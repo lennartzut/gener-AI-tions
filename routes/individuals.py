@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from models import Individual
 from extensions import db
-from schemas import IndividualSchema
+from schemas.individual_schema import IndividualSchema
 
 api = Blueprint('api', __name__)
 
