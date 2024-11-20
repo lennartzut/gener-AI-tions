@@ -3,7 +3,8 @@ from models import Individual
 from extensions import db
 from schemas.individual_schema import IndividualSchema
 
-api = Blueprint('api', __name__)
+core_bp = Blueprint('individuals_core', __name__,
+                    url_prefix='/individuals')
 
 # Marshmallow schemas
 individual_schema = IndividualSchema()
@@ -11,7 +12,7 @@ individuals_schema = IndividualSchema(many=True)
 
 
 # Create Individual
-@api.route('/individuals', methods=['POST'])
+@core_bp.route('', methods=['POST'])
 def create_individual():
     data = request.json
     try:
@@ -25,21 +26,21 @@ def create_individual():
 
 
 # Get All Individuals
-@api.route('/individuals', methods=['GET'])
+@core_bp.route('', methods=['GET'])
 def get_individuals():
     individuals = Individual.query.all()
     return jsonify(individuals_schema.dump(individuals)), 200
 
 
 # Get Individual by ID
-@api.route('/individuals/<int:id>', methods=['GET'])
+@core_bp.route('/<int:id>', methods=['GET'])
 def get_individual(id):
     individual = Individual.query.get_or_404(id)
     return jsonify(individual_schema.dump(individual)), 200
 
 
 # Update Individual
-@api.route('/individuals/<int:id>', methods=['PUT'])
+@core_bp.route('/<int:id>', methods=['PUT'])
 def update_individual(id):
     data = request.json
     individual = Individual.query.get_or_404(id)
@@ -54,7 +55,7 @@ def update_individual(id):
 
 
 # Delete Individual
-@api.route('/individuals/<int:id>', methods=['DELETE'])
+@core_bp.route('/<int:id>', methods=['DELETE'])
 def delete_individual(id):
     individual = Individual.query.get_or_404(id)
     db.session.delete(individual)
