@@ -1,9 +1,9 @@
 import os
+import logging
 from flask import Flask
 from dotenv import load_dotenv
 from extensions import db, migrate
 from routes import api
-import logging
 
 # Load environment variables
 load_dotenv()
@@ -24,12 +24,15 @@ db.init_app(app)
 migrate.init_app(app, db)
 
 # Register blueprints
-app.register_blueprint(api, url_prefix='/api')
+app.register_blueprint(api)
 
-# Test route
 @app.route('/')
 def home():
-    return "Hello, Flask is running!"
+    return {
+        "message": "Welcome to the Genealogy API!",
+        "status": "Running"
+    }
+
 
 # Run application
 if __name__ == '__main__':
