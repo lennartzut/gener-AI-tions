@@ -43,7 +43,7 @@ def add_relationship(id):
     if relationship_type == 'parent':
         relationship = Relationship(parent_id=target_id, related_individual_id=id)
     elif relationship_type == 'child':
-        relationship = Relationship(parent_id=id, crelated_individual_idhild_id=target_id)
+        relationship = Relationship(parent_id=id, related_individual_id=target_id)
     elif relationship_type == 'partner':
         relationship = Family(partner1_id=id, partner2_id=target_id)
     else:
