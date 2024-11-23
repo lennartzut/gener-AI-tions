@@ -1,24 +1,21 @@
-import os
 import logging
 from flask import Flask
-from dotenv import load_dotenv
+from config import DevelopmentConfig
 from extensions import db, migrate
 from routes import api
 
 
-def create_app():
-    # Load environment variables
-    load_dotenv()
+def create_app(config_class=DevelopmentConfig):
     # Initialize Flask application
     app = Flask(__name__)
     # Configure logging
     logging.basicConfig(level=logging.DEBUG)
-    # Database configuration
-    database_url = os.getenv('DATABASE_URL')
-    if not database_url:
-        raise ValueError("DATABASE_URL not found in .env file.")
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # Apply configuration
+    app.config.from_object(config_class)
+    # Check if DATABASE_URL is set
+    if not app.config['SQLALCHEMY_DATABASE_URI']:
+        raise ValueError(
+            "DATABASE_URL not found in environment variables.")
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
