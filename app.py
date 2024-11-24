@@ -1,5 +1,6 @@
 import logging
-from flask import Flask
+from flask import Flask, jsonify
+from pydantic import ValidationError
 from config import DevelopmentConfig
 from extensions import db, migrate
 from routes import api
@@ -20,14 +21,18 @@ def create_app(config_class=DevelopmentConfig):
     db.init_app(app)
     migrate.init_app(app, db)
     # Register blueprints
-    app.register_blueprint(api)
+    app.register_blueprint(api, url_prefix='/api')
 
     @app.route('/')
     def home():
-        return {
+        return jsonify({
             "message": "Welcome to Gener-AI-tions!",
             "status": "Running"
-        }
+        }), 200
+
+    @app.errorhandler(ValidationError)
+    def handle_validation_error(e):
+        return jsonify({'error': e.errors()}), 400
 
     return app
 

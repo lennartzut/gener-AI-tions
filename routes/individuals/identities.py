@@ -1,48 +1,51 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify
+from flask_pydantic import validate
 from models import Identity, Individual
-from schemas.identity_schema import IdentitySchema
+from schemas.subject_schema import IdentityCreate, IdentityUpdate, \
+    IdentityOut
 from extensions import db
 
-identities_bp = Blueprint('individuals_identities', __name__, url_prefix='/individuals/<int:individual_id>/identities')
+identities_bp = Blueprint('individuals_identities', __name__)
 
-# Marshmallow schema
-identity_schema = IdentitySchema()
-identities_schema = IdentitySchema(many=True)
 
 # Add Identity
-@identities_bp.route('', methods=['POST'])
-def add_identity(individual_id):
-    data = request.json
+@identities_bp.route('/<int:individual_id>/identities',
+                     methods=['POST'])
+@validate()
+def add_identity(individual_id: int, body: IdentityCreate):
     individual = Individual.query.get_or_404(individual_id)
-
-    try:
-        identity = identity_schema.load(data)
-        identity.individual = individual
-        db.session.add(identity)
-        db.session.commit()
-        return jsonify({'message': 'Identity added successfully', 'id': identity.id}), 201
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
+    new_identity = Identity(
+        individual_id=individual_id,
+        first_name=body.first_name,
+        last_name=body.last_name,
+        gender=body.gender,
+        valid_from=body.valid_from,
+        valid_until=body.valid_until,
+    )
+    db.session.add(new_identity)
+    db.session.commit()
+    identity_out = IdentityOut.from_orm(new_identity)
+    return jsonify(identity_out.model_dump()), 201
 
 
 # Update Identity
-@identities_bp.route('/<int:id>', methods=['PUT'])
-def update_identity(individual_id, id):
+@identities_bp.route('/<int:individual_id>/identities/<int:id>',
+                     methods=['PUT'])
+@validate()
+def update_identity(individual_id: int, id: int,
+                    body: IdentityUpdate):
     identity = Identity.query.get_or_404(id)
-    data = request.json
-
-    try:
-        for key, value in data.items():
-            setattr(identity, key, value)
-        db.session.commit()
-        return jsonify({'message': 'Identity updated successfully'}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
+    for key, value in body.model_dump(exclude_unset=True).items():
+        setattr(identity, key, value)
+    db.session.commit()
+    identity_out = IdentityOut.from_orm(identity)
+    return jsonify(identity_out.model_dump()), 200
 
 
 # Delete Identity
-@identities_bp.route('/<int:id>', methods=['DELETE'])
-def delete_identity(individual_id, id):
+@identities_bp.route('/<int:individual_id>/identities/<int:id>',
+                     methods=['DELETE'])
+def delete_identity(individual_id: int, id: int):
     identity = Identity.query.get_or_404(id)
     db.session.delete(identity)
     db.session.commit()

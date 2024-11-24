@@ -1,62 +1,66 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify
+from flask_pydantic import validate
 from models import Individual
 from extensions import db
-from schemas.individual_schema import IndividualSchema
+from schemas.subject_schema import (
+    IndividualCreate,
+    IndividualUpdate,
+    IndividualOut,
+)
 
-core_bp = Blueprint('individuals_core', __name__,
-                    url_prefix='/individuals')
-
-# Marshmallow schemas
-individual_schema = IndividualSchema()
-individuals_schema = IndividualSchema(many=True)
+core_bp = Blueprint('individuals_core', __name__)
 
 
 # Create Individual
-@core_bp.route('', methods=['POST'])
-def create_individual():
-    data = request.json
-    try:
-        individual = individual_schema.load(data)
-        db.session.add(individual)
-        db.session.commit()
-        return jsonify({'id': individual.id,
-                        'message': 'Individual created'}), 201
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
+@core_bp.route('/', methods=['POST'])
+@validate()
+def create_individual(body: IndividualCreate):
+    new_individual = Individual(
+        birth_date=body.birth_date,
+        birth_place=body.birth_place,
+        death_date=body.death_date,
+        death_place=body.death_place,
+    )
+    db.session.add(new_individual)
+    db.session.commit()
+    individual_out = IndividualOut.from_orm(new_individual)
+    return jsonify(individual_out.model_dump()), 201
 
 
 # Get All Individuals
-@core_bp.route('', methods=['GET'])
+@core_bp.route('/', methods=['GET'])
 def get_individuals():
     individuals = Individual.query.all()
-    return jsonify(individuals_schema.dump(individuals)), 200
+    individual_out_list = [IndividualOut.from_orm(individual) for
+                           individual in individuals]
+    individual_dicts = [individual_out.model_dump() for
+                        individual_out in individual_out_list]
+    return jsonify(individual_dicts), 200
 
 
 # Get Individual by ID
 @core_bp.route('/<int:id>', methods=['GET'])
-def get_individual(id):
+def get_individual(id: int):
     individual = Individual.query.get_or_404(id)
-    return jsonify(individual_schema.dump(individual)), 200
+    individual_out = IndividualOut.from_orm(individual)
+    return jsonify(individual_out.model_dump()), 200
 
 
 # Update Individual
 @core_bp.route('/<int:id>', methods=['PUT'])
-def update_individual(id):
-    data = request.json
+@validate()
+def update_individual(id: int, body: IndividualUpdate):
     individual = Individual.query.get_or_404(id)
-    try:
-        for key, value in data.items():
-            setattr(individual, key, value)
-        db.session.commit()
-        return jsonify(
-            {'message': 'Individual updated successfully'}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
+    for key, value in body.model_dump(exclude_unset=True).items():
+        setattr(individual, key, value)
+    db.session.commit()
+    individual_out = IndividualOut.from_orm(individual)
+    return jsonify(individual_out.model_dump()), 200
 
 
 # Delete Individual
 @core_bp.route('/<int:id>', methods=['DELETE'])
-def delete_individual(id):
+def delete_individual(id: int):
     individual = Individual.query.get_or_404(id)
     db.session.delete(individual)
     db.session.commit()
