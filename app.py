@@ -2,8 +2,9 @@ import logging
 from flask import Flask, jsonify
 from pydantic import ValidationError
 from config import DevelopmentConfig
-from extensions import db, migrate
+from extensions import db, migrate, jwt
 from routes import api
+from models.user import User
 
 
 def create_app(config_class=DevelopmentConfig):
@@ -20,8 +21,15 @@ def create_app(config_class=DevelopmentConfig):
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
+    jwt.init_app(app)
     # Register blueprints
     app.register_blueprint(api, url_prefix='/api')
+
+    # Define user lookup loader
+    @jwt.user_lookup_loader
+    def user_lookup_callback(_jwt_header, jwt_data):
+        identity = jwt_data["sub"]
+        return User.query.get(identity)
 
     @app.route('/')
     def home():

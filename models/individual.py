@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from extensions import db
 
 
@@ -9,8 +10,21 @@ class Individual(db.Model):
     birth_place = db.Column(db.String(100), nullable=True)
     death_date = db.Column(db.Date, nullable=True)
     death_place = db.Column(db.String(100), nullable=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(
+                               timezone.utc))
+    updated_at = db.Column(db.DateTime, default=datetime.now(
+                               timezone.utc),
+                           onupdate=datetime.now(
+                               timezone.utc))
 
     # Relationships
+    user = db.relationship(
+        'User',
+        back_populates='individuals'
+    )
+    identities = db.relationship(
+        'Identity',
+        back_populates='individual')
     families_as_partner1 = db.relationship(
         'Family',
         foreign_keys='Family.partner1_id',
