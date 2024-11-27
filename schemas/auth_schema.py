@@ -1,6 +1,5 @@
 from __future__ import annotations
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
-from typing import Optional
 from datetime import datetime
 
 
@@ -22,7 +21,6 @@ class UserLogin(BaseModel):
 class UserOut(BaseModel):
     id: int
     email: EmailStr
-    avatar: Optional[str]
     created_at: datetime
     updated_at: datetime
 
