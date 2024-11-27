@@ -11,11 +11,11 @@ class Individual(db.Model):
     death_date = db.Column(db.Date, nullable=True)
     death_place = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(
-                               timezone.utc))
-    updated_at = db.Column(db.DateTime, default=datetime.now(
-                               timezone.utc),
-                           onupdate=datetime.now(
-                               timezone.utc))
+        timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(
+        timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'),
+                        nullable=False)
 
     # Relationships
     user = db.relationship(
@@ -24,30 +24,29 @@ class Individual(db.Model):
     )
     identities = db.relationship(
         'Identity',
-        back_populates='individual')
+        back_populates='individual'
+    )
     families_as_partner1 = db.relationship(
         'Family',
         foreign_keys='Family.partner1_id',
-        backref='partner1_family',
-        overlaps="families_as_partner2, partner1"
+        back_populates='partner1'
     )
     families_as_partner2 = db.relationship(
         'Family',
         foreign_keys='Family.partner2_id',
-        backref='partner2_family',
-        overlaps="families_as_partner1, partner2"
-    )
-    children_relationships = db.relationship(
-        'Relationship',
-        foreign_keys='Relationship.parent_id',
-        backref='parent_relationship',
-        overlaps="parent_relationship, children_relationships"
+        back_populates='partner2'
     )
     parent_relationships = db.relationship(
         'Relationship',
-        foreign_keys='Relationship.related_individual_id',
-        backref='child_relationship',
-        overlaps="child_relationship, parent_relationships"
+        foreign_keys='Relationship.child_id',
+        back_populates='child',
+        overlaps="child_relationships"
+    )
+    child_relationships = db.relationship(
+        'Relationship',
+        foreign_keys='Relationship.parent_id',
+        back_populates='parent',
+        overlaps="parent_relationships"
     )
 
     def __repr__(self):
@@ -55,10 +54,10 @@ class Individual(db.Model):
 
     # Helper Methods
     def get_parents(self):
-        return [rel.parent_relationship for rel in self.parent_relationships]
+        return [rel.parent for rel in self.parent_relationships]
 
     def get_children(self):
-        return [rel.child_relationship for rel in self.children_relationships]
+        return [rel.child for rel in self.child_relationships]
 
     def get_siblings(self):
         siblings = set()
@@ -69,11 +68,9 @@ class Individual(db.Model):
         return list(siblings)
 
     def get_partners(self):
-        partners = []
+        partners = set()
         for family in self.families_as_partner1:
-            if family.partner2_id != self.id:
-                partners.append(family.partner2)
+            partners.add(family.partner2)
         for family in self.families_as_partner2:
-            if family.partner1_id != self.id:
-                partners.append(family.partner1)
-        return partners
+            partners.add(family.partner1)
+        return list(partners)

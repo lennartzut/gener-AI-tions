@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, \
     check_password_hash
 from extensions import db
@@ -11,12 +11,12 @@ class User(db.Model):
 
     id = Column(Integer, primary_key=True)
     email = Column(String(150), unique=True, nullable=False)
-    password_hash = Column(String(128), nullable=False)
-    avatar = Column(String(255),
-                    nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow,
-                        onupdate=datetime.utcnow)
+    password_hash = Column(String(256), nullable=False)
+    created_at = Column(DateTime,
+                        default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime,
+                        default=lambda: datetime.now(timezone.utc),
+                        onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
     individuals = relationship('Individual', back_populates='user')
