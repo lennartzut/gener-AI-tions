@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center">
+    <h1>Welcome to Gener-AI-tions</h1>
+    <p>Manage your family tree with ease.</p>
+    {% if current_user %}
+    <a href="{{ url_for('web.individuals_web.get_individuals') }}" class="btn btn-primary">View Individuals</a>
+    {% else %}
+    <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Log In</a>
+    <a href="{{ url_for('auth.signup') }}" class="btn btn-secondary">Sign Up</a>
+    {% endif %}
+</div>
+{% endblock %}

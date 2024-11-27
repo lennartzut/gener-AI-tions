@@ -1,0 +1,40 @@
+<div class="row identity-fields">
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label class="form-label">First Name</label>
+            <input type="text" class="form-control" name="identities[][first_name]">
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label class="form-label">Last Name</label>
+            <input type="text" class="form-control" name="identities[][last_name]">
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label class="form-label">Gender</label>
+            <select class="form-control" name="identities[][gender]">
+                <option value="" disabled selected>Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+                <option value="Non-binary">Non-binary</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+            </select>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label class="form-label">Valid From</label>
+            <input type="date" class="form-control" name="identities[][valid_from]">
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label class="form-label">Valid Until</label>
+            <input type="date" class="form-control" name="identities[][valid_until]">
+        </div>
+    </div>
+    <button type="button" class="btn btn-danger btn-sm remove-identity">Remove Identity</button>
+</div>

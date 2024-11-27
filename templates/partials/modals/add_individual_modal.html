@@ -1,0 +1,20 @@
+<div class="modal fade" id="addIndividualModal" tabindex="-1" aria-labelledby="addIndividualModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="addIndividualForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addIndividualModalLabel">Add New Individual</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Include the Individual Form -->
+                    {% include "partials/forms/add_individual_form.html" %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Individual</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
