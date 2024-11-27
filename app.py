@@ -1,51 +1,74 @@
 import logging
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
+from flask_jwt_extended import get_jwt_identity
 from pydantic import ValidationError
 from config import DevelopmentConfig
 from extensions import db, migrate, jwt
-from routes import api
+from blueprints import auth_bp, api_bp, web_bp
 from models.user import User
 
 
 def create_app(config_class=DevelopmentConfig):
-    # Initialize Flask application
     app = Flask(__name__)
-    # Configure logging
     logging.basicConfig(level=logging.DEBUG)
-    # Apply configuration
     app.config.from_object(config_class)
-    # Check if DATABASE_URL is set
+
     if not app.config['SQLALCHEMY_DATABASE_URI']:
-        raise ValueError(
-            "DATABASE_URL not found in environment variables.")
+        raise ValueError("DATABASE_URL not found in environment variables.")
+
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
-    # Register blueprints
-    app.register_blueprint(api, url_prefix='/api')
 
-    # Define user lookup loader
+    # Register blueprints
+    app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.register_blueprint(api_bp, url_prefix='/api')
+    app.register_blueprint(web_bp)
+
+    @app.context_processor
+    def inject_current_user():
+        user = None
+        try:
+            user_id = get_jwt_identity()
+            if user_id:
+                user = User.query.get(user_id)
+        except:
+            # No JWT present or invalid token
+            pass
+        return dict(current_user=user)
+
+    # User lookup callback for JWT
     @jwt.user_lookup_loader
     def user_lookup_callback(_jwt_header, jwt_data):
         identity = jwt_data["sub"]
-        return User.query.get(identity)
+        try:
+            user_id = int(
+                identity)  # Convert the identity back to an integer
+        except (ValueError, TypeError):
+            # Handle the error, possibly by returning None
+            return None
+        return User.query.get(user_id)
 
-    @app.route('/')
-    def home():
-        return jsonify({
-            "message": "Welcome to Gener-AI-tions!",
-            "status": "Running"
-        }), 200
-
+    # Error handler for Pydantic validation errors
     @app.errorhandler(ValidationError)
     def handle_validation_error(e):
         return jsonify({'error': e.errors()}), 400
 
+    # 404 Not Found
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return render_template('errors/404.html'), 404
+
+    # 500 Internal Server Error
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        return render_template('errors/500.html'), 500
+
+
     return app
 
 
-# Run application
 if __name__ == '__main__':
     app = create_app()
     app.run(host="0.0.0.0", port=5000, debug=True)
