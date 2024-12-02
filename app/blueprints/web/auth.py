@@ -1,5 +1,6 @@
-from flask import Blueprint, render_template, redirect, url_for, \
-    flash, request, make_response
+from flask import (Blueprint, render_template, redirect, jsonify,
+                   url_for, \
+                   flash, request, make_response)
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -16,8 +17,7 @@ from app.forms import RegistrationForm, LoginForm
 web_auth_bp = Blueprint(
     'web_auth_bp',
     __name__,
-    template_folder='templates/auth',
-    url_prefix='/auth'
+    template_folder='templates/auth'
 )
 
 
@@ -74,10 +74,28 @@ def login():
     return render_template('login.html', form=form)
 
 
-@web_auth_bp.route('/logout', methods=['POST'])
+@web_auth_bp.route('/logout', methods=['GET', 'POST'])
 @jwt_required()
 def logout():
     response = make_response(redirect(url_for('web_auth_bp.login')))
     unset_jwt_cookies(response)
     flash('Logged out successfully.', 'success')
     return response
+
+
+@web_auth_bp.route('/refresh', methods=['POST'])
+@jwt_required(refresh=True)
+def refresh():
+    """
+    Refreshes the access token using a valid refresh token.
+    """
+    current_user_id = get_jwt_identity()
+    new_access_token = create_access_token(
+        identity=str(current_user_id))
+
+    response = jsonify({'message': 'Token refreshed successfully.'})
+    set_access_cookies(
+        response,
+        new_access_token,
+    )
+    return response, 200

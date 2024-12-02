@@ -1,15 +1,14 @@
-# blueprints/web/profile.py
-
-from flask import Blueprint, render_template, redirect, url_for, flash
+from flask import Blueprint, render_template, redirect, url_for, \
+    flash
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.user import User
 
 web_profile_bp = Blueprint(
     'web_profile_bp',
     __name__,
-    template_folder='templates/profile',
-    url_prefix='/profile'
+    template_folder='templates/profile'
 )
+
 
 @web_profile_bp.route('/', methods=['GET'])
 @jwt_required()

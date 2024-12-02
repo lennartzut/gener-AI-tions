@@ -5,7 +5,8 @@
     <h1>Welcome to Gener-AI-tions</h1>
     <p>Manage your family tree with ease.</p>
     {% if current_user %}
-    <a href="{{ url_for('web.individuals_web.get_individuals') }}" class="btn btn-primary">View Individuals</a>
+    <a href="{{ url_for('web_individuals_bp.get_individuals') }}"
+       class="btn btn-primary">View Individuals</a>
     {% else %}
     <a href="{{ url_for('web_auth_bp.login') }}"
        class="btn btn-primary">Log In</a>
