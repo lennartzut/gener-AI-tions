@@ -1,3 +1,4 @@
+// Function to toggle the display of death-related fields
 function toggleDeathFields() {
     const isDeceased = document.getElementById('isDeceased').checked;
     const isDeceasedUnknown = document.getElementById('isDeceasedUnknown').checked;
@@ -7,34 +8,26 @@ function toggleDeathFields() {
     deathFields.style.display = (isDeceased && !isDeceasedUnknown) ? 'block' : 'none';
 }
 
+// Event listener for adding a new identity form
 document.getElementById('addIdentityBtn').addEventListener('click', function () {
     const identitySection = document.getElementById('identitySection');
 
-    // Fetch and append the identity form template
-    fetch('/static/templates/partials/forms/identity_form.html')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to load identity form template');
-            }
-            return response.text();
-        })
-        .then(html => {
-            const template = document.createElement('div');
-            template.innerHTML = html;
-            identitySection.appendChild(template);
+    // Fetch and append the identity form template from a hidden template element
+    const template = document.getElementById('identityFormTemplate');
+    const clone = template.content.cloneNode(true);
+    identitySection.appendChild(clone);
 
-            // Attach remove event to the newly added "Remove Identity" button
-            template.querySelector('.remove-identity').addEventListener('click', function () {
-                template.remove();
-            });
-        })
-        .catch(error => {
-            console.error('Error loading identity form:', error);
-            alert('Could not add identity field. Please try again.');
+    // Attach remove event to the newly added "Remove Identity" button
+    const removeBtn = identitySection.querySelector('.remove-identity:last-of-type');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function () {
+            removeBtn.closest('.identity-fields').remove();
         });
+    }
 });
 
-document.getElementById('addIndividualForm').addEventListener('submit', function (event) {
+// Event listener for submitting the individual form
+document.getElementById('addIndividualForm').addEventListener('submit', async function (event) {
     event.preventDefault();
 
     const formData = new FormData(this);
@@ -54,7 +47,12 @@ document.getElementById('addIndividualForm').addEventListener('submit', function
         const identityData = {};
         fieldset.querySelectorAll('input, select').forEach(input => {
             if (input.value) {
-                identityData[input.name.split('[')[2].replace(']', '')] = input.value;
+                // Adjusted regex to correctly extract field names
+                const match = input.name.match(/\[(\w+)\]$/);
+                if (match) {
+                    const fieldName = match[1];
+                    identityData[fieldName] = input.value;
+                }
             }
         });
         if (Object.keys(identityData).length > 0) {
@@ -62,33 +60,64 @@ document.getElementById('addIndividualForm').addEventListener('submit', function
         }
     });
 
-    // Submit the data via API
-    fetch('/api/individuals', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(individualData),
-        credentials: 'include'  // Important to include cookies
-    })
-
-        .then(response => {
-            if (response.ok) {
-                location.reload(); // Reload the page on successful submission
-            } else if (response.status === 401) {
-                alert('Unauthorized. Please log in again.');
-                window.location.href = '/auth/login'; // Redirect to login page
-            } else {
-                return response.json(); // Parse and handle errors
-            }
-        })
-        .then(data => {
-            if (data && data.error) {
-                alert(data.error); // Display error message
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while saving the individual. Please try again.');
+    try {
+        const response = await fetch('/api/individuals/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify(individualData)
         });
+
+        if (response.ok) {
+            const newIndividual = await response.json();
+
+            // Append the new individual to the list
+            appendIndividualToList(newIndividual);
+
+            // Close the modal
+            const modalElement = document.getElementById('addIndividualModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+            modalInstance.hide();
+
+            // Reset the form
+            this.reset();
+            toggleDeathFields(); // Reset the death fields visibility
+
+            alert('Individual added successfully!');
+        } else {
+            let data;
+            try {
+                data = await response.json();
+            } catch (e) {
+                console.error('Error parsing JSON:', e);
+                data = null;
+            }
+            if (data && data.error) {
+                alert('Error: ' + data.error); // Display error message from the server
+            } else {
+                alert('An error occurred. Please try again.');
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An unexpected error occurred. Please try again.');
+    }
 });
+
+// Function to append the new individual to the list
+function appendIndividualToList(individual) {
+    const listGroup = document.querySelector('.list-group');
+
+    const listItem = document.createElement('li');
+    listItem.className = 'list-group-item';
+
+    const link = document.createElement('a');
+    link.href = `/individuals/${individual.id}/family-card`;
+    link.className = 'text-decoration-none';
+    link.textContent = individual.name;
+
+    listItem.appendChild(link);
+    listGroup.appendChild(listItem);
+}
