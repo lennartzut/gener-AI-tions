@@ -1,4 +1,5 @@
-from .enums import GenderEnum
+from sqlalchemy.dialects.postgresql import ENUM
+from app.schemas.enums import GenderEnum
 from datetime import date
 from app.extensions import db
 
@@ -38,7 +39,9 @@ class Identity(db.Model):
     )
     first_name = db.Column(db.String(100), nullable=True)
     last_name = db.Column(db.String(100), nullable=True)
-    gender = db.Column(db.Enum(GenderEnum), nullable=True)
+    gender = db.Column(
+        ENUM(GenderEnum, name='genderenum', create_type=False),
+        nullable=True)
     valid_from = db.Column(db.Date, nullable=True)
     valid_until = db.Column(db.Date, nullable=True)
 
