@@ -10,9 +10,9 @@ api_families_bp = Blueprint('api_families_bp', __name__)
 # Get Family Data
 @api_families_bp.route('/<int:id>', methods=['GET'])
 @jwt_required()
-def get_family_data(id):
+def get_family_data(individual_id):
     current_user_id = get_jwt_identity()
-    individual = Individual.query.filter_by(id=id,
+    individual = Individual.query.filter_by(id=individual_id,
                                             user_id=current_user_id).first_or_404()
 
     family_data = {
@@ -32,9 +32,9 @@ def get_family_data(id):
 # Add Relationship
 @api_families_bp.route('/<int:id>/relationships', methods=['POST'])
 @jwt_required()
-def add_relationship(id):
+def add_relationship(individual_id):
     current_user_id = get_jwt_identity()
-    individual = Individual.query.filter_by(id=id,
+    individual = Individual.query.filter_by(id=individual_id,
                                             user_id=current_user_id).first_or_404()
     data = request.get_json()
 

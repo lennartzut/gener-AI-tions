@@ -26,16 +26,20 @@
 
     <!-- Individuals List -->
     <ul class="list-group">
-    {% for individual in individuals %}
-    <li class="list-group-item">
-        <a href="{{ url_for('web_individuals_bp.get_family_card', id=individual.id) }}" class="text-decoration-none">
-            {{ individual.identity.first_name }} {{ individual.identity.last_name }}
-        </a>
-    </li>
-    {% else %}
-    <li class="list-group-item text-muted">No individuals found.</li>
-    {% endfor %}
-</ul>
+        {% for individual in individuals %}
+        <li class="list-group-item">
+            <a href="{{ url_for('web_individuals_bp.get_family_card', individual_id=individual.id) }}" class="text-decoration-none">
+                {% if individual.primary_identity %}
+                    {{ individual.primary_identity.first_name }} {{ individual.primary_identity.last_name }}
+                {% else %}
+                    Unknown Name
+                {% endif %}
+            </a>
+        </li>
+        {% else %}
+        <li class="list-group-item text-muted">No individuals found.</li>
+        {% endfor %}
+    </ul>
 </div>
 
 <!-- Include Add Individual Modal -->

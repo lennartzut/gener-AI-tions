@@ -8,29 +8,22 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
-                {% if current_user.is_authenticated %}
+                {% if current_user %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('web.individuals_web.get_individuals') }}">Individuals</a>
+                    <a class="nav-link" href="{{ url_for('web_individuals_bp.get_individuals') }}">Individuals</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('web.profile_web.profile') }}">Profile</a>
+                    <a class="nav-link" href="{{ url_for('web_profile_bp.profile') }}">Profile</a>
                 </li>
                 <li class="nav-item">
-                    <form action="{{ url_for('auth.logout') }}" method="post" style="display: inline;">
-                        {{ csrf_token() }}
-                        <button type="submit" class="nav-link btn btn-link" style="display: inline; padding: 0;">Logout</button>
-                    </form>
+                    <a class="nav-link" href="{{ url_for('web_auth_bp.logout') }}">Logout</a>
                 </li>
                 {% else %}
                 <li class="nav-item">
-                    <a class="nav-link"
-                       href="{{ url_for('web_auth_bp.login') }}">Login
-                    </a>
+                    <a class="nav-link" href="{{ url_for('web_auth_bp.login') }}">Login</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link"
-                       href="{{ url_for('web_auth_bp.signup') }}">Sign
-                        Up</a>
+                    <a class="nav-link" href="{{ url_for('web_auth_bp.signup') }}">Sign Up</a>
                 </li>
                 {% endif %}
             </ul>

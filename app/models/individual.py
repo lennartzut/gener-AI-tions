@@ -68,6 +68,13 @@ class Individual(db.Model):
         cascade='all, delete-orphan'
     )
 
+    @property
+    def primary_identity(self):
+        """
+        Returns the first identity associated with the individual, if any.
+        """
+        return self.identities[0] if self.identities else None
+
     def __repr__(self):
         """
         Returns a string representation of the Individual instance.

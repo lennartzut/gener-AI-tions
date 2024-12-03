@@ -5,6 +5,7 @@ from app.models.individual import Individual
 from app.models.identity import Identity
 from app.models.relationship import Relationship
 from app.extensions import db
+from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import SQLAlchemyError
 
 web_individuals_bp = Blueprint(
@@ -22,7 +23,9 @@ def get_individuals():
     search_query = request.args.get('q')
     limit = request.args.get('limit', 10, type=int)
 
-    query = Individual.query.filter_by(user_id=current_user_id)
+    query = Individual.query.filter_by(
+        user_id=current_user_id).options(
+        joinedload(Individual.identities))
 
     if search_query:
         # Join with Identity model for searching by name
