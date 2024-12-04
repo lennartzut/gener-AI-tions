@@ -19,11 +19,11 @@ class Config:
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY') or secrets.token_urlsafe(32)
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
-    JWT_COOKIE_SECURE = False  # Should be True in production
+    JWT_COOKIE_SECURE = os.getenv('JWT_COOKIE_SECURE', 'False').lower() == 'true'
     JWT_TOKEN_LOCATION = ['cookies']
     JWT_ACCESS_COOKIE_PATH = '/'
     JWT_REFRESH_COOKIE_PATH = '/'
-    JWT_COOKIE_CSRF_PROTECT = False
+    JWT_COOKIE_CSRF_PROTECT = os.getenv('JWT_COOKIE_CSRF_PROTECT', 'True').lower() == 'true'
 
 
 class DevelopmentConfig(Config):
@@ -31,6 +31,7 @@ class DevelopmentConfig(Config):
     Development-specific configurations.
     """
     DEBUG = True
+    SQLALCHEMY_ECHO = True
     JWT_COOKIE_CSRF_PROTECT = False
 
 
@@ -42,6 +43,7 @@ class TestingConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL', 'sqlite:///:memory:')
     JWT_COOKIE_CSRF_PROTECT = False
+    SQLALCHEMY_ECHO = False
 
 
 class ProductionConfig(Config):
@@ -49,6 +51,7 @@ class ProductionConfig(Config):
     Production-specific configurations.
     """
     DEBUG = False
+    SQLALCHEMY_ECHO = False
     JWT_COOKIE_SECURE = True
-    JWT_COOKIE_CSRF_PROTECT = False
-
+    JWT_COOKIE_CSRF_PROTECT = True
+    SECRET_KEY = os.getenv('SECRET_KEY')

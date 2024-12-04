@@ -1,9 +1,14 @@
-from flask import Blueprint, render_template, request, redirect, \
-    url_for, flash
+from flask import (
+    Blueprint, render_template, request, redirect,
+    url_for, flash, current_app as app
+)
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.individual import Individual
 from app.models.identity import Identity
 from app.models.relationship import Relationship
+from app.models.family import Family
+from app.models.enums import GenderEnum, RelationshipType, \
+    RelationshipTypeEnum
 from app.extensions import db
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import SQLAlchemyError
@@ -15,10 +20,13 @@ web_individuals_bp = Blueprint(
 )
 
 
-# Get Individuals
 @web_individuals_bp.route('/', methods=['GET'])
 @jwt_required()
 def get_individuals():
+    """
+    Displays a list of individuals for the current user.
+    Supports optional search query and limit parameters.
+    """
     current_user_id = get_jwt_identity()
     search_query = request.args.get('q')
     limit = request.args.get('limit', 10, type=int)
@@ -28,7 +36,6 @@ def get_individuals():
         joinedload(Individual.identities))
 
     if search_query:
-        # Join with Identity model for searching by name
         query = query.join(Identity).filter(
             (Individual.birth_place.ilike(f"%{search_query}%")) |
             (Identity.first_name.ilike(f"%{search_query}%")) |
@@ -37,45 +44,48 @@ def get_individuals():
 
     individuals = query.order_by(Individual.updated_at.desc()).limit(
         limit).all()
+
     return render_template('individuals_list.html',
                            individuals=individuals)
 
 
-# Get Individual by ID
-@web_individuals_bp.route('/<int:individual_id>', methods=['GET'])
-@jwt_required()
-def get_individual(individual_id: int):
-    current_user_id = get_jwt_identity()
-    individual = Individual.query.filter_by(id=individual_id,
-                                            user_id=current_user_id).first_or_404()
-    return render_template('individual_detail.html',
-                           individual=individual)
-
-
-# Create Individual with Default Identity
 @web_individuals_bp.route('/create', methods=['GET', 'POST'])
 @jwt_required()
 def create_individual():
+    """
+    Creates a new individual along with a default identity.
+    GET: Renders the form for creating an individual.
+    POST: Processes the submitted form and creates an individual.
+    """
     current_user_id = get_jwt_identity()
+    relationship = request.args.get('relationship')
+    related_individual_id = request.args.get('related_individual_id',
+                                             type=int)
+    family_id = request.args.get('family_id', type=int)
 
     if request.method == 'POST':
-        # Handle form submission
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        gender_str = request.form.get('gender')
         birth_date = request.form.get('birth_date')
         birth_place = request.form.get('birth_place')
         death_date = request.form.get('death_date')
         death_place = request.form.get('death_place')
-        first_name = request.form.get('first_name')
-        last_name = request.form.get('last_name')
-        gender = request.form.get('gender')
 
-        if not first_name or not last_name or not gender:
+        if not first_name or not last_name or not gender_str:
             flash("First name, last name, and gender are required.",
                   'error')
-            return redirect(
-                url_for('web_individuals_bp.create_individual'))
+            return redirect(url_for(
+                'web_individuals_bp.create_individual',
+                relationship=relationship,
+                related_individual_id=related_individual_id,
+                family_id=family_id
+            ))
 
         try:
-            # Step 1: Create Individual
+            gender = GenderEnum(gender_str)
+
+            # Create the new individual
             new_individual = Individual(
                 user_id=current_user_id,
                 birth_date=birth_date,
@@ -84,148 +94,303 @@ def create_individual():
                 death_place=death_place,
             )
             db.session.add(new_individual)
-            db.session.flush()  # Ensure `new_individual.id` is available
+            db.session.flush()  # Ensure new_individual.id is available
 
-            # Step 2: Create Default Identity
+            # Create the default identity
             default_identity = Identity(
                 individual_id=new_individual.id,
                 first_name=first_name,
                 last_name=last_name,
                 gender=gender,
                 valid_from=birth_date
-                # Optional: Use birth_date as default start
             )
             db.session.add(default_identity)
-            db.session.commit()
 
+            # Handle relationships if specified
+            if relationship and related_individual_id:
+                add_relationship_for_new_individual(
+                    relationship, related_individual_id,
+                    new_individual, family_id, current_user_id
+                )
+
+            db.session.commit()
             flash(
                 'Individual and default identity created successfully.',
                 'success')
-            return redirect(
-                url_for('web_individuals_bp.get_individuals'))
+            return redirect_to_family_or_individual(
+                related_individual_id, family_id)
 
-        except SQLAlchemyError:
+        except ValueError:
+            flash(f"Invalid gender value: {gender_str}", 'error')
+        except SQLAlchemyError as e:
             db.session.rollback()
+            app.logger.error(f"Error creating individual: {e}")
             flash('An error occurred while creating the individual.',
                   'error')
-            return redirect(
-                url_for('web_individuals_bp.create_individual'))
 
-    return render_template('create_individual.html')
+    return render_template('create_individual.html',
+                           GenderEnum=GenderEnum)
 
 
-# Update Individual
-@web_individuals_bp.route('/<int:individual_id>/edit',
-                          methods=['GET', 'POST'])
+@web_individuals_bp.route('/<int:individual_id>/update',
+                          methods=['POST'])
 @jwt_required()
-def update_individual(individual_id: int):
+def update_individual(individual_id):
+    """
+    Updates the details of an existing individual.
+    """
     current_user_id = get_jwt_identity()
     individual = Individual.query.filter_by(id=individual_id,
                                             user_id=current_user_id).first_or_404()
 
-    if request.method == 'POST':
-        # Handle form submission
-        individual.birth_date = request.form.get('birth_date')
-        individual.birth_place = request.form.get('birth_place')
-        individual.death_date = request.form.get('death_date')
-        individual.death_place = request.form.get('death_place')
+    try:
+        # Update individual fields
+        individual.birth_date = request.form.get(
+            'birth_date') or None
+        individual.birth_place = request.form.get(
+            'birth_place') or None
+        individual.death_date = request.form.get(
+            'death_date') or None
+        individual.death_place = request.form.get(
+            'death_place') or None
+
+        # Update identity fields
+        identity_id = request.args.get('identity_id', type=int)
+        identity = Identity.query.filter_by(id=identity_id,
+                                            individual_id=individual_id).first()
+        if identity:
+            identity.first_name = request.form.get(
+                'first_name') or None
+            identity.last_name = request.form.get(
+                'last_name') or None
+
         db.session.commit()
-
         flash('Individual updated successfully.', 'success')
-        return redirect(url_for('web_individuals_bp.get_individual',
-                                individual_id=individual_id))
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        app.logger.error(f"Error updating individual: {e}")
+        flash('An error occurred while updating the individual.',
+              'danger')
 
-    return render_template('edit_individual.html',
-                           individual=individual)
+    return redirect(url_for('web_individuals_bp.get_family_card',
+                            individual_id=individual_id))
 
 
-# Delete Individual
 @web_individuals_bp.route('/<int:individual_id>/delete',
                           methods=['POST'])
 @jwt_required()
 def delete_individual(individual_id: int):
+    """
+    Deletes an individual and all associated data.
+    """
     current_user_id = get_jwt_identity()
     individual = Individual.query.filter_by(id=individual_id,
                                             user_id=current_user_id).first_or_404()
 
-    db.session.delete(individual)
-    db.session.commit()
-    flash('Individual deleted successfully.', 'success')
+    try:
+        db.session.delete(individual)
+        db.session.commit()
+        flash('Individual deleted successfully.', 'success')
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        app.logger.error(f"Error deleting individual: {e}")
+        flash('An error occurred while deleting the individual.',
+              'danger')
+
     return redirect(url_for('web_individuals_bp.get_individuals'))
 
 
-# Family Card
 @web_individuals_bp.route('/<int:individual_id>/family-card',
                           methods=['GET'])
 @jwt_required()
 def get_family_card(individual_id):
+    """
+    Displays the family card of an individual.
+    """
     current_user_id = get_jwt_identity()
-    individual = Individual.query.filter_by(id=individual_id,
-                                            user_id=current_user_id).first_or_404()
-    parents = individual.get_parents()
-    siblings = individual.get_siblings()
-    partners = individual.get_partners()
-    children = individual.get_children()
+    individual = Individual.query.filter_by(
+        id=individual_id,
+        user_id=current_user_id
+    ).options(
+        joinedload(Individual.identities)
+    ).first_or_404()
+
+    identities = individual.identities
+    selected_identity = get_selected_identity(
+        identities,
+        request.args.get('identity_id', type=int)
+    )
+
+    # Get family details
+    parents, siblings, partners, children, parent_family, partner_family = get_family_details(
+        individual)
+
+    # Map parent IDs to their family IDs
+    parent_family_ids = {}
+    for parent in parents:
+        family = Family.query.filter(
+            Family.children.any(id=individual.id),
+            (Family.partner1_id == parent.id) | (
+                        Family.partner2_id == parent.id)
+        ).first()
+        parent_family_ids[parent.id] = family.id if family else None
+
     return render_template(
         'family_card.html',
         individual=individual,
+        identities=identities,
+        selected_identity=selected_identity,
         parents=parents,
         siblings=siblings,
         partners=partners,
-        children=children
+        children=children,
+        parent_family=parent_family,
+        partner_family=partner_family,
+        parent_family_ids=parent_family_ids,
+        RelationshipTypeEnum=RelationshipTypeEnum
     )
 
 
-# Add Relationship
-@web_individuals_bp.route('/<int:individual_id>/add-relationship',
-                          methods=['POST'])
-@jwt_required()
-def add_relationship(individual_id: int):
-    current_user_id = get_jwt_identity()
-    individual = Individual.query.filter_by(id=individual_id,
-                                            user_id=current_user_id).first_or_404()
+# Helper Functions
+def add_relationship_for_new_individual(relationship,
+                                        related_individual_id,
+                                        new_individual, family_id,
+                                        user_id):
+    """
+    Adds a relationship for a newly created individual based on the specified type.
 
-    relationship_type = request.form.get('type')
-    target_id = request.form.get('target_id')
+    :param relationship: The type of relationship (parent, partner, child).
+    :param related_individual_id: ID of the related individual.
+    :param new_individual: The newly created individual object.
+    :param family_id: Optional ID of an existing family.
+    :param user_id: Current user's ID.
+    """
+    related_individual = Individual.query.filter_by(
+        id=related_individual_id, user_id=user_id).first_or_404()
 
-    if not relationship_type or not target_id:
-        flash(
-            'Relationship type and target individual are required.',
-            'error')
-        return redirect(url_for('web_individuals_bp.get_family_card',
-                                individual_id=individual_id))
+    if relationship == 'parent':
+        # Create a parent-child relationship
+        relationship_obj = Relationship(
+            parent_id=new_individual.id,
+            child_id=related_individual.id,
+            relationship_type=RelationshipType.PARENT
+        )
+        db.session.add(relationship_obj)
 
-    target_individual = Individual.query.filter_by(id=target_id,
-                                                   user_id=current_user_id).first()
-    if not target_individual:
-        flash('Target individual not found.', 'error')
-        return redirect(url_for('web_individuals_bp.get_family_card',
-                                individual_id=individual_id))
-
-    try:
-        if relationship_type == 'parent':
-            relationship = Relationship(
-                parent_id=target_individual.id,
-                child_id=individual.id
-            )
-        elif relationship_type == 'child':
-            relationship = Relationship(
-                parent_id=individual.id,
-                child_id=target_individual.id
-            )
+        # Associate the parent with a family
+        existing_families = Family.query.filter(
+            Family.children.any(id=related_individual.id)).all()
+        if existing_families:
+            family = existing_families[0]
+            if not family.partner1_id:
+                family.partner1_id = new_individual.id
+            elif not family.partner2_id:
+                family.partner2_id = new_individual.id
         else:
-            flash('Invalid relationship type.', 'error')
+            family = Family(partner1_id=new_individual.id)
+            db.session.add(family)
+            family.children.append(related_individual)
+
+    elif relationship == 'partner':
+        # Create a partnership between the two individuals
+        family = Family(
+            partner1_id=related_individual.id,
+            partner2_id=new_individual.id,
+            relationship_type=RelationshipTypeEnum.MARRIAGE
+        )
+        db.session.add(family)
+
+    elif relationship == 'child':
+        if family_id:
+            family = Family.query.get_or_404(family_id)
+            family.children.append(new_individual)
+            if family.partner1_id:
+                relationship_obj = Relationship(
+                    parent_id=family.partner1_id,
+                    child_id=new_individual.id,
+                    relationship_type=RelationshipType.PARENT
+                )
+                db.session.add(relationship_obj)
+            if family.partner2_id:
+                relationship_obj = Relationship(
+                    parent_id=family.partner2_id,
+                    child_id=new_individual.id,
+                    relationship_type=RelationshipType.PARENT
+                )
+                db.session.add(relationship_obj)
+        else:
+            raise ValueError("Family ID is required to add a child.")
+    else:
+        raise ValueError(
+            f"Invalid relationship type: {relationship}")
+
+
+def redirect_to_family_or_individual(related_individual_id,
+                                     family_id):
+    """
+    Redirects to the appropriate individual or family card based on the IDs.
+
+    :param related_individual_id: ID of the related individual.
+    :param family_id: ID of the related family.
+    :return: Redirect to the appropriate route.
+    """
+    if related_individual_id:
+        return redirect(url_for('web_individuals_bp.get_family_card',
+                                individual_id=related_individual_id))
+    elif family_id:
+        family = Family.query.get(family_id)
+        if family:
             return redirect(
                 url_for('web_individuals_bp.get_family_card',
-                        individual_id=individual_id))
+                        individual_id=family.partner1_id or family.partner2_id)
+            )
+    return redirect(url_for('web_individuals_bp.get_individuals'))
 
-        db.session.add(relationship)
-        db.session.commit()
-        flash('Relationship added successfully.', 'success')
-    except SQLAlchemyError:
-        db.session.rollback()
-        flash('An error occurred while adding the relationship.',
-              'error')
 
-    return redirect(url_for('web_individuals_bp.get_family_card',
-                            individual_id=individual_id))
+def get_selected_identity(identities, selected_identity_id):
+    """
+    Retrieves the selected identity or defaults to the primary identity.
+
+    :param identities: List of identity objects.
+    :param selected_identity_id: ID of the selected identity.
+    :return: The selected identity or None if not found.
+    """
+    if not identities:
+        return None
+    return next(
+        (i for i in identities if i.id == selected_identity_id),
+        identities[0])
+
+
+def get_family_details(individual):
+    """
+    Retrieves family details such as parents, siblings, partners, and children.
+
+    :param individual: The individual for whom to fetch family details.
+    :return: A tuple containing family details (parents, siblings, partners, children, parent_family, partner_family).
+    """
+    parents = individual.get_parents()
+    siblings = individual.get_siblings()
+    partners = individual.get_partners()
+
+    parent_family = None
+    if parents:
+        parent_family = Family.query.filter(
+            Family.children.any(id=individual.id),
+            (Family.partner1_id.in_([p.id for p in parents]) |
+             Family.partner2_id.in_([p.id for p in parents]))
+        ).first()
+
+    selected_partner = partners[0] if partners else None
+    partner_family = None
+    if selected_partner:
+        partner_family = Family.query.filter(
+            ((Family.partner1_id == individual.id) & (
+                    Family.partner2_id == selected_partner.id)) |
+            ((Family.partner1_id == selected_partner.id) & (
+                    Family.partner2_id == individual.id))
+        ).first()
+
+    children = individual.get_children(
+        partner_id=selected_partner.id if selected_partner else None)
+    return parents, siblings, partners, children, parent_family, partner_family

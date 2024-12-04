@@ -3,8 +3,7 @@
 {% block content %}
 <div class="container mt-4">
     <h2>Log In</h2>
-    <form id="loginForm" method="POST"
-          action="{{ url_for('web_auth_bp.login') }}">
+    <form id="loginForm" method="POST" action="{{ url_for('web_auth_bp.login') }}">
         {{ form.hidden_tag() }}
         <div class="mb-3">
             {{ form.email.label }}

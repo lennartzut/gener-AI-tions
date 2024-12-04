@@ -1,28 +1,27 @@
-from .enums import RelationshipType
+"""
+Defines the Relationship model, representing parent-child or guardian relationships.
+"""
+
+from sqlalchemy import CheckConstraint, UniqueConstraint
 from app.extensions import db
+from .enums import RelationshipType
 
 
 class Relationship(db.Model):
     """
-    Relationship model representing the relationship between two individuals.
-
-    Attributes:
-        id (int): Primary key.
-        parent_id (int): Foreign key referencing the parent individual.
-        child_id (int): Foreign key referencing the child individual.
-        relationship_type (RelationshipType): Type of relationship.
-
-    Relationships:
-        parent (Individual): The parent individual.
-        child (Individual): The child individual.
+    Represents a relationship between two individuals, such as parent-child or guardian-child.
     """
+
     __tablename__ = 'relationships'
     __table_args__ = (
-        db.UniqueConstraint('parent_id', 'child_id',
-                            'relationship_type',
-                            name='uix_relationship'),
-        db.CheckConstraint('parent_id != child_id',
-                           name='chk_parent_child_not_same'),
+        UniqueConstraint(
+            'parent_id', 'child_id', 'relationship_type',
+            name='uix_relationship'
+        ),
+        CheckConstraint(
+            'parent_id != child_id',
+            name='chk_parent_child_not_same'
+        ),
     )
 
     id = db.Column(db.Integer, primary_key=True)
@@ -57,7 +56,7 @@ class Relationship(db.Model):
 
     def __repr__(self):
         """
-        Returns a string representation of the Relationship instance.
+        Returns a string representation of the relationship instance.
         """
         return (
             f"<Relationship(id={self.id}, parent_id={self.parent_id}, "

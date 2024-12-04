@@ -4,6 +4,7 @@ Models Package.
 This module initializes and exposes all the SQLAlchemy models within the application.
 
 Models:
+    Enums
     Individual
     Identity
     Family
@@ -11,13 +12,7 @@ Models:
     User
 """
 
-# Standard Library Imports
-# (None in this case)
-
-# Third-Party Imports
-# (None in this case)
-
-# Local Application Imports
+from .enums import GenderEnum, RelationshipType, RelationshipTypeEnum
 from .individual import Individual
 from .identity import Identity
 from .family import Family

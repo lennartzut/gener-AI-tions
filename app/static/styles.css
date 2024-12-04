@@ -1,0 +1,64 @@
+/* styles.css */
+
+/* General Styles */
+body {
+    margin: 0;
+    padding: 0;
+}
+
+/* Navbar Styles */
+.navbar {
+    margin-bottom: 20px;
+}
+
+/* Container */
+.container {
+    max-width: 960px;
+}
+
+/* Form Styles */
+.form-label {
+    font-weight: bold;
+}
+
+/* List Group */
+.list-group-item {
+    cursor: pointer;
+}
+
+/* Suggestions Box */
+#suggestions,
+#searchSuggestions,
+#parentSuggestions,
+#partnerSuggestions {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Modal Styles */
+.modal-header,
+.modal-footer {
+    background-color: #f8f9fa;
+}
+
+/* Button Styles */
+.btn-link {
+    padding: 0;
+}
+
+/* Identity Section */
+.identities-section {
+    margin-bottom: 15px;
+}
+
+/* Collapse Sections */
+.collapse {
+    margin-top: 15px;
+}
+
+/* Footer Styles */
+.footer {
+    background-color: #343a40;
+    color: white;
+    padding: 10px 0;
+}

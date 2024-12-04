@@ -1,35 +1,18 @@
-from .enums import RelationshipTypeEnum
-from datetime import date
+"""
+Defines the Family model, representing family units and their relationships.
+"""
+
 from app.extensions import db
+from .enums import RelationshipTypeEnum
+from .associations import family_children_association_table
 
 
 class Family(db.Model):
     """
-    Family model representing a family unit consisting of two partners and their union details.
-
-    Attributes:
-        id (int): Primary key.
-        partner1_id (int): Foreign key referencing the first partner.
-        partner2_id (int): Foreign key referencing the second partner.
-        relationship_type (RelationshipTypeEnum): Type of relationship between the partners.
-        union_date (date): Date when the union was established.
-        union_place (str): Place where the union was established.
-        dissolution_date (date): Date when the union was dissolved, if applicable.
-
-    Relationships:
-        partner1 (Individual): The first partner in the family.
-        partner2 (Individual): The second partner in the family.
+    Represents a family unit consisting of two partners and their children.
     """
+
     __tablename__ = 'families'
-    __table_args__ = (
-        db.UniqueConstraint('partner1_id', 'partner2_id',
-                            name='uix_partners'),
-        db.CheckConstraint('partner1_id < partner2_id',
-                           name='chk_partner_order'),
-        db.CheckConstraint(
-            'dissolution_date IS NULL OR dissolution_date > union_date',
-            name='chk_dissolution_after_union'),
-    )
 
     id = db.Column(db.Integer, primary_key=True)
     partner1_id = db.Column(
@@ -41,7 +24,7 @@ class Family(db.Model):
     partner2_id = db.Column(
         db.Integer,
         db.ForeignKey('individuals.id', ondelete='CASCADE'),
-        nullable=False,
+        nullable=True,  # Partner2 can be NULL (single-parent family)
         index=True
     )
     relationship_type = db.Column(
@@ -63,40 +46,42 @@ class Family(db.Model):
         foreign_keys=[partner2_id],
         back_populates='families_as_partner2'
     )
+    children = db.relationship(
+        'Individual',
+        secondary=family_children_association_table,
+        back_populates='families'
+    )
 
     def __repr__(self):
         """
-        Returns a string representation of the Family instance.
+        Returns a string representation of the family instance.
         """
+        partner2_repr = self.partner2_id if self.partner2_id else "None"
         return (
             f"<Family(id={self.id}, partner1_id={self.partner1_id}, "
-            f"partner2_id={self.partner2_id}, relationship_type='{self.relationship_type.value if self.relationship_type else 'None'}')>"
+            f"partner2_id={partner2_repr}, "
+            f"relationship_type='{self.relationship_type.value if self.relationship_type else 'None'}')>"
         )
 
     # Helper Methods
-    def is_active(self):
+    def is_active(self) -> bool:
         """
         Determines if the family union is currently active.
-
-        Returns:
-            bool: True if active (no dissolution_date), False otherwise.
+        :return: True if the union is active, otherwise False.
         """
         return self.dissolution_date is None
 
     def duration(self):
         """
         Calculates the duration of the family union.
-
-        Returns:
-            tuple: A tuple containing the start date and end date (if dissolved).
+        :return: A tuple containing the start (union_date) and end (dissolution_date) of the union.
         """
-        return (self.union_date, self.dissolution_date)
+        return self.union_date, self.dissolution_date
 
     def get_partners(self):
         """
         Retrieves both partners in the family.
-
-        Returns:
-            list: A list containing both partner1 and partner2 Individual instances.
+        :return: A list containing partner1 and partner2.
         """
-        return [self.partner1, self.partner2]
+        return [self.partner1, self.partner2] if self.partner2 else [
+            self.partner1]

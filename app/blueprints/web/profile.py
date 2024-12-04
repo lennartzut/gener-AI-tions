@@ -13,8 +13,10 @@ web_profile_bp = Blueprint(
 @web_profile_bp.route('/', methods=['GET'])
 @jwt_required()
 def profile():
-    current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
+    """
+    Displays the profile of the logged-in user.
+    """
+    user = User.query.get(get_jwt_identity())
     if not user:
         flash('User not found.', 'error')
         return redirect(url_for('web_auth_bp.login'))

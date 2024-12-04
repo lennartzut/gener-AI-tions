@@ -5,9 +5,22 @@ from datetime import datetime
 
 # User Registration Schema
 class UserCreate(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50, description="Unique username")
-    email: EmailStr = Field(..., description="User's unique email address")
-    password: str = Field(..., min_length=8, description="User's password")
+    username: str = Field(
+        ...,
+        min_length=3,
+        max_length=50,
+        description="Unique username"
+    )
+    email: EmailStr = Field(
+        ...,
+        description="User's unique email address"
+    )
+    password: str = Field(
+        ...,
+        min_length=8,
+        max_length=128,  # Added max length for passwords
+        description="User's password"
+    )
 
     @field_validator('username')
     def username_alphanumeric(cls, v):
@@ -19,8 +32,14 @@ class UserCreate(BaseModel):
 
 # User Login Schema
 class UserLogin(BaseModel):
-    email: EmailStr = Field(..., description="User's email address")
-    password: str = Field(..., description="User's password")
+    email: EmailStr = Field(
+        ...,
+        description="User's email address"
+    )
+    password: str = Field(
+        ...,
+        description="User's password"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -1,14 +1,17 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, constr, \
+    model_validator
 from typing import Optional
 from datetime import date
-from app.schemas.enums import GenderEnum
+from app.models.enums import GenderEnum
 
 
 class IdentityBase(BaseModel):
-    first_name: Optional[str] = Field(None, max_length=100,
-                                      description="First name of the individual")
-    last_name: Optional[str] = Field(None, max_length=100,
-                                     description="Last name of the individual")
+    first_name: Optional[
+        constr(min_length=1, max_length=100)] = Field(None,
+                                                      description="First name of the individual")
+    last_name: Optional[
+        constr(min_length=1, max_length=100)] = Field(None,
+                                                      description="Last name of the individual")
     gender: Optional[GenderEnum] = Field(None,
                                          description="Gender of the individual")
     valid_from: Optional[date] = Field(None,
@@ -17,6 +20,15 @@ class IdentityBase(BaseModel):
                                         description="End date of the identity's validity")
 
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode='before')
+    def check_date_range(cls, values):
+        valid_from = values.get('valid_from')
+        valid_until = values.get('valid_until')
+        if valid_from and valid_until and valid_until < valid_from:
+            raise ValueError(
+                "valid_until cannot be earlier than valid_from")
+        return values
 
 
 class IdentityCreate(IdentityBase):

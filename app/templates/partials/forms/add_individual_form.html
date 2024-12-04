@@ -22,20 +22,9 @@
             <label for="gender" class="form-label">Gender</label>
             <select class="form-control" id="gender" name="gender" required>
                 <option value="" disabled selected>Select Gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="transgender">Transgender</option>
-                <option value="gender neutral">Gender
-                    Neutral</option>
-                <option value="non binary">Non-binary</option>
-                <option value="agender">Agender</option>
-                <option value="pangender">Pangender</option>
-                <option value="genderqueer">Genderqueer</option>
-                <option value="two spirit">Two Spirit</option>
-                <option value="third gender">Third
-                    Gender</option>
-                <option value="other">Other</option>
-                <option value="unknown">Unknown</option>
+                {% for gender in GenderEnum %}
+                    <option value="{{ gender.value }}">{{ gender.value }}</option>
+                {% endfor %}
             </select>
         </div>
     </div>
@@ -70,52 +59,6 @@
     <!-- Identity fields will be dynamically added here -->
 </div>
 <button type="button" class="btn btn-secondary btn-sm" id="addIdentityBtn">Add Identity</button>
-
-<!-- Hidden Template for Identity Form -->
 <template id="identityFormTemplate">
-    <div class="row identity-fields mt-3">
-        <!-- Identity Fields -->
-        <div class="col-md-6">
-            <div class="mb-3">
-                <label class="form-label">First Name</label>
-                <input type="text" class="form-control" name="identities[][first_name]">
-            </div>
-            <!-- Add other identity fields here -->
-            <div class="mb-3">
-                <label class="form-label">Last Name</label>
-                <input type="text" class="form-control" name="identities[][last_name]">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Gender</label>
-                <select class="form-control" name="identities[][gender]">
-                    <option value="" disabled selected>Select Gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="transgender">Transgender</option>
-                    <option value="gender neutral">Gender
-                        Neutral</option>
-                    <option value="non binary">Non-binary</option>
-                    <option value="agender">Agender</option>
-                    <option value="pangender">Pangender</option>
-                    <option value="genderqueer">Genderqueer</option>
-                    <option value="two spirit">Two Spirit</option>
-                    <option value="third gender">Third
-                        Gender</option>
-                    <option value="other">Other</option>
-                    <option value="unknown">Unknown</option>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Valid From</label>
-                <input type="date" class="form-control" name="identities[][valid_from]">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Valid Until</label>
-                <input type="date" class="form-control" name="identities[][valid_until]">
-            </div>
-        </div>
-        <div class="col-md-12">
-            <button type="button" class="btn btn-danger btn-sm remove-identity">Remove Identity</button>
-        </div>
-    </div>
+    {% include "partials/forms/identity_form.html" %}
 </template>

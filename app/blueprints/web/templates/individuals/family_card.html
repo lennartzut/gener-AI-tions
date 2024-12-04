@@ -2,110 +2,510 @@
 
 {% block content %}
 <div class="container mt-4">
+    <!-- Individual Header -->
     <h2>
-        {% if individual.primary_identity %}
-            {{ individual.primary_identity.first_name }} {{ individual.primary_identity.last_name }}
+        {% if selected_identity %}
+            {{ selected_identity.first_name }} {{ selected_identity.last_name }} ({{ individual.get_age() }})
         {% else %}
             Unknown Name
         {% endif %}
+        - (ID: {{ individual.id }})
     </h2>
-    <p><strong>Birth Date:</strong> {{ individual.birth_date or "Unknown" }}</p>
-    <p><strong>Birth Place:</strong> {{ individual.birth_place or "Unknown" }}</p>
-    <p><strong>Death Date:</strong> {{ individual.death_date or "Still Alive" }}</p>
-    <p><strong>Death Place:</strong> {{ individual.death_place or "N/A" }}</p>
 
-    <h3>Relationships</h3>
-    <ul>
-        <!-- Parents Section -->
-        <li>
-            <strong>Parents:</strong>
-            {% if parents %}
-                {% for parent in parents %}
-                <a href="{{ url_for('web_individuals_bp.get_family_card', individual_id=parent.id) }}" class="text-decoration-none">
-                    {% if parent.primary_identity %}
-                        {{ parent.primary_identity.first_name }} {{ parent.primary_identity.last_name }}
-                    {% else %}
-                        Unknown Name
-                    {% endif %}
-                </a>{% if not loop.last %}, {% endif %}
+    <!-- Identities Section -->
+    <div class="identities-section mb-3">
+        {% if individual.identities|length > 1 %}
+            <label for="identitySelect">Select Identity:</label>
+            <select id="identitySelect" class="form-select">
+                {% for identity in individual.identities %}
+                    <option value="{{ identity.id }}" {% if identity.id == selected_identity.id %}selected{% endif %}>
+                        Identity {{ loop.index }}
+                    </option>
                 {% endfor %}
-            {% else %}
-                <span class="text-muted">None</span>
-            {% endif %}
-        </li>
-
-        <!-- Siblings Section -->
-        <li>
-            <strong>Siblings:</strong>
-            {% if siblings %}
-                {% for sibling in siblings %}
-                <a href="{{ url_for('web_individuals_bp.get_family_card', individual_id=sibling.id) }}" class="text-decoration-none">
-                    {% if sibling.primary_identity %}
-                        {{ sibling.primary_identity.first_name }} {{ sibling.primary_identity.last_name }}
-                    {% else %}
-                        Unknown Name
-                    {% endif %}
-                </a>{% if not loop.last %}, {% endif %}
-                {% endfor %}
-            {% else %}
-                <span class="text-muted">None</span>
-            {% endif %}
-        </li>
-
-        <!-- Partners Section -->
-        <li>
-            <strong>Partners:</strong>
-            {% if partners %}
-                {% for partner in partners %}
-                <a href="{{ url_for('web_individuals_bp.get_family_card', individual_id=partner.id) }}" class="text-decoration-none">
-                    {% if partner.primary_identity %}
-                        {{ partner.primary_identity.first_name }} {{ partner.primary_identity.last_name }}
-                    {% else %}
-                        Unknown Name
-                    {% endif %}
-                </a>{% if not loop.last %}, {% endif %}
-                {% endfor %}
-            {% else %}
-                <span class="text-muted">None</span>
-            {% endif %}
-        </li>
-
-        <!-- Children Section -->
-        <li>
-            <strong>Children:</strong>
-            {% if children %}
-                {% for child in children %}
-                <a href="{{ url_for('web_individuals_bp.get_family_card', individual_id=child.id) }}" class="text-decoration-none">
-                    {% if child.primary_identity %}
-                        {{ child.primary_identity.first_name }} {{ child.primary_identity.last_name }}
-                    {% else %}
-                        Unknown Name
-                    {% endif %}
-                </a>{% if not loop.last %}, {% endif %}
-                {% endfor %}
-            {% else %}
-                <span class="text-muted">None</span>
-            {% endif %}
-        </li>
-    </ul>
-
-    <!-- Add Relationship Form -->
-    <h3>Add Relationship</h3>
-    <form method="POST" action="{{ url_for('web_individuals_bp.add_relationship', individual_id=individual.id) }}">
-        <div class="mb-3">
-            <label for="relationshipType" class="form-label">Relationship Type</label>
-            <select name="type" id="relationshipType" class="form-select" required>
-                <option value="" disabled selected>Select Relationship Type</option>
-                <option value="parent">Parent</option>
-                <option value="child">Child</option>
-                <option value="sibling">Sibling</option>
             </select>
+        {% else %}
+            <button id="addIdentityBtn" class="btn btn-secondary">Add Identity</button>
+        {% endif %}
+    </div>
+
+    <!-- Individual Details Expansion -->
+    <button class="btn btn-link mb-3" data-bs-toggle="collapse" data-bs-target="#individualDetails">
+        Show Details
+    </button>
+    <div id="individualDetails" class="collapse">
+        <form id="individualForm" method="POST" action="{{ url_for('web_individuals_bp.update_individual', individual_id=individual.id) }}">
+            <!-- Individual fields -->
+            <div class="mb-3">
+                <label for="birthDate" class="form-label">Birth Date</label>
+                <input type="date" class="form-control" id="birthDate" name="birth_date" value="{{ individual.birth_date }}">
+            </div>
+            <div class="mb-3">
+                <label for="birthPlace" class="form-label">Birth Place</label>
+                <input type="text" class="form-control" id="birthPlace" name="birth_place" value="{{ individual.birth_place }}">
+            </div>
+            <div class="mb-3">
+                <label for="deathDate" class="form-label">Death Date</label>
+                <input type="date" class="form-control" id="deathDate" name="death_date" value="{{ individual.death_date }}">
+            </div>
+            <div class="mb-3">
+                <label for="deathPlace" class="form-label">Death Place</label>
+                <input type="text" class="form-control" id="deathPlace" name="death_place" value="{{ individual.death_place }}">
+            </div>
+
+            <!-- Identity Details -->
+            <h4>Identity Details</h4>
+            <div class="mb-3">
+                <label for="identityFirstName" class="form-label">First Name</label>
+                <input type="text" class="form-control" id="identityFirstName" name="first_name" value="{{ selected_identity.first_name }}">
+            </div>
+            <div class="mb-3">
+                <label for="identityLastName" class="form-label">Last Name</label>
+                <input type="text" class="form-control" id="identityLastName" name="last_name" value="{{ selected_identity.last_name }}">
+            </div>
+            <button type="submit" class="btn btn-primary" id="updateIndividualBtn" disabled>Update</button>
+        </form>
+    </div>
+
+    <!-- Parents Section -->
+    <h3>Parents:</h3>
+    <div class="parents-section mb-3">
+        {% if parents %}
+            {% for parent in parents %}
+                <div>
+                    <a href="{{ url_for('web_individuals_bp.get_family_card', individual_id=parent.id) }}">
+                        {% if parent.primary_identity %}
+                            {{ parent.primary_identity.first_name }} {{ parent.primary_identity.last_name }}
+                        {% else %}
+                            Unknown Name
+                        {% endif %}
+                    </a>
+                    (Family ID: {{ parent_family_ids[parent.id] if parent.id in parent_family_ids else 'Unknown' }})
+                </div>
+            {% endfor %}
+        {% else %}
+            <span class="text-muted">Unknown</span>
+        {% endif %}
+        {% if parents|length < 2 %}
+            <button id="addParentBtn" class="btn btn-secondary mt-2">Add Parent</button>
+        {% endif %}
+    </div>
+
+    <!-- Expandable Family Details -->
+    <button class="btn btn-link mb-3" data-bs-toggle="collapse" data-bs-target="#parentFamilyDetails">
+        Show Family Details
+    </button>
+    <div id="parentFamilyDetails" class="collapse">
+        {% if parent_family %}
+        <form method="POST" action="{{ url_for('web_individuals_bp.update_family', family_id=parent_family.id) }}">
+            <div class="mb-3">
+                <label for="parentRelationshipType" class="form-label">Relationship Type</label>
+                <select name="relationship_type" id="parentRelationshipType" class="form-select">
+                    {% for choice in RelationshipTypeEnum %}
+                        <option value="{{ choice.value }}" {% if choice.value == parent_family.relationship_type %}selected{% endif %}>
+                            {{ choice.value }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- Other family fields like union date, union place -->
+            <div class="mb-3">
+                <label for="parentUnionDate" class="form-label">Union Date</label>
+                <input type="date" class="form-control" id="parentUnionDate" name="union_date" value="{{ parent_family.union_date or '' }}">
+            </div>
+            <div class="mb-3">
+                <label for="parentUnionPlace" class="form-label">Union Place</label>
+                <input type="text" class="form-control" id="parentUnionPlace" name="union_place" value="{{ parent_family.union_place or '' }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Update Family</button>
+        </form>
+        {% else %}
+        <p>No family information available.</p>
+        {% endif %}
+        <h4>Siblings:</h4>
+        <ul>
+            {% for sibling in siblings %}
+                <li>
+                    <a href="{{ url_for('web_individuals_bp.get_family_card', individual_id=sibling.id) }}">
+                        {% if sibling.primary_identity %}
+                            {{ sibling.primary_identity.first_name }} {{ sibling.primary_identity.last_name }}
+                        {% else %}
+                            Unknown Name
+                        {% endif %}
+                    </a>
+                </li>
+            {% else %}
+                <li class="text-muted">No siblings found.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Partners Section -->
+    <h3>Partner:</h3>
+    <div class="partners-section mb-3">
+        {% if partners %}
+            {% if partners|length > 1 %}
+                <label for="partnerSelect">Select Partner:</label>
+                <select id="partnerSelect" class="form-select">
+                    {% for partner in partners %}
+                        <option value="{{ partner.id }}" {% if partner.id == selected_partner.id %}selected{% endif %}>
+                            {% if partner.primary_identity %}
+                                {{ partner.primary_identity.first_name }} {{ partner.primary_identity.last_name }}
+                            {% else %}
+                                Unknown Name
+                            {% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            {% else %}
+                <div>
+                    <a href="{{ url_for('web_individuals_bp.get_family_card', individual_id=partners[0].id) }}">
+                        {% if partners[0].primary_identity %}
+                            {{ partners[0].primary_identity.first_name }} {{ partners[0].primary_identity.last_name }}
+                        {% else %}
+                            Unknown Name
+                        {% endif %}
+                    </a>
+                    (Family ID: {{ partner_family_ids[partners[0].id] or 'Unknown' }})
+                </div>
+            {% endif %}
+        {% else %}
+            <span class="text-muted">None</span>
+        {% endif %}
+        <button id="addPartnerBtn" class="btn btn-secondary mt-2">Add Partner</button>
+    </div>
+
+    <!-- Expandable Partner Family Details -->
+    <button class="btn btn-link mb-3" data-bs-toggle="collapse" data-bs-target="#partnerFamilyDetails">
+        Show Partner Family Details
+    </button>
+    <div id="partnerFamilyDetails" class="collapse">
+        {% if selected_partner_family %}
+        <form method="POST" action="{{ url_for('web_individuals_bp.update_family', family_id=selected_partner_family.id) }}">
+            <div class="mb-3">
+                <label for="partnerRelationshipType" class="form-label">Relationship Type</label>
+                <select name="relationship_type" id="partnerRelationshipType" class="form-select">
+                    {% for choice in RelationshipTypeEnum %}
+                        <option value="{{ choice.value }}" {% if choice.value == selected_partner_family.relationship_type %}selected{% endif %}>
+                            {{ choice.value }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- Other family fields -->
+            <div class="mb-3">
+                <label for="partnerUnionDate" class="form-label">Union Date</label>
+                <input type="date" class="form-control" id="partnerUnionDate" name="union_date" value="{{ selected_partner_family.union_date or '' }}">
+            </div>
+            <div class="mb-3">
+                <label for="partnerUnionPlace" class="form-label">Union Place</label>
+                <input type="text" class="form-control" id="partnerUnionPlace" name="union_place" value="{{ selected_partner_family.union_place or '' }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Update Family</button>
+        </form>
+        {% else %}
+        <p>No family information available.</p>
+        {% endif %}
+        <h4>Children:</h4>
+        <ul>
+            {% for child in children %}
+                <li>
+                    <a href="{{ url_for('web_individuals_bp.get_family_card', individual_id=child.id) }}">
+                        {% if child.primary_identity %}
+                            {{ child.primary_identity.first_name }} {{ child.primary_identity.last_name }}
+                        {% else %}
+                            Unknown Name
+                        {% endif %}
+                    </a>
+                </li>
+            {% else %}
+                <li class="text-muted">No children found.</li>
+            {% endfor %}
+        </ul>
+        <h4>Add Child:</h4>
+        <form method="POST" action="{{ url_for('web_individuals_bp.add_child', family_id=selected_partner_family.id) }}">
+            <div class="mb-3 position-relative">
+                <label for="childName" class="form-label">Select or Create Child</label>
+                <input type="text" id="childName" class="form-control" placeholder="Type to search..." autocomplete="off" required>
+                <input type="hidden" name="child_id" id="childId" required>
+                <div id="childSuggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
+            </div>
+            <!-- Option to create a new individual -->
+            <button type="button" class="btn btn-secondary" id="createNewChildBtn">Create New Child</button>
+            <button type="submit" class="btn btn-primary">Add Child</button>
+        </form>
+    </div>
+
+    <!-- Modals for Adding Individuals -->
+    <!-- Add Parent Modal -->
+    <div class="modal fade" id="addParentModal" tabindex="-1" aria-labelledby="addParentModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST" action="{{ url_for('web_individuals_bp.add_parent', individual_id=individual.id) }}">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addParentModalLabel">Add Parent</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Search or create individual -->
+                        <div class="mb-3 position-relative">
+                            <label for="parentName" class="form-label">Select or Create Parent</label>
+                            <input type="text" id="parentName" class="form-control" placeholder="Type to search..." autocomplete="off" required>
+                            <input type="hidden" name="parent_id" id="parentId" required>
+                            <div id="parentSuggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
+                        </div>
+                        <!-- Option to create a new individual -->
+                        <button type="button" class="btn btn-secondary" id="createNewParentBtn">Create New Parent</button>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Add Parent</button>
+                    </div>
+                </form>
+            </div>
         </div>
-        <div class="mb-3">
-            <label for="targetId" class="form-label">Target Individual ID</label>
-            <input type="number" name="target_id" id="targetId" class="form-control" required>
+    </div>
+
+    <!-- Add Partner Modal -->
+    <div class="modal fade" id="addPartnerModal" tabindex="-1" aria-labelledby="addPartnerModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST" action="{{ url_for('web_individuals_bp.add_partner', individual_id=individual.id) }}">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addPartnerModalLabel">Add Partner</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Search or create individual -->
+                        <div class="mb-3 position-relative">
+                            <label for="partnerName" class="form-label">Select or Create Partner</label>
+                            <input type="text" id="partnerName" class="form-control" placeholder="Type to search..." autocomplete="off" required>
+                            <input type="hidden" name="partner_id" id="partnerId" required>
+                            <div id="partnerSuggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
+                        </div>
+                        <!-- Option to create a new individual -->
+                        <button type="button" class="btn btn-secondary" id="createNewPartnerBtn">Create New Partner</button>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Add Partner</button>
+                    </div>
+                </form>
+            </div>
         </div>
-        <button type="submit" class="btn btn-primary">Add Relationship</button>
-    </form>
+    </div>
+
+    <!-- Add Identity Modal -->
+    <div class="modal fade" id="addIdentityModal" tabindex="-1" aria-labelledby="addIdentityModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST" action="{{ url_for('web_individuals_bp.add_identity', individual_id=individual.id) }}">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addIdentityModalLabel">Add Identity</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Identity Form Fields -->
+                        {% include "partials/forms/identity_form.html" %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Add Identity</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Individual Modal -->
+    <div class="modal fade" id="createIndividualModal" tabindex="-1" aria-labelledby="createIndividualModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="createIndividualForm" method="POST" action="">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="createIndividualModalLabel">Create Individual</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Include the identity form fields -->
+                        {% include "partials/forms/identity_form.html" %}
+                        <!-- Additional fields if necessary -->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Create Individual</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='scripts/search.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Identity selection
+    {% if individual.identities|length > 1 %}
+    const identitySelect = document.getElementById('identitySelect');
+    if (identitySelect) {
+        identitySelect.addEventListener('change', function() {
+            const identityId = this.value;
+            const url = new URL(window.location.href);
+            url.searchParams.set('identity_id', identityId);
+            window.location.href = url.toString();
+        });
+    }
+    {% endif %}
+
+    // Partner selection
+    {% if partners|length > 1 %}
+    const partnerSelect = document.getElementById('partnerSelect');
+    if (partnerSelect) {
+        partnerSelect.addEventListener('change', function() {
+            const partnerId = this.value;
+            const url = new URL(window.location.href);
+            url.searchParams.set('partner_id', partnerId);
+            window.location.href = url.toString();
+        });
+    }
+    {% endif %}
+
+    // Form change detection
+    const individualForm = document.getElementById('individualForm');
+    const updateBtn = document.getElementById('updateIndividualBtn');
+    if (individualForm && updateBtn) {
+        individualForm.addEventListener('input', function() {
+            updateBtn.disabled = false;
+        });
+    }
+
+    // Setup search for adding parent
+    if (typeof setupIndividualSearch === 'function') {
+        setupIndividualSearch({
+            inputSelector: '#parentName',
+            hiddenInputSelector: '#parentId',
+            suggestionsContainerSelector: '#parentSuggestions',
+            excludeId: {{ individual.id }}
+        });
+    } else {
+        console.error('setupIndividualSearch function is not available.');
+    }
+
+    // Show add parent modal
+    const addParentBtn = document.getElementById('addParentBtn');
+    if (addParentBtn) {
+        addParentBtn.addEventListener('click', function() {
+            const addParentModal = new bootstrap.Modal(document.getElementById('addParentModal'));
+            addParentModal.show();
+        });
+    }
+
+    // Show create new parent modal
+    const createNewParentBtn = document.getElementById('createNewParentBtn');
+    if (createNewParentBtn) {
+        createNewParentBtn.addEventListener('click', function () {
+            const createIndividualModal = new bootstrap.Modal(document.getElementById('createIndividualModal'));
+            const createIndividualForm = document.getElementById('createIndividualForm');
+            const modalTitle = document.getElementById('createIndividualModalLabel');
+            const submitButton = createIndividualForm.querySelector('button[type="submit"]');
+
+            // Set form action
+            createIndividualForm.action = "{{ url_for('web_individuals_bp.create_individual') }}" + "?relationship=parent&related_individual_id={{ individual.id }}";
+
+            // Set modal title and submit button text
+            modalTitle.textContent = 'Create New Parent';
+            submitButton.textContent = 'Create Parent';
+
+            createIndividualModal.show();
+        });
+    }
+
+    // Setup search for adding partner
+    if (typeof setupIndividualSearch === 'function') {
+        setupIndividualSearch({
+            inputSelector: '#partnerName',
+            hiddenInputSelector: '#partnerId',
+            suggestionsContainerSelector: '#partnerSuggestions',
+            excludeId: {{ individual.id }}
+        });
+    } else {
+        console.error('setupIndividualSearch function is not available.');
+    }
+
+    // Show add partner modal
+    const addPartnerBtn = document.getElementById('addPartnerBtn');
+    if (addPartnerBtn) {
+        addPartnerBtn.addEventListener('click', function() {
+            const addPartnerModal = new bootstrap.Modal(document.getElementById('addPartnerModal'));
+            addPartnerModal.show();
+        });
+    }
+
+    // Show create new partner modal
+    const createNewPartnerBtn = document.getElementById('createNewPartnerBtn');
+    if (createNewPartnerBtn) {
+        createNewPartnerBtn.addEventListener('click', function () {
+            const createIndividualModal = new bootstrap.Modal(document.getElementById('createIndividualModal'));
+            const createIndividualForm = document.getElementById('createIndividualForm');
+            const modalTitle = document.getElementById('createIndividualModalLabel');
+            const submitButton = createIndividualForm.querySelector('button[type="submit"]');
+
+            // Set form action
+            createIndividualForm.action = "{{ url_for('web_individuals_bp.create_individual') }}" + "?relationship=partner&related_individual_id={{ individual.id }}";
+
+            // Set modal title and submit button text
+            modalTitle.textContent = 'Create New Partner';
+            submitButton.textContent = 'Create Partner';
+
+            createIndividualModal.show();
+        });
+    }
+
+    // Setup search for adding child
+    if (typeof setupIndividualSearch === 'function') {
+        setupIndividualSearch({
+            inputSelector: '#childName',
+            hiddenInputSelector: '#childId',
+            suggestionsContainerSelector: '#childSuggestions',
+            excludeId: {{ individual.id }}
+        });
+    } else {
+        console.error('setupIndividualSearch function is not available.');
+    }
+
+    // Show create new child modal
+    const createNewChildBtn = document.getElementById('createNewChildBtn');
+    if (createNewChildBtn) {
+        createNewChildBtn.addEventListener('click', function () {
+            const createIndividualModal = new bootstrap.Modal(document.getElementById('createIndividualModal'));
+            const createIndividualForm = document.getElementById('createIndividualForm');
+            const modalTitle = document.getElementById('createIndividualModalLabel');
+            const submitButton = createIndividualForm.querySelector('button[type="submit"]');
+
+            // For adding a child, we need the family ID
+            const familyId = "{{ selected_partner_family.id if selected_partner_family else '' }}";
+
+            // Set form action
+            createIndividualForm.action = "{{ url_for('web_individuals_bp.create_individual') }}" + "?relationship=child&family_id=" + familyId;
+
+            // Set modal title and submit button text
+            modalTitle.textContent = 'Create New Child';
+            submitButton.textContent = 'Create Child';
+
+            createIndividualModal.show();
+        });
+    }
+
+    // Show add identity modal
+    {% if individual.identities|length == 1 %}
+    const addIdentityBtn = document.getElementById('addIdentityBtn');
+    if (addIdentityBtn) {
+        addIdentityBtn.addEventListener('click', function() {
+            const addIdentityModal = new bootstrap.Modal(document.getElementById('addIdentityModal'));
+            addIdentityModal.show();
+        });
+    }
+    {% endif %}
+});
+
+</script>
 {% endblock %}

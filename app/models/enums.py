@@ -1,14 +1,14 @@
+"""
+Defines enumerations for various attributes like gender, relationship types, and roles.
+"""
+
 from enum import Enum
 
 
-class RelationshipTypeEnum(Enum):
-    MARRIAGE = "marriage"
-    CIVIL_UNION = "civil_union"
-    PARTNERSHIP = "partnership"
-    OTHER = "other"
-
-
-class GenderEnum(Enum):
+class GenderEnum(str, Enum):
+    """
+    Enumerates various gender identities.
+    """
     MALE = "male"
     FEMALE = "female"
     TRANSGENDER = "transgender"
@@ -23,7 +23,20 @@ class GenderEnum(Enum):
     UNKNOWN = "unknown"
 
 
-class RelationshipType(Enum):
+class RelationshipTypeEnum(str, Enum):
+    """
+    Enumerates legal or recognized relationship types between partners.
+    """
+    MARRIAGE = "marriage"
+    CIVIL_UNION = "civil union"
+    PARTNERSHIP = "partnership"
+    OTHER = "other"
+
+
+class RelationshipType(str, Enum):
+    """
+    Enumerates types of family relationships.
+    """
     PARENT = "parent"
     GUARDIAN = "guardian"
     CHILD = "child"
