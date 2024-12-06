@@ -11,15 +11,16 @@
                 type="text"
                 id="searchInput"
                 class="form-control"
-                placeholder="Search by name or place"
+                placeholder="Search by name"
                 autocomplete="off"
             />
-            <div id="searchSuggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
         </div>
     </form>
 
     <!-- Add Individual Button -->
-    <button type="button" class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addIndividualModal">
+    <button type="button" class="btn btn-success mb-3"
+            data-bs-toggle="modal"
+            data-bs-target="#createIndividualModal">
         Add Individual
     </button>
 
@@ -27,7 +28,7 @@
     <ul class="list-group" id="individualsList">
         {% for individual in individuals %}
         <li class="list-group-item">
-            <a href="{{ url_for('web_individuals_bp.get_family_card', individual_id=individual.id) }}" class="text-decoration-none">
+            <a href="{{ url_for('web_family_card_bp.get_family_card', individual_id=individual.id) }}" class="text-decoration-none">
                 {% if individual.primary_identity %}
                     {{ individual.primary_identity.first_name }} {{ individual.primary_identity.last_name }}
                 {% else %}
@@ -42,24 +43,9 @@
 </div>
 
 <!-- Include Add Individual Modal -->
-{% include "partials/modals/add_individual_modal.html" %}
+{% include "partials/modals/create_individual_modal.html" %}
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='scripts/search.js') }}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        setupIndividualSearch({
-            inputSelector: '#searchInput',
-            hiddenInputSelector: null, // Not needed here
-            suggestionsContainerSelector: '#searchSuggestions',
-            excludeId: null, // No exclusion
-            minQueryLength: 1,
-            onSelect: function(individual) {
-                // Redirect to the individual's family card page
-                window.location.href = "/individuals/" + individual.id + "/family-card";
-            }
-        });
-    });
-</script>
+<script type="module" src="{{ url_for('static', filename='scripts/individuals_list.js') }}"></script>
 {% endblock %}

@@ -1,12 +1,10 @@
-from flask import Blueprint, jsonify, current_app, request
+from flask import Blueprint, jsonify, current_app
 from flask_jwt_extended import (
     jwt_required, get_jwt_identity,
-    create_access_token, create_refresh_token,
-    set_access_cookies, set_refresh_cookies, unset_jwt_cookies
+    create_access_token, set_access_cookies
 )
 from app.models.user import User
 from app.schemas.user_schema import UserOut
-from app.extensions import db
 
 api_auth_bp = Blueprint('api_auth_bp', __name__)
 
@@ -24,9 +22,10 @@ def get_current_user():
         if not user:
             return jsonify({'error': 'User not found.'}), 404
 
-        user_out = UserOut.from_orm(user)
-        return jsonify({'message': 'User retrieved successfully',
-                        'data': user_out.model_dump()}), 200
+        return jsonify({
+            'message': 'User retrieved successfully',
+            'data': UserOut.from_orm(user).model_dump()
+        }), 200
 
     except Exception as e:
         current_app.logger.error(

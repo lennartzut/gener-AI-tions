@@ -25,10 +25,14 @@ def get_family_data(individual_id):
         # Prepare family data
         family_data = {
             'individual': individual.to_dict(),
-            'parents': [parent.to_dict() for parent in individual.get_parents()],
-            'siblings': [sibling.to_dict() for sibling in individual.get_siblings()],
-            'partners': [partner.to_dict() for partner in individual.get_partners()],
-            'children': [child.to_dict() for child in individual.get_children()],
+            'parents': [parent.to_dict() for parent in
+                        individual.get_parents()],
+            'siblings': [sibling.to_dict() for sibling in
+                         individual.get_siblings()],
+            'partners': [partner.to_dict() for partner in
+                         individual.get_partners()],
+            'children': [child.to_dict() for child in
+                         individual.get_children()],
         }
 
         return jsonify({
@@ -37,11 +41,14 @@ def get_family_data(individual_id):
         }), 200
 
     except Exception as e:
-        current_app.logger.error(f"Error retrieving family data for individual {individual_id}: {e}")
-        return jsonify({'error': 'An error occurred while retrieving family data.'}), 500
+        current_app.logger.error(
+            f"Error retrieving family data for individual {individual_id}: {e}")
+        return jsonify({
+                           'error': 'An error occurred while retrieving family data.'}), 500
 
 
-@api_families_bp.route('/<int:individual_id>/relationships', methods=['POST'])
+@api_families_bp.route('/<int:individual_id>/relationships',
+                       methods=['POST'])
 @jwt_required()
 def add_relationship(individual_id):
     """
@@ -63,34 +70,48 @@ def add_relationship(individual_id):
 
         # Validate input
         if not relationship_type or not target_id:
-            return jsonify({'error': 'Relationship type and target individual are required.'}), 400
+            return jsonify({
+                               'error': 'Relationship type and target individual are required.'}), 400
+
+        if relationship_type not in ['parent', 'child']:
+            return jsonify({
+                               'error': 'Invalid relationship type. Must be either "parent" or "child".'}), 400
 
         # Fetch the target individual
         target_individual = Individual.query.filter_by(
             id=target_id, user_id=current_user_id
-        ).first()
-        if not target_individual:
-            return jsonify({'error': 'Target individual not found.'}), 404
+        ).first_or_404()
+
+        # Initialize the relationship variable
+        relationship = None
 
         # Create the relationship based on the specified type
         if relationship_type == 'parent':
             relationship = Relationship(
-                parent_id=target_individual.id, child_id=individual.id
+                parent_id=target_individual.id,
+                child_id=individual.id
             )
         elif relationship_type == 'child':
             relationship = Relationship(
-                parent_id=individual.id, child_id=target_individual.id
+                parent_id=individual.id,
+                child_id=target_individual.id
             )
-        else:
-            return jsonify({'error': 'Invalid relationship type.'}), 400
+
+        # Ensure relationship was created successfully
+        if relationship is None:
+            return jsonify(
+                {'error': 'Failed to create relationship.'}), 400
 
         # Commit the new relationship
         db.session.add(relationship)
         db.session.commit()
 
-        return jsonify({'message': 'Relationship added successfully.'}), 201
+        return jsonify(
+            {'message': 'Relationship added successfully.'}), 201
 
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"Error adding relationship for individual {individual_id}: {e}")
-        return jsonify({'error': 'An error occurred while adding the relationship.'}), 500
+        current_app.logger.error(
+            f"Error adding relationship for individual {individual_id}: {e}")
+        return jsonify({
+                           'error': 'An error occurred while adding the relationship.'}), 500
