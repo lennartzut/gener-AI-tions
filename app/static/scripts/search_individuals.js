@@ -1,50 +1,72 @@
 import { setupIndividualSearch } from './common.js';
 
 document.addEventListener('DOMContentLoaded', function () {
-    setupIndividualSearch({
-        inputSelector: '#parentName',  // For adding parents
-        suggestionsContainerSelector: '#parentSuggestions',
-        excludeId: null,
-        minQueryLength: 2,
-        onSelect: function (individual) {
-            // Set the hidden input field value to selected individual's ID
-            document.getElementById('parentId').value = individual.id;
-        }
-    });
+    const searchInput = document.getElementById('searchInput');
+    const searchSuggestions = document.getElementById('searchSuggestions');
 
-    setupIndividualSearch({
-        inputSelector: '#partnerName',  // For adding partners
-        suggestionsContainerSelector: '#partnerSuggestions',
-        excludeId: null,
-        minQueryLength: 2,
-        onSelect: function (individual) {
-            // Set the hidden input field value to selected individual's ID
-            document.getElementById('partnerId').value = individual.id;
-        }
-    });
+    // Setup search for individuals list page
+    if (searchInput && searchSuggestions) {
+        setupIndividualSearch({
+            inputSelector: '#searchInput',
+            suggestionsContainerSelector: '#searchSuggestions',
+            excludeId: null,
+            minQueryLength: 2,
+            onSelect: function (individual) {
+                // Update the search input with the selected individual's name
+                searchInput.value = individual.name;
+                searchSuggestions.innerHTML = '';
+            }
+        });
+    }
 
-    setupIndividualSearch({
-        inputSelector: '#childName',  // For adding children
-        suggestionsContainerSelector: '#childSuggestions',
-        excludeId: null,
-        minQueryLength: 2,
-        onSelect: function (individual) {
-            // Set the hidden input field value to selected individual's ID
-            document.getElementById('childId').value = individual.id;
+    // Set up search for adding parents, partners, or children in the family card
+    const familySearchFields = [
+        { inputSelector: '#parentName', suggestionsContainerSelector: '#parentSuggestions', hiddenInputId: 'parentId' },
+        { inputSelector: '#partnerName', suggestionsContainerSelector: '#partnerSuggestions', hiddenInputId: 'partnerId' },
+        { inputSelector: '#childName', suggestionsContainerSelector: '#childSuggestions', hiddenInputId: 'childId' }
+    ];
+
+    familySearchFields.forEach(({ inputSelector, suggestionsContainerSelector, hiddenInputId }) => {
+        const inputElement = document.querySelector(inputSelector);
+        const suggestionsElement = document.querySelector(suggestionsContainerSelector);
+        const hiddenInputElement = document.getElementById(hiddenInputId);
+
+        if (inputElement && suggestionsElement && hiddenInputElement) {
+            setupIndividualSearch({
+                inputSelector,
+                suggestionsContainerSelector,
+                excludeId: null,
+                minQueryLength: 2,
+                onSelect: function (individual) {
+                    // Update the input with the selected individual's name
+                    inputElement.value = individual.name;
+                    // Set the hidden field to selected individual's ID
+                    hiddenInputElement.value = individual.id;
+                    // Clear suggestions once selection is made
+                    suggestionsElement.innerHTML = '';
+                }
+            });
         }
     });
 
     // Hide suggestions when clicking outside of search input or suggestions list
     document.addEventListener('click', function (event) {
-        const inputsAndSuggestions = [
-            {input: document.getElementById('parentName'), suggestions: document.getElementById('parentSuggestions')},
-            {input: document.getElementById('partnerName'), suggestions: document.getElementById('partnerSuggestions')},
-            {input: document.getElementById('childName'), suggestions: document.getElementById('childSuggestions')}
-        ];
+        // Handle individuals list search
+        if (searchInput && searchSuggestions) {
+            if (!searchInput.contains(event.target) && !searchSuggestions.contains(event.target)) {
+                searchSuggestions.innerHTML = '';
+            }
+        }
 
-        inputsAndSuggestions.forEach(({ input, suggestions }) => {
-            if (input && suggestions && !input.contains(event.target) && !suggestions.contains(event.target)) {
-                suggestions.innerHTML = '';
+        // Handle family card search fields
+        familySearchFields.forEach(({ inputSelector, suggestionsContainerSelector }) => {
+            const inputElement = document.querySelector(inputSelector);
+            const suggestionsElement = document.querySelector(suggestionsContainerSelector);
+
+            if (inputElement && suggestionsElement) {
+                if (!inputElement.contains(event.target) && !suggestionsElement.contains(event.target)) {
+                    suggestionsElement.innerHTML = '';
+                }
             }
         });
     });
