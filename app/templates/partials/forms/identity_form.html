@@ -14,10 +14,12 @@
     <div class="col-md-6">
         <div class="mb-3">
             <label class="form-label">Gender</label>
-            <select class="form-control" name="identities[][gender]" required>
-                <option value="" disabled selected>Select Gender</option>
-                {% for gender in GenderEnum %}
-                    <option value="{{ gender.value }}">{{ gender.value }}</option>
+            <select name="identities[][gender]" class="form-select" required>
+                <option value="" disabled {% if not selected_gender %}selected{% endif %}>Please select</option>
+                {% for choice in GenderEnum %}
+                    <option value="{{ choice.value }}" {% if selected_gender == choice.value %}selected{% endif %}>
+                        {{ choice.value|capitalize }}
+                    </option>
                 {% endfor %}
             </select>
         </div>

@@ -19,11 +19,13 @@
             <input type="text" class="form-control" id="birthPlace" name="birth_place">
         </div>
         <div class="mb-3">
-            <label for="gender" class="form-label">Gender</label>
-            <select class="form-control" id="gender" name="gender" required>
-                <option value="" disabled selected>Select Gender</option>
-                {% for gender in GenderEnum %}
-                    <option value="{{ gender.value }}">{{ gender.value }}</option>
+            <label class="form-label">Gender</label>
+            <select name="gender" class="form-select" required>
+                <option value="" disabled {% if not selected_gender %}selected{% endif %}>Please select</option>
+                {% for choice in GenderEnum %}
+                    <option value="{{ choice.value }}" {% if selected_gender == choice.value %}selected{% endif %}>
+                        {{ choice.value|capitalize }}
+                    </option>
                 {% endfor %}
             </select>
         </div>
@@ -52,13 +54,3 @@
         </div>
     </div>
 </div>
-<hr>
-<!-- Identities Section -->
-<h6>Identities</h6>
-<div id="identitySection">
-    <!-- Identity fields will be dynamically added here -->
-</div>
-<button type="button" class="btn btn-secondary btn-sm" id="addIdentityBtn">Add Identity</button>
-<template id="identityFormTemplate">
-    {% include "partials/forms/identity_form.html" %}
-</template>

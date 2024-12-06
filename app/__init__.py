@@ -8,6 +8,8 @@ from app.blueprints import (
     web_individuals_bp,
     web_main_bp,
     web_profile_bp,
+    web_family_card_bp,
+    web_identities_bp,
     api_auth_bp,
     api_individuals_bp,
     api_families_bp
@@ -74,8 +76,12 @@ def register_blueprints(app):
     app.register_blueprint(web_auth_bp, url_prefix='/auth')
     app.register_blueprint(web_individuals_bp,
                            url_prefix='/individuals')
-    app.register_blueprint(web_main_bp)
+    app.register_blueprint(web_main_bp, url_prefix='/')
     app.register_blueprint(web_profile_bp, url_prefix='/profile')
+    app.register_blueprint(web_identities_bp,
+                           url_prefix='/identities')
+    app.register_blueprint(web_family_card_bp,
+                           url_prefix='/family-card')
 
     # API blueprints
     app.register_blueprint(api_auth_bp, url_prefix='/api/auth')
