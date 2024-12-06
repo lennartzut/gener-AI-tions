@@ -40,3 +40,4 @@ class RelationshipType(str, Enum):
     PARENT = "parent"
     GUARDIAN = "guardian"
     CHILD = "child"
+    SIBLING = "sibling"
