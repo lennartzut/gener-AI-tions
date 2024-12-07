@@ -2,8 +2,8 @@ from __future__ import annotations
 from pydantic import BaseModel, Field, ConfigDict, constr
 from typing import Optional, List
 from datetime import date
-from app.models.enums import GenderEnum, RelationshipTypeEnum, \
-    RelationshipType
+from app.models.enums import GenderEnum, LegalRelationshipEnum, \
+    FamilyRelationshipEnum
 from app.schemas.identity_schema import IdentityOut
 
 
@@ -28,6 +28,16 @@ class IndividualBase(BaseModel):
 class IndividualCreate(IndividualBase):
     user_id: int = Field(...,
                          description="ID of the associated user")
+    first_name: str = Field(..., min_length=1, max_length=50,
+                            description="First name of the individual")
+    last_name: str = Field(..., min_length=1, max_length=50,
+                           description="Last name of the individual")
+    gender: GenderEnum = Field(...,
+                               description="Gender of the individual")
+    valid_from: Optional[date] = Field(None,
+                                       description="Validity start date for the identity")
+    valid_until: Optional[date] = Field(None,
+                                        description="Validity end date for the identity")
 
 
 class IndividualUpdate(IndividualBase):
@@ -52,8 +62,8 @@ class RelationshipBase(BaseModel):
                            description="ID of the parent individual")
     child_id: int = Field(...,
                           description="ID of the child individual")
-    relationship_type: RelationshipType = Field(...,
-                                                description="Type of relationship")
+    relationship_type: FamilyRelationshipEnum = Field(...,
+                                                      description="Type of relationship")
 
     model_config = ConfigDict(from_attributes=True)
 

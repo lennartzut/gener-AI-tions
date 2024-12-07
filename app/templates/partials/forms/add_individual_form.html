@@ -12,7 +12,7 @@
         </div>
         <div class="mb-3">
             <label for="birthDate" class="form-label">Birth Date</label>
-            <input type="date" class="form-control" id="birthDate" name="birth_date">
+            <input type="date" class="form-control" id="birthDate" name="birth_date" oninvalid="this.setCustomValidity('Please enter a valid date or leave blank')" onchange="this.setCustomValidity('')">
         </div>
         <div class="mb-3">
             <label for="birthPlace" class="form-label">Birth Place</label>
@@ -45,7 +45,7 @@
         <div id="deathFields" style="display: none;">
             <div class="mb-3">
                 <label for="deathDate" class="form-label">Death Date</label>
-                <input type="date" class="form-control" id="deathDate" name="death_date">
+                <input type="date" class="form-control" id="deathDate" name="death_date" oninvalid="this.setCustomValidity('Please enter a valid date or leave blank')" onchange="this.setCustomValidity('')">
             </div>
             <div class="mb-3">
                 <label for="deathPlace" class="form-label">Death Place</label>

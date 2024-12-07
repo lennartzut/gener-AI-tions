@@ -12,7 +12,8 @@ from app.blueprints import (
     web_identities_bp,
     api_auth_bp,
     api_individuals_bp,
-    api_families_bp
+    api_families_bp,
+    api_relationships_bp
 )
 from app.models.user import User
 from app.context_processors import inject_current_user
@@ -89,6 +90,8 @@ def register_blueprints(app):
                            url_prefix='/api/individuals')
     app.register_blueprint(api_families_bp,
                            url_prefix='/api/families')
+    app.register_blueprint(api_relationships_bp,
+                           url_prefix='/api/relationships')
 
 
 def register_jwt_callbacks(app):

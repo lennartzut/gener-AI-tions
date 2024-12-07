@@ -1,9 +1,9 @@
 from pydantic import BaseModel, Field, ConfigDict
-from app.models.enums import RelationshipTypeEnum
+from app.models.enums import LegalRelationshipEnum
 
 
 class RelationshipRequest(BaseModel):
-    type: RelationshipTypeEnum = Field(
+    type: LegalRelationshipEnum = Field(
         ...,
         description="Type of relationship (e.g., parent, child, partner)"
     )

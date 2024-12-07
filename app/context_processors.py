@@ -12,7 +12,7 @@ def inject_current_user():
     user = None
     try:
         verify_jwt_in_request(optional=True)
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         if user_id:
             user = User.query.get(int(user_id))
     except (ExpiredSignatureError, DecodeError):

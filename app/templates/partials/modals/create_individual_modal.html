@@ -2,6 +2,8 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <form id="createIndividualForm" method="POST" action="{{ url_for('web_individuals_bp.create_individual') }}">
+                <input type="hidden" id="userId" name="user_id"
+                       value="{{ current_user.id }}">
                 <div class="modal-header">
                     <h5 class="modal-title" id="createIndividualModalLabel">Create Individual</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>

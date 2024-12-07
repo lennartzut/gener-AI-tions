@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing import Optional
 from datetime import date
-from app.models.enums import RelationshipTypeEnum
+from app.models.enums import LegalRelationshipEnum
 from app.schemas.user_schema import UserOut
 
 
@@ -10,8 +10,8 @@ class FamilyBase(BaseModel):
                              description="ID of the first partner")
     partner2_id: Optional[int] = Field(None,
                                        description="ID of the second partner")
-    relationship_type: Optional[RelationshipTypeEnum] = Field(None,
-                                                              description="Type of relationship between partners")
+    relationship_type: Optional[LegalRelationshipEnum] = Field(None,
+                                                               description="Type of relationship between partners")
     union_date: Optional[date] = Field(None,
                                        description="Date when the union was established")
     union_place: Optional[str] = Field(None, max_length=100,
