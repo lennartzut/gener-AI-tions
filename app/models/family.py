@@ -3,7 +3,7 @@ Defines the Family model, representing family units and their relationships.
 """
 
 from app.extensions import db
-from .enums import RelationshipTypeEnum
+from .enums import LegalRelationshipEnum
 from .associations import family_children_association_table
 
 
@@ -28,7 +28,7 @@ class Family(db.Model):
         index=True
     )
     relationship_type = db.Column(
-        db.Enum(RelationshipTypeEnum),
+        db.Enum(LegalRelationshipEnum),
         nullable=True
     )
     union_date = db.Column(db.Date, nullable=True)

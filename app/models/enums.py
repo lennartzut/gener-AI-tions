@@ -23,7 +23,7 @@ class GenderEnum(str, Enum):
     UNKNOWN = "unknown"
 
 
-class RelationshipTypeEnum(str, Enum):
+class LegalRelationshipEnum(str, Enum):
     """
     Enumerates legal or recognized relationship types between partners.
     """
@@ -33,7 +33,7 @@ class RelationshipTypeEnum(str, Enum):
     OTHER = "other"
 
 
-class RelationshipType(str, Enum):
+class FamilyRelationshipEnum(str, Enum):
     """
     Enumerates types of family relationships.
     """
@@ -41,3 +41,4 @@ class RelationshipType(str, Enum):
     GUARDIAN = "guardian"
     CHILD = "child"
     SIBLING = "sibling"
+    PARTNER = "partner"

@@ -4,7 +4,7 @@ Defines the Relationship model, representing parent-child or guardian relationsh
 
 from sqlalchemy import CheckConstraint, UniqueConstraint
 from app.extensions import db
-from .enums import RelationshipType
+from .enums import FamilyRelationshipEnum
 
 
 class Relationship(db.Model):
@@ -38,7 +38,7 @@ class Relationship(db.Model):
         index=True
     )
     relationship_type = db.Column(
-        db.Enum(RelationshipType),
+        db.Enum(FamilyRelationshipEnum),
         nullable=False
     )
 

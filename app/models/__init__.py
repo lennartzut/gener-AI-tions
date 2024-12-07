@@ -12,7 +12,7 @@ Models:
     User
 """
 
-from .enums import GenderEnum, RelationshipType, RelationshipTypeEnum
+from .enums import GenderEnum, FamilyRelationshipEnum, LegalRelationshipEnum
 from .individual import Individual
 from .identity import Identity
 from .family import Family
