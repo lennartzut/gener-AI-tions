@@ -11,16 +11,28 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import SQLAlchemyError
 from app.utils.family_utils import \
     add_relationship_for_new_individual
+from datetime import datetime
+from typing import Optional
 
 web_individuals_bp = Blueprint('web_individuals_bp', __name__,
                                template_folder='templates/individuals')
+
+
+def parse_date(date_str: Optional[str]) -> Optional[datetime.date]:
+    """Utility function to safely parse a date string."""
+    if date_str:
+        try:
+            return datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            app.logger.error(f"Invalid date format: {date_str}")
+    return None
 
 
 # Get Individuals
 @web_individuals_bp.route('/', methods=['GET'])
 @jwt_required()
 def get_individuals():
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     search_query = request.args.get('q')
     limit = request.args.get('limit', 10, type=int)
 
@@ -37,25 +49,30 @@ def get_individuals():
 
     individuals = query.order_by(Individual.updated_at.desc()).limit(
         limit).all()
-    return render_template('individuals_list.html',
-                           individuals=individuals,
-                           GenderEnum=GenderEnum)
+    return render_template(
+        'individuals_list.html',
+        individuals=individuals,
+        GenderEnum=GenderEnum
+    )
 
 
 # Create Individual with Default Identity
 @web_individuals_bp.route('/create', methods=['GET', 'POST'])
 @jwt_required()
 def create_individual():
-    current_user_id = get_jwt_identity()
-    if request.method == 'POST':
-        birth_date = request.form.get('birth_date') or None
-        birth_place = request.form.get('birth_place') or None
-        death_date = request.form.get('death_date') or None
-        death_place = request.form.get('death_place') or None
-        first_name = request.form.get('first_name') or None
-        last_name = request.form.get('last_name') or None
-        gender_str = request.form.get('gender') or None
+    current_user_id = int(get_jwt_identity())
 
+    if request.method == 'POST':
+        # Extract form data
+        birth_date = parse_date(request.form.get('birth_date'))
+        birth_place = request.form.get('birth_place') or None
+        death_date = parse_date(request.form.get('death_date'))
+        death_place = request.form.get('death_place') or None
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        gender_str = request.form.get('gender')
+
+        # Validate required fields
         if not first_name or not last_name or not gender_str:
             flash("First name, last name, and gender are required.",
                   'error')
@@ -86,16 +103,11 @@ def create_individual():
             )
             db.session.add(default_identity)
 
-            # Add a relationship if specified
-            relationship = request.args.get(
-                'relationship') or request.form.get('relationship')
-            related_individual_id = request.args.get(
-                'related_individual_id',
-                type=int) or request.form.get(
+            # Handle optional relationships
+            relationship = request.form.get('relationship')
+            related_individual_id = request.form.get(
                 'related_individual_id', type=int)
-            family_id = request.args.get('family_id',
-                                         type=int) or request.form.get(
-                'family_id', type=int)
+            family_id = request.form.get('family_id', type=int)
 
             if relationship and (related_individual_id or family_id):
                 add_relationship_for_new_individual(
@@ -104,15 +116,14 @@ def create_individual():
                 )
 
             db.session.commit()
-
             flash(
                 'Individual and default identity created successfully.',
                 'success')
             return redirect(
                 url_for('web_individuals_bp.get_individuals'))
 
-        except ValueError:
-            flash(f"Invalid gender value: {gender_str}", 'error')
+        except ValueError as e:
+            flash(f"Invalid input: {e}", 'error')
         except SQLAlchemyError as e:
             db.session.rollback()
             app.logger.error(f"Error creating individual: {e}")
@@ -120,7 +131,7 @@ def create_individual():
                   'error')
 
     return render_template('create_individual_modal.html',
-                           GenderEnum=GenderEnum)
+                           GenderEnum=GenderEnum, current_user_id=int(get_jwt_identity()))
 
 
 # Update Individual
@@ -128,27 +139,29 @@ def create_individual():
                           methods=['GET', 'POST'])
 @jwt_required()
 def update_individual(individual_id):
-    current_user_id = get_jwt_identity()
-    individual = Individual.query.filter_by(id=individual_id,
-                                            user_id=current_user_id).first_or_404()
+    current_user_id = int(get_jwt_identity())
+    individual = Individual.query.filter_by(
+        id=individual_id, user_id=current_user_id
+    ).first_or_404()
 
     if request.method == 'POST':
-        birth_date = request.form.get('birth_date') or None
+        # Extract form data
+        birth_date = parse_date(request.form.get('birth_date'))
         birth_place = request.form.get('birth_place') or None
-        death_date = request.form.get('death_date') or None
+        death_date = parse_date(request.form.get('death_date'))
         death_place = request.form.get('death_place') or None
-        first_name = request.form.get('first_name') or None
-        last_name = request.form.get('last_name') or None
-        gender_str = request.form.get('gender') or None
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        gender_str = request.form.get('gender')
 
         try:
-            # Update individual fields
+            # Update individual
             individual.birth_date = birth_date
             individual.birth_place = birth_place
             individual.death_date = death_date
             individual.death_place = death_place
 
-            # Update selected identity
+            # Update primary identity
             primary_identity = individual.primary_identity
             if primary_identity:
                 primary_identity.first_name = first_name
@@ -157,9 +170,9 @@ def update_individual(individual_id):
 
             db.session.commit()
             flash('Individual updated successfully.', 'success')
-        except ValueError:
+        except ValueError as e:
             db.session.rollback()
-            flash(f"Invalid gender value: {gender_str}", 'error')
+            flash(f"Invalid input: {e}", 'error')
         except SQLAlchemyError as e:
             db.session.rollback()
             app.logger.error(f"Error updating individual: {e}")
@@ -174,7 +187,8 @@ def update_individual(individual_id):
     return render_template('create_individual_modal.html',
                            GenderEnum=GenderEnum,
                            selected_gender=selected_gender,
-                           individual=individual)
+                           individual=individual,
+                           current_user_id=int(get_jwt_identity()))
 
 
 # Delete Individual
@@ -182,9 +196,10 @@ def update_individual(individual_id):
                           methods=['POST'])
 @jwt_required()
 def delete_individual(individual_id: int):
-    current_user_id = get_jwt_identity()
-    individual = Individual.query.filter_by(id=individual_id,
-                                            user_id=current_user_id).first_or_404()
+    current_user_id = int(get_jwt_identity())
+    individual = Individual.query.filter_by(
+        id=individual_id, user_id=current_user_id
+    ).first_or_404()
 
     db.session.delete(individual)
     db.session.commit()

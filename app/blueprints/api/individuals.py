@@ -3,10 +3,9 @@ from flask_pydantic import validate
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.individual import Individual
 from app.models.identity import Identity
-from app.schemas import (
-    IndividualUpdate,
-    IndividualOut
-)
+from app.utils.family_utils import \
+    add_relationship_for_new_individual
+from app.schemas import IndividualCreate, IndividualOut
 from app.extensions import db
 from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
@@ -38,10 +37,7 @@ def format_individual_response(individual: Individual) -> dict:
     """Helper function to format an individual for JSON response."""
     primary_identity = individual.primary_identity
     name = f"{primary_identity.first_name} {primary_identity.last_name}" if primary_identity else "Unknown"
-    return {
-        'id': individual.id,
-        'name': name
-    }
+    return {'id': individual.id, 'name': name}
 
 
 # Search Individuals
@@ -53,7 +49,7 @@ def search_individuals():
     Excludes a specific individual if 'exclude_id' is provided.
     """
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = int(get_jwt_identity())
         search_query = request.args.get('q', '').strip()
         exclude_id = request.args.get('exclude_id', type=int)
 
@@ -88,70 +84,87 @@ def search_individuals():
         current_app.logger.error(
             f"Unexpected error during search: {e}")
         return jsonify({
-                           'error': 'Unexpected error occurred during search'}), 500
+            'error': 'Unexpected error occurred during search'}), 500
 
 
 # Create Individual with Default Identity
 @api_individuals_bp.route('/', methods=['POST'],
                           strict_slashes=False)
 @jwt_required()
-@validate(body=IndividualUpdate)
-def create_individual(body: IndividualUpdate):
+@validate(body=IndividualCreate)
+def create_individual(body: IndividualCreate):
     """
-    Creates a new individual along with their default identity.
+    Create a new individual and optionally establish a relationship.
     """
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
+    if body.user_id != current_user_id:
+        current_app.logger.error(
+            f"User ID mismatch: token={current_user_id}, body={body.user_id}")
+        return jsonify({
+                           "error": "User ID mismatch. You cannot create individuals for another user."}), 403
+
+    relationship = request.args.get('relationship')
+    related_individual_id = request.args.get('related_individual_id',
+                                             type=int)
+
+    if relationship and not related_individual_id and relationship != 'child':
+        return jsonify({
+            "error": f"'{relationship}' requires a 'related_individual_id'."
+        }), 400
 
     try:
-        # Create the individual
+        # Create Individual
         new_individual = Individual(
             user_id=current_user_id,
             birth_date=parse_date(body.birth_date),
             birth_place=body.birth_place,
             death_date=parse_date(body.death_date),
-            death_place=body.death_place
+            death_place=body.death_place,
         )
         db.session.add(new_individual)
-        db.session.flush()  # Ensure new_individual.id is available
+        db.session.flush()
 
-        # Create default identity
-        create_identity(new_individual.id, body.first_name,
-                        body.last_name, body.gender, body.birth_date)
+        # Create Identity
+        create_identity(
+            individual_id=new_individual.id,
+            first_name=body.first_name,
+            last_name=body.last_name,
+            gender=body.gender,
+            valid_from=body.valid_from,
+            valid_until=body.valid_until,
+        )
 
-        # Add additional identities if provided
-        for identity_data in body.identities or []:
-            create_identity(new_individual.id,
-                            identity_data.first_name,
-                            identity_data.last_name,
-                            identity_data.gender,
-                            identity_data.valid_from,
-                            identity_data.valid_until)
+        # Handle relationships
+        if relationship:
+            add_relationship_for_new_individual(
+                relationship=relationship,
+                related_individual_id=related_individual_id,
+                new_individual=new_individual,
+                family_id=request.args.get('family_id', type=int),
+                user_id=current_user_id,
+            )
 
         db.session.commit()
-        return jsonify({
-            'message': 'Individual created successfully.',
-            'data': IndividualOut.from_orm(
-                new_individual).model_dump()
-        }), 201
 
-    except SQLAlchemyError as e:
+        return jsonify({
+            "message": "Individual created successfully.",
+            "data": IndividualOut.from_orm(
+                new_individual).model_dump(),
+        }), 201
+    except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error creating individual: {e}")
         return jsonify({
-            'error': 'A database error occurred while creating the individual.'}), 500
-
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(f"Unexpected error: {e}")
-        return jsonify({
-            'error': 'An unexpected error occurred while creating the individual.'}), 500
+                           "error": "An unexpected error occurred. Please try again later."}), 500
 
 
 def create_identity(individual_id: int, first_name: str,
                     last_name: str, gender: str,
                     valid_from: Optional[str] = None,
                     valid_until: Optional[str] = None):
-    """Helper function to create and add an identity to an individual."""
+    """
+    Helper function to create and add an identity to an individual.
+    """
     new_identity = Identity(
         individual_id=individual_id,
         first_name=first_name,
@@ -172,7 +185,7 @@ def get_individuals():
     Supports optional search and limit parameters.
     """
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = int(get_jwt_identity())
         search_query = request.args.get('q', '').strip()
         limit = request.args.get('limit', 10, type=int)
 
@@ -186,7 +199,6 @@ def get_individuals():
 
         individuals = query.order_by(
             Individual.updated_at.desc()).limit(limit).all()
-
         data = [format_individual_response(ind) for ind in
                 individuals]
 

@@ -10,7 +10,8 @@ from app.utils.family_utils import (
     get_family_by_parents, add_parent_child_relationship
 )
 from app.utils.relationships import add_sibling_relationship
-from app.models.enums import RelationshipTypeEnum, GenderEnum
+from app.models.enums import LegalRelationshipEnum, GenderEnum, \
+    FamilyRelationshipEnum
 from app.extensions import db
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -23,7 +24,7 @@ web_family_card_bp = Blueprint('web_family_card_bp', __name__,
                           methods=['GET'])
 @jwt_required()
 def get_family_card(individual_id):
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     individual = Individual.query.filter_by(
         id=individual_id, user_id=current_user_id
     ).options(
@@ -89,7 +90,7 @@ def get_family_card(individual_id):
         children=children,
         parent_family=parent_family,
         selected_partner_family=selected_partner_family,
-        RelationshipTypeEnum=RelationshipTypeEnum,
+        RelationshipTypeEnum=LegalRelationshipEnum,
         GenderEnum=GenderEnum
     )
 
@@ -99,7 +100,7 @@ def get_family_card(individual_id):
                           methods=['POST'])
 @jwt_required()
 def update_family(family_id):
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     family = Family.query.get_or_404(family_id)
 
     # Check if the user has permission to modify the family
@@ -140,7 +141,7 @@ def update_family(family_id):
 @web_family_card_bp.route('/add-child', methods=['POST'])
 @jwt_required()
 def add_child():
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     family_id = request.form.get('family_id', type=int)
     child_id = request.form.get('child_id', type=int)
 
@@ -191,7 +192,9 @@ def add_child():
                           methods=['POST'])
 @jwt_required()
 def add_parent(individual_id):
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
+
+    # Get the child (current individual) and validate ownership
     child = Individual.query.filter_by(id=individual_id,
                                        user_id=current_user_id).first_or_404()
     parent_id = request.form.get('parent_id', type=int)
@@ -201,42 +204,42 @@ def add_parent(individual_id):
         return redirect(url_for('web_family_card_bp.get_family_card',
                                 individual_id=individual_id))
 
-    parent = Individual.query.filter_by(id=parent_id,
-                                        user_id=current_user_id).first()
+    if parent_id == individual_id:
+        flash('An individual cannot be their own parent.', 'danger')
+        return redirect(url_for('web_family_card_bp.get_family_card',
+                                individual_id=individual_id))
 
+    # Check if the parent exists
+    parent = Individual.query.filter_by(id=parent_id).first()
     if not parent:
         flash('Parent not found.', 'danger')
         return redirect(url_for('web_family_card_bp.get_family_card',
                                 individual_id=individual_id))
 
     try:
-        add_parent_child_relationship(parent.id, child.id)
-        existing_families = Family.query.filter(
-            Family.children.contains(child)).all()
-
-        if existing_families:
-            family = existing_families[0]
-            if family.partner1_id and family.partner2_id:
-                for c in family.children:
-                    add_parent_child_relationship(parent.id, c.id)
-            else:
-                if not family.partner1_id:
-                    family.partner1_id = parent.id
-                elif not family.partner2_id:
-                    family.partner2_id = parent.id
-        else:
-            family = Family(partner1_id=parent.id)
-            db.session.add(family)
-            family.children.append(child)
-
+        # Add the parent-child relationship using the API endpoint logic
+        from app.utils.relationships import \
+            add_parent_child_relationship
+        add_parent_child_relationship(parent_id, individual_id)
         db.session.commit()
-        flash('Parent added successfully.', 'success')
 
-    except SQLAlchemyError as e:
+        flash('Parent added successfully.', 'success')
+    except ValueError as ve:
         db.session.rollback()
         app.logger.error(
-            f"Error adding parent for individual {individual_id}: {e}")
-        flash('An error occurred while adding the parent.', 'danger')
+            f"Validation error while adding parent: {ve}")
+        flash(str(ve), 'danger')
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        app.logger.error(f"Database error while adding parent: {e}")
+        flash('A database error occurred. Please try again.',
+              'danger')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(
+            f"Unexpected error while adding parent: {e}")
+        flash('An unexpected error occurred. Please try again.',
+              'danger')
 
     return redirect(url_for('web_family_card_bp.get_family_card',
                             individual_id=individual_id))
@@ -247,7 +250,7 @@ def add_parent(individual_id):
                           methods=['POST'])
 @jwt_required()
 def add_partner(individual_id):
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     individual = Individual.query.filter_by(id=individual_id,
                                             user_id=current_user_id).first_or_404()
     partner_id = request.form.get('partner_id', type=int)
@@ -289,13 +292,13 @@ def add_partner(individual_id):
 
             # Set a default relationship type if not set
             if not family.relationship_type:
-                family.relationship_type = RelationshipTypeEnum.MARRIAGE
+                family.relationship_type = LegalRelationshipEnum.MARRIAGE
         else:
             # No single-parent family found, create a new family
             family = Family(
                 partner1_id=individual.id,
                 partner2_id=partner.id,
-                relationship_type=RelationshipTypeEnum.MARRIAGE
+                relationship_type=LegalRelationshipEnum.MARRIAGE
             )
             db.session.add(family)
 

@@ -78,9 +78,9 @@ def login():
                 response = make_response(redirect(
                     url_for('web_individuals_bp.get_individuals')))
                 set_access_cookies(response, create_access_token(
-                    identity=str(user.id)))
+                    identity=(user.id)))
                 set_refresh_cookies(response, create_refresh_token(
-                    identity=str(user.id)))
+                    identity=(user.id)))
                 flash('Login successful!', 'success')
                 return response
             except Exception as e:
@@ -114,7 +114,7 @@ def refresh():
         response = jsonify(
             {'message': 'Token refreshed successfully.'})
         set_access_cookies(response, create_access_token(
-            identity=get_jwt_identity()))
+            identity=int(get_jwt_identity())))
         return response, 200
     except Exception as e:
         current_app.logger.error(f"Token refresh error: {e}")

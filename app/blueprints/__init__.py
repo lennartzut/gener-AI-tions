@@ -8,6 +8,7 @@ from .web.profile import web_profile_bp
 from .api.auth import api_auth_bp
 from .api.individuals import api_individuals_bp
 from .api.families import api_families_bp
+from .api.relationships import api_relationships_bp
 
 __all__ = [
     'web_auth_bp',
@@ -19,4 +20,5 @@ __all__ = [
     'api_auth_bp',
     'api_individuals_bp',
     'api_families_bp',
+    'api_relationships_bp'
 ]

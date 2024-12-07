@@ -16,7 +16,7 @@ web_identities_bp = Blueprint('web_identities_bp', __name__,
                          methods=['GET', 'POST'])
 @jwt_required()
 def add_identity(individual_id):
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     individual = Individual.query.filter_by(id=individual_id,
                                             user_id=current_user_id).first_or_404()
 
@@ -66,7 +66,7 @@ def add_identity(individual_id):
     methods=['GET', 'POST'])
 @jwt_required()
 def update_identity(individual_id, identity_id):
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     identity = Identity.query.filter_by(id=identity_id).join(
         Individual).filter(
         Individual.id == individual_id,
@@ -110,7 +110,7 @@ def update_identity(individual_id, identity_id):
     methods=['POST'])
 @jwt_required()
 def delete_identity(individual_id, identity_id):
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     identity = Identity.query.filter_by(id=identity_id).join(
         Individual).filter(
         Individual.id == individual_id,
