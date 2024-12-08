@@ -15,7 +15,7 @@ def get_family_data(individual_id):
     siblings, partners, and children.
     """
     try:
-        current_user_id = int(get_jwt_identity())
+        current_user_id = get_jwt_identity()
 
         # Fetch the individual belonging to the logged-in user
         individual = Individual.query.filter_by(
@@ -56,7 +56,7 @@ def add_relationship(individual_id):
     as either a parent or a child.
     """
     try:
-        current_user_id = int(get_jwt_identity())
+        current_user_id = get_jwt_identity()
 
         # Fetch the individual belonging to the logged-in user
         individual = Individual.query.filter_by(

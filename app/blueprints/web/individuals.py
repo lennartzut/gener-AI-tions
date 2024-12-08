@@ -32,7 +32,7 @@ def parse_date(date_str: Optional[str]) -> Optional[datetime.date]:
 @web_individuals_bp.route('/', methods=['GET'])
 @jwt_required()
 def get_individuals():
-    current_user_id = int(get_jwt_identity())
+    current_user_id = get_jwt_identity()
     search_query = request.args.get('q')
     limit = request.args.get('limit', 10, type=int)
 
@@ -60,7 +60,7 @@ def get_individuals():
 @web_individuals_bp.route('/create', methods=['GET', 'POST'])
 @jwt_required()
 def create_individual():
-    current_user_id = int(get_jwt_identity())
+    current_user_id = get_jwt_identity()
 
     if request.method == 'POST':
         # Extract form data
@@ -131,7 +131,7 @@ def create_individual():
                   'error')
 
     return render_template('create_individual_modal.html',
-                           GenderEnum=GenderEnum, current_user_id=int(get_jwt_identity()))
+                           GenderEnum=GenderEnum, current_user_id=get_jwt_identity())
 
 
 # Update Individual
@@ -139,7 +139,7 @@ def create_individual():
                           methods=['GET', 'POST'])
 @jwt_required()
 def update_individual(individual_id):
-    current_user_id = int(get_jwt_identity())
+    current_user_id = get_jwt_identity()
     individual = Individual.query.filter_by(
         id=individual_id, user_id=current_user_id
     ).first_or_404()
@@ -188,7 +188,7 @@ def update_individual(individual_id):
                            GenderEnum=GenderEnum,
                            selected_gender=selected_gender,
                            individual=individual,
-                           current_user_id=int(get_jwt_identity()))
+                           current_user_id=get_jwt_identity())
 
 
 # Delete Individual
@@ -196,7 +196,7 @@ def update_individual(individual_id):
                           methods=['POST'])
 @jwt_required()
 def delete_individual(individual_id: int):
-    current_user_id = int(get_jwt_identity())
+    current_user_id = get_jwt_identity()
     individual = Individual.query.filter_by(
         id=individual_id, user_id=current_user_id
     ).first_or_404()

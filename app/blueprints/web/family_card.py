@@ -24,7 +24,7 @@ web_family_card_bp = Blueprint('web_family_card_bp', __name__,
                           methods=['GET'])
 @jwt_required()
 def get_family_card(individual_id):
-    current_user_id = int(get_jwt_identity())
+    current_user_id = get_jwt_identity()
     individual = Individual.query.filter_by(
         id=individual_id, user_id=current_user_id
     ).options(
@@ -100,7 +100,7 @@ def get_family_card(individual_id):
                           methods=['POST'])
 @jwt_required()
 def update_family(family_id):
-    current_user_id = int(get_jwt_identity())
+    current_user_id = get_jwt_identity()
     family = Family.query.get_or_404(family_id)
 
     # Check if the user has permission to modify the family
@@ -141,7 +141,7 @@ def update_family(family_id):
 @web_family_card_bp.route('/add-child', methods=['POST'])
 @jwt_required()
 def add_child():
-    current_user_id = int(get_jwt_identity())
+    current_user_id = get_jwt_identity()
     family_id = request.form.get('family_id', type=int)
     child_id = request.form.get('child_id', type=int)
 
@@ -192,7 +192,7 @@ def add_child():
                           methods=['POST'])
 @jwt_required()
 def add_parent(individual_id):
-    current_user_id = int(get_jwt_identity())
+    current_user_id = get_jwt_identity()
 
     # Get the child (current individual) and validate ownership
     child = Individual.query.filter_by(id=individual_id,
@@ -250,7 +250,7 @@ def add_parent(individual_id):
                           methods=['POST'])
 @jwt_required()
 def add_partner(individual_id):
-    current_user_id = int(get_jwt_identity())
+    current_user_id = get_jwt_identity()
     individual = Individual.query.filter_by(id=individual_id,
                                             user_id=current_user_id).first_or_404()
     partner_id = request.form.get('partner_id', type=int)

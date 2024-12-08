@@ -245,6 +245,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <form method="POST" action="{{ url_for('web_family_card_bp.add_parent', individual_id=individual.id) }}">
+                    <input type="hidden" id="userId" name="user_id" value="{{ current_user.id }}">
                     <div class="modal-header">
                         <h5 class="modal-title" id="addParentModalLabel">Add Parent</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -273,6 +274,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <form method="POST" action="{{ url_for('web_family_card_bp.add_partner', individual_id=individual.id) }}">
+                    <input type="hidden" id="userId" name="user_id" value="{{ current_user.id }}">
                     <div class="modal-header">
                         <h5 class="modal-title" id="addPartnerModalLabel">Add Partner</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -319,27 +321,7 @@
     </div>
 
     <!-- Create Individual Modal -->
-    <div class="modal fade" id="createIndividualModal" tabindex="-1" aria-labelledby="createIndividualModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form id="createIndividualForm" method="POST" action="">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="createIndividualModalLabel">Create Individual</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <!-- Include the identity form fields -->
-                        {% include
-                        "partials/forms/add_individual_form.html" %}
-                        <!-- Additional fields if necessary -->
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary">Create Individual</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    {% include "partials/modal/create_individual_modal.html" %}
 
 
 </div>

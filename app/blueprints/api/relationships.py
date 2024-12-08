@@ -24,7 +24,7 @@ def create_relationship():
         body = RelationshipRequest(**request.get_json())
 
         # Get the current user identity
-        current_user_id = int(get_jwt_identity())
+        current_user_id = get_jwt_identity()
 
         # Get the target and current individual
         target_individual = Individual.query.filter_by(
@@ -52,7 +52,7 @@ def create_relationship():
             new_relationship = Relationship(
                 parent_id=body.target_id,
                 child_id=current_user_id,
-                relationship_type=FamilyRelationshipTypeEnum.PARENT
+                relationship_type=FamilyRelationshipEnum.PARENT
             )
             db.session.add(new_relationship)
 

@@ -49,7 +49,7 @@ def search_individuals():
     Excludes a specific individual if 'exclude_id' is provided.
     """
     try:
-        current_user_id = int(get_jwt_identity())
+        current_user_id = get_jwt_identity()
         search_query = request.args.get('q', '').strip()
         exclude_id = request.args.get('exclude_id', type=int)
 
@@ -96,7 +96,7 @@ def create_individual(body: IndividualCreate):
     """
     Create a new individual and optionally establish a relationship.
     """
-    current_user_id = int(get_jwt_identity())
+    current_user_id = get_jwt_identity()
     if body.user_id != current_user_id:
         current_app.logger.error(
             f"User ID mismatch: token={current_user_id}, body={body.user_id}")
@@ -185,7 +185,7 @@ def get_individuals():
     Supports optional search and limit parameters.
     """
     try:
-        current_user_id = int(get_jwt_identity())
+        current_user_id = get_jwt_identity()
         search_query = request.args.get('q', '').strip()
         limit = request.args.get('limit', 10, type=int)
 

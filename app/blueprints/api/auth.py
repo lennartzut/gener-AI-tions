@@ -16,7 +16,7 @@ def get_current_user():
     Retrieves the currently authenticated user's information.
     """
     try:
-        current_user_id = int(get_jwt_identity())
+        current_user_id = get_jwt_identity()
         user = User.query.get(current_user_id)
 
         if not user:
@@ -41,7 +41,7 @@ def refresh_access_token():
     Generates a new access token using a valid refresh token.
     """
     try:
-        current_user_id = int(get_jwt_identity())
+        current_user_id = get_jwt_identity()
         new_access_token = create_access_token(
             identity=current_user_id)
 
