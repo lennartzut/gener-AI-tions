@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>User Profile</h2>
+    <form method="POST" action="{{ url_for('web_profile_bp.update_profile') }}">
+        <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">New Password (leave blank to keep current password)</label>
+            <input type="password" class="form-control" id="password" name="password">
+        </div>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+    </form>
+
+    <hr class="my-4">
+    <h3>Danger Zone</h3>
+    <form method="POST" action="{{ url_for('web_profile_bp.delete_profile') }}">
+        <div class="alert alert-danger" role="alert">
+            Deleting your account will permanently delete all your projects. This action cannot be undone.
+        </div>
+        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete your account? All projects will be deleted!')">Delete Account</button>
+    </form>
+</div>
+{% endblock %}

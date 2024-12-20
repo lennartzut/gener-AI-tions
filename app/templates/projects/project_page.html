@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+{% block title %}Project Overview{% endblock %}
+
+{% block content %}
+<div class="row" id="projectPage" data-project-id="{{ project_id }}"{% if selected_individual %} data-individual-id="{{ selected_individual.id }}"{% endif %}>
+    <!-- Left Column: Search, Individuals List, Add Individual Modal -->
+    <div class="col-md-3 border-end">
+        <h2 class="mt-3">Individuals</h2>
+
+        <!-- Search Form -->
+        <form id="searchForm" class="mb-3 position-relative">
+            <input type="text" id="searchInput" class="form-control" placeholder="Search by name" autocomplete="off">
+            <div id="searchSuggestions" class="list-group position-absolute w-100" style="z-index:1000;"></div>
+        </form>
+
+        <p>You have {{ individuals_list|length }} individuals in this project.</p>
+
+        <!-- Add Individual Button -->
+        <button type="button" class="btn btn-success mb-3"
+                data-bs-toggle="modal" data-bs-target="#createIndividualModal" data-project-id="{{ project_id }}">
+            Add Individual
+        </button>
+
+        <!-- Buttons for selecting/deleting individuals from the list -->
+        <div class="mb-3 d-flex justify-content-start align-items-center">
+            <button type="button" id="selectModeButton" class="btn btn-outline-primary btn-sm me-2">Select</button>
+            <button type="button" id="deleteSelectedButton" class="btn btn-outline-danger btn-sm" style="display:none;">Delete Selected</button>
+        </div>
+
+        <!-- Individuals List -->
+        <div class="scrollable-list" style="max-height: 60vh; overflow:auto;">
+            <ul class="list-group" id="leftIndividualsList">
+                {% for ind in individuals_list %}
+                <li class="list-group-item d-flex align-items-center"
+                    draggable="true"
+                    data-individual-id="{{ ind.id }}"
+                    data-individual-name="{{ ind.primary_identity.full_name() if ind.primary_identity else 'Unknown' }}">
+                    <a href="{{ url_for('web_individuals_bp.get_individuals', project_id=project_id, individual_id=ind.id) }}" class="text-decoration-none flex-grow-1">
+                        {% if ind.primary_identity %}
+                            {{ ind.primary_identity.first_name }} {{ ind.primary_identity.last_name }}
+                        {% else %}
+                            Unknown Name
+                        {% endif %}
+                    </a>
+                    <small class="text-muted">ID: {{ ind.id }}</small>
+                </li>
+                {% else %}
+                <li class="list-group-item text-muted">No individuals found.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Right Column: Family Card if an individual is selected -->
+    <div class="col-md-9">
+        {% if selected_individual %}
+            <div class="mt-3 d-flex justify-content-between align-items-center">
+                <h2>
+                    {% if selected_identity %}
+                        {{ selected_identity.first_name }} {{ selected_identity.last_name }} (Age: {{ selected_individual_age or 'Unknown' }})
+                    {% else %}
+                        Unknown Name
+                    {% endif %}
+                    - (ID: {{ selected_individual.id }})
+                </h2>
+                <button id="addIdentityBtn" class="btn btn-secondary">Add Identity</button>
+            </div>
+
+            <p class="text-muted">
+                Drag individuals from the left column into the sections below to form relationships.
+                For example, drag an individual into the "Parents" area to add them as a parent.
+            </p>
+
+            <!-- Individual Details Toggle -->
+            <button class="btn btn-link mb-3" data-bs-toggle="collapse" data-bs-target="#individualDetails">Show Individual Details</button>
+            <div id="individualDetails" class="collapse">
+                <form id="individualForm" method="POST"
+                      action="{{ url_for('web_individuals_bp.update_individual', individual_id=selected_individual.id, project_id=project_id) }}">
+                    <div class="mb-3">
+                        <label for="birthDate" class="form-label">Birth Date</label>
+                        <input type="date" class="form-control" id="birthDate" name="birth_date"
+                               value="{{ selected_individual.birth_date|default('') }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="birthPlace" class="form-label">Birth Place</label>
+                        <input type="text" class="form-control" id="birthPlace" name="birth_place"
+                               value="{{ selected_individual.birth_place|default('') }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="deathDate" class="form-label">Death Date</label>
+                        <input type="date" class="form-control" id="deathDate" name="death_date"
+                               value="{{ selected_individual.death_date|default('') }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="deathPlace" class="form-label">Death Place</label>
+                        <input type="text" class="form-control" id="deathPlace" name="death_place"
+                               value="{{ selected_individual.death_place|default('') }}">
+                    </div>
+
+                    <h4>Primary Identity Details</h4>
+                    {% if selected_identity %}
+                    <div class="mb-3">
+                        <label for="identityFirstName" class="form-label">First Name</label>
+                        <input type="text" class="form-control" id="identityFirstName" name="first_name"
+                               value="{{ selected_identity.first_name }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="identityLastName" class="form-label">Last Name</label>
+                        <input type="text" class="form-control" id="identityLastName" name="last_name"
+                               value="{{ selected_identity.last_name }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="identityGender" class="form-label">Gender</label>
+                        <select class="form-select" id="identityGender" name="gender">
+                            {% for g in GenderEnum %}
+                            <option value="{{ g.value }}" {% if selected_identity.gender and g.value == selected_identity.gender.value %}selected{% endif %}>{{ g.value }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No primary identity. Use "Add Identity" to create one.</p>
+                    {% endif %}
+
+                    <button type="submit" class="btn btn-primary">Update Individual</button>
+                </form>
+            </div>
+
+            <!-- Parents Section -->
+            <h3 class="mt-4">Parents (Drag to remove)</h3>
+            <!-- Parents List -->
+            <ul id="parentsList" class="list-group mb-2">
+                {% if parents and parents|length > 0 %}
+                    {% for parent in parents %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center" draggable="true" data-relationship-id="{{ parent.relationship_id }}" data-individual-id="{{ parent.id }}">
+                        <span>
+                            {% if parent.primary_identity %}
+                                {{ parent.primary_identity.first_name }} {{ parent.primary_identity.last_name }}
+                            {% else %}
+                                Unknown Name
+                            {% endif %}
+                        </span>
+                        <small class="text-muted">ID: {{ parent.id }}</small>
+                    </li>
+                    {% endfor %}
+                {% else %}
+                    <li class="list-group-item text-muted">No parents assigned.</li>
+                {% endif %}
+            </ul>
+
+            <!-- Parents Dropzone Removed -->
+
+            <button class="btn btn-link mb-3" data-bs-toggle="collapse" data-bs-target="#parentFamilyDetails">Show Parent Family Details</button>
+            <div id="parentFamilyDetails" class="collapse">
+                {% if parent_family %}
+                <form method="POST"
+                      action="{{ url_for('web_families_bp.update_family', family_id=parent_family.id, project_id=project_id) }}">
+                    <div class="mb-3">
+                        <label for="parentRelationshipType" class="form-label">Relationship Type</label>
+                        <select name="relationship_type" id="parentRelationshipType" class="form-select">
+                            {% for choice in RelationshipTypeEnum %}
+                            <option value="{{ choice.value }}" {% if choice.value == parent_family.relationship_type %}selected{% endif %}>{{ choice.value }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="parentUnionDate" class="form-label">Union Date</label>
+                        <input type="date" class="form-control" id="parentUnionDate" name="union_date"
+                               value="{{ parent_family.union_date|default('') }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="parentUnionPlace" class="form-label">Union Place</label>
+                        <input type="text" class="form-control" id="parentUnionPlace" name="union_place"
+                               value="{{ parent_family.union_place|default('') }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Family</button>
+                </form>
+
+                <h4>Siblings:</h4>
+                <ul>
+                    {% if siblings and siblings|length > 0 %}
+                        {% for sibling in siblings %}
+                        <li>
+                            <a href="{{ url_for('web_individuals_bp.get_individuals', project_id=project_id, individual_id=sibling.id) }}">
+                                {% if sibling.primary_identity %}
+                                    {{ sibling.primary_identity.first_name }} {{ sibling.primary_identity.last_name }}
+                                {% else %}
+                                    Unknown Name
+                                {% endif %}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    {% else %}
+                    <li class="text-muted">No siblings found.</li>
+                    {% endif %}
+                </ul>
+                {% else %}
+                <p>No parent-family information available.</p>
+                {% endif %}
+            </div>
+
+            <!-- Partners Section -->
+            <h3 class="mt-4">Partners (Drag to remove)</h3>
+            <!-- Partners List -->
+            <ul id="partnersList" class="list-group mb-2">
+                {% if partners and partners|length > 0 %}
+                    {% for partner in partners %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center" draggable="true" data-relationship-id="{{ partner.relationship_id }}" data-individual-id="{{ partner.id }}">
+                        <span>
+                            {% if partner.primary_identity %}
+                                {{ partner.primary_identity.first_name }} {{ partner.primary_identity.last_name }}
+                            {% else %}
+                                Unknown Name
+                            {% endif %}
+                        </span>
+                        <small class="text-muted">ID: {{ partner.id }}</small>
+                    </li>
+                    {% endfor %}
+                {% else %}
+                    <li class="list-group-item text-muted">No partners assigned.</li>
+                {% endif %}
+            </ul>
+
+            <!-- Partners Dropzone Removed -->
+
+            <button class="btn btn-link mb-3" data-bs-toggle="collapse" data-bs-target="#partnerFamilyDetails">Show Partner Family Details</button>
+            <div id="partnerFamilyDetails" class="collapse">
+                {% if selected_partner_family %}
+                <form method="POST"
+                      action="{{ url_for('web_families_bp.update_family', family_id=selected_partner_family.id, project_id=project_id) }}">
+                    <div class="mb-3">
+                        <label for="partnerRelationshipType" class="form-label">Relationship Type</label>
+                        <select name="relationship_type" id="partnerRelationshipType" class="form-select">
+                            {% for choice in RelationshipTypeEnum %}
+                            <option value="{{ choice.value }}" {% if choice.value == selected_partner_family.relationship_type %}selected{% endif %}>{{ choice.value }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="partnerUnionDate" class="form-label">Union Date</label>
+                        <input type="date" class="form-control" id="partnerUnionDate" name="union_date"
+                               value="{{ selected_partner_family.union_date|default('') }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="partnerUnionPlace" class="form-label">Union Place</label>
+                        <input type="text" class="form-control" id="partnerUnionPlace" name="union_place"
+                               value="{{ selected_partner_family.union_place|default('') }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Family</button>
+                </form>
+                {% else %}
+                <p>No partner-family information available.</p>
+                {% endif %}
+
+                <h4>Children (Drag to remove)</h4>
+                <!-- Children List -->
+                <ul id="childrenList" class="list-group mb-2">
+                    {% if children and children|length > 0 %}
+                        {% for child in children %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center" draggable="true" data-relationship-id="{{ child.relationship_id }}" data-individual-id="{{ child.id }}">
+                            <span>
+                                {% if child.primary_identity %}
+                                    {{ child.primary_identity.first_name }} {{ child.primary_identity.last_name }}
+                                {% else %}
+                                    Unknown Name
+                                {% endif %}
+                            </span>
+                            <small class="text-muted">ID: {{ child.id }}</small>
+                        </li>
+                        {% endfor %}
+                    {% else %}
+                        <li class="list-group-item text-muted">No children assigned.</li>
+                    {% endif %}
+                </ul>
+
+                <!-- Children Dropzone Removed -->
+
+                <div id="childrenDropzone" class="dropzone border p-3 mb-3" data-relationship-type="child">
+                    {% if children and children|length > 0 %}
+                        {% for child in children %}
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="me-2">
+                                {% if child.primary_identity %}
+                                    {{ child.primary_identity.first_name }} {{ child.primary_identity.last_name }}
+                                {% else %}
+                                    Unknown Name
+                                {% endif %}
+                            </span>
+                            <small class="text-muted">ID: {{ child.id }}</small>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No children assigned. Drag an individual here.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Dropzones for Relationships at the Bottom -->
+            <div class="d-flex justify-content-around mt-4">
+                <div class="dropzone p-3 border rounded" data-relationship-type="parent" style="width: 150px; height: 150px;">
+                    <p class="text-center">Add Parent</p>
+                </div>
+                <div class="dropzone p-3 border rounded" data-relationship-type="partner" style="width: 150px; height: 150px;">
+                    <p class="text-center">Add Partner</p>
+                </div>
+                <div class="dropzone p-3 border rounded" data-relationship-type="child" style="width: 150px; height: 150px;">
+                    <p class="text-center">Add Child</p>
+                </div>
+            </div>
+        {% else %}
+            <!-- If no individual selected -->
+            <div class="mt-3">
+                <h3>Select an individual from the left column or create a new one to view their family card here.</h3>
+                <p>Once you select or create an individual, their family card will appear in this area, allowing you to drag and drop other individuals as parents, partners, or children.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Include Modals -->
+{% include "partials/modals/create_individual_modal.html" %}
+{% include "partials/modals/add_identity_modal.html" %}
+
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='scripts/common.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='scripts/individuals.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='scripts/project_overview.js') }}"></script>
+{% endblock %}

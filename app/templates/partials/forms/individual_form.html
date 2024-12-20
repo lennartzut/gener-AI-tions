@@ -1,0 +1,52 @@
+<div class="row">
+    <div class="col-md-6">
+        <h6>Basic Information</h6>
+        <div class="mb-3">
+            <label for="firstName" class="form-label">First Name*</label>
+            <input type="text" class="form-control" id="firstName" name="first_name" required>
+        </div>
+        <div class="mb-3">
+            <label for="lastName" class="form-label">Last Name*</label>
+            <input type="text" class="form-control" id="lastName" name="last_name" required>
+        </div>
+        <div class="mb-3">
+            <label for="birthDate" class="form-label">Birth Date</label>
+            <input type="date" class="form-control" id="birthDate" name="birth_date">
+        </div>
+        <div class="mb-3">
+            <label for="birthPlace" class="form-label">Birth Place</label>
+            <input type="text" class="form-control" id="birthPlace" name="birth_place">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Gender*</label>
+            <select name="gender" class="form-select" required>
+                <option value="" disabled selected>Please select</option>
+                {% for choice in GenderEnum %}
+                <option value="{{ choice.value }}">{{ choice.value|capitalize }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <h6>Death Information</h6>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="isDeceased" name="is_deceased">
+            <label class="form-check-label" for="isDeceased">Deceased</label>
+        </div>
+        <div class="form-check mb-3">
+            <input type="checkbox" class="form-check-input" id="isDeceasedUnknown" name="is_deceased_unknown">
+            <label class="form-check-label" for="isDeceasedUnknown">Deceased Unknown</label>
+        </div>
+        <div id="deathFields" style="display: none;">
+            <div class="mb-3">
+                <label for="deathDate" class="form-label">Death Date</label>
+                <input type="date" class="form-control" id="deathDate" name="death_date">
+            </div>
+            <div class="mb-3">
+                <label for="deathPlace" class="form-label">Death Place</label>
+                <input type="text" class="form-control" id="deathPlace" name="death_place">
+            </div>
+        </div>
+    </div>
+</div>

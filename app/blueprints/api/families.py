@@ -1,117 +1,155 @@
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, jsonify, request, abort, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models.individual import Individual
-from app.models.relationship import Relationship
+from sqlalchemy.exc import SQLAlchemyError
+from app.schemas.family_schema import FamilyCreate, FamilyUpdate, \
+    FamilyOut
 from app.extensions import db
+from app.services.project_service import ProjectService
+from app.services.family_service import FamilyService
 
-api_families_bp = Blueprint('api_families_bp', __name__)
+api_families_bp = Blueprint('api_families', __name__)
 
 
-@api_families_bp.route('/<int:individual_id>', methods=['GET'])
+def get_project_or_404(user_id: int, project_id: int):
+    service = ProjectService(db=db.session)
+    project = service.get_project_by_id(project_id)
+    if not project or project.user_id != user_id:
+        abort(404,
+              description="Project not found or not owned by this user.")
+    return project
+
+
+@api_families_bp.route('/', methods=['GET'])
 @jwt_required()
-def get_family_data(individual_id):
-    """
-    Retrieves family data for a given individual, including parents,
-    siblings, partners, and children.
-    """
+def list_families():
+    """List all families for a project."""
+    current_user_id = get_jwt_identity()
+    project_id = request.args.get('project_id', type=int)
+    if not project_id:
+        return jsonify({'error': 'project_id is required'}), 400
+
+    get_project_or_404(current_user_id, project_id)
     try:
-        current_user_id = get_jwt_identity()
-
-        # Fetch the individual belonging to the logged-in user
-        individual = Individual.query.filter_by(
-            id=individual_id, user_id=current_user_id
-        ).first_or_404()
-
-        # Prepare family data
-        family_data = {
-            'individual': individual.to_dict(),
-            'parents': [parent.to_dict() for parent in
-                        individual.get_parents()],
-            'siblings': [sibling.to_dict() for sibling in
-                         individual.get_siblings()],
-            'partners': [partner.to_dict() for partner in
-                         individual.get_partners()],
-            'children': [child.to_dict() for child in
-                         individual.get_children()],
-        }
-
-        return jsonify({
-            'message': 'Family data retrieved successfully',
-            'data': family_data
-        }), 200
-
-    except Exception as e:
-        current_app.logger.error(
-            f"Error retrieving family data for individual {individual_id}: {e}")
-        return jsonify({
-                           'error': 'An error occurred while retrieving family data.'}), 500
+        service = FamilyService(db=db.session)
+        families = service.list_families_by_project(project_id)
+        results = [FamilyOut.from_orm(f).model_dump() for f in
+                   families]
+        return jsonify({"data": results}), 200
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"DB error listing families: {e}")
+        return jsonify({"error": "Database error"}), 500
 
 
-@api_families_bp.route('/<int:individual_id>/relationships',
-                       methods=['POST'])
+@api_families_bp.route('/<int:family_id>', methods=['GET'])
 @jwt_required()
-def add_relationship(individual_id):
-    """
-    Adds a relationship between the given individual and another individual
-    as either a parent or a child.
-    """
+def get_family(family_id):
+    """Retrieve details of a specific family."""
+    current_user_id = get_jwt_identity()
+    project_id = request.args.get('project_id', type=int)
+    if not project_id:
+        return jsonify({'error': 'project_id is required'}), 400
+
+    get_project_or_404(current_user_id, project_id)
     try:
-        current_user_id = get_jwt_identity()
-
-        # Fetch the individual belonging to the logged-in user
-        individual = Individual.query.filter_by(
-            id=individual_id, user_id=current_user_id
-        ).first_or_404()
-
-        # Parse request data
-        data = request.get_json()
-        relationship_type = data.get('type')
-        target_id = data.get('target_id')
-
-        # Validate input
-        if not relationship_type or not target_id:
-            return jsonify({
-                               'error': 'Relationship type and target individual are required.'}), 400
-
-        if relationship_type not in ['parent', 'child']:
-            return jsonify({
-                               'error': 'Invalid relationship type. Must be either "parent" or "child".'}), 400
-
-        # Fetch the target individual
-        target_individual = Individual.query.filter_by(
-            id=target_id, user_id=current_user_id
-        ).first_or_404()
-
-        # Initialize the relationship variable
-        relationship = None
-
-        # Create the relationship based on the specified type
-        if relationship_type == 'parent':
-            relationship = Relationship(
-                parent_id=target_individual.id,
-                child_id=individual.id
-            )
-        elif relationship_type == 'child':
-            relationship = Relationship(
-                parent_id=individual.id,
-                child_id=target_individual.id
-            )
-
-        # Ensure relationship was created successfully
-        if relationship is None:
-            return jsonify(
-                {'error': 'Failed to create relationship.'}), 400
-
-        # Commit the new relationship
-        db.session.add(relationship)
-        db.session.commit()
+        service = FamilyService(db=db.session)
+        family = service.get_family_by_id(family_id)
+        if not family or family.project_id != project_id:
+            return jsonify({'error': 'Family not found'}), 404
 
         return jsonify(
-            {'message': 'Relationship added successfully.'}), 201
+            {"data": FamilyOut.from_orm(family).model_dump()}), 200
+    except SQLAlchemyError as e:
+        current_app.logger.error(
+            f"DB error retrieving family {family_id}: {e}")
+        return jsonify({"error": "Database error"}), 500
 
+
+@api_families_bp.route('/', methods=['POST'])
+@jwt_required()
+def create_family():
+    """Create a new family."""
+    current_user_id = get_jwt_identity()
+    project_id = request.args.get('project_id', type=int)
+    if not project_id:
+        return jsonify({'error': 'project_id is required'}), 400
+
+    get_project_or_404(current_user_id, project_id)
+    try:
+        data = request.get_json() or {}
+        family_data = FamilyCreate(**data)
+        service = FamilyService(db=db.session)
+        new_family = service.create_family(project_id=project_id,
+                                           **family_data.dict())
+        return jsonify({
+            "message": "Family created successfully",
+            "data": FamilyOut.from_orm(new_family).model_dump()
+        }), 201
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"DB error creating family: {e}")
+        return jsonify({"error": "Database error"}), 500
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f"Error creating family: {e}")
+        return jsonify({"error": "Invalid data"}), 400
+
+
+@api_families_bp.route('/<int:family_id>', methods=['PUT'])
+@jwt_required()
+def update_family(family_id):
+    """Update an existing family."""
+    current_user_id = get_jwt_identity()
+    project_id = request.args.get('project_id', type=int)
+    if not project_id:
+        return jsonify({'error': 'project_id is required'}), 400
+
+    get_project_or_404(current_user_id, project_id)
+    try:
+        service = FamilyService(db=db.session)
+        family = service.get_family_by_id(family_id)
+        if not family or family.project_id != project_id:
+            return jsonify({"error": "Family not found"}), 404
+
+        data = request.get_json() or {}
+        family_update = FamilyUpdate(**data)
+        updated_family = service.update_family(family_id,
+                                               **family_update.dict(
+                                                   exclude_unset=True))
+
+        return jsonify({"message": "Family updated successfully",
+                        "data": FamilyOut.from_orm(
+                            updated_family).model_dump()}), 200
+    except SQLAlchemyError as e:
+        db.session.rollback()
         current_app.logger.error(
-            f"Error adding relationship for individual {individual_id}: {e}")
-        return jsonify({
-                           'error': 'An error occurred while adding the relationship.'}), 500
+            f"DB error updating family {family_id}: {e}")
+        return jsonify({"error": "Database error"}), 500
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error updating family: {e}")
+        return jsonify({"error": "Invalid data"}), 400
+
+
+@api_families_bp.route('/<int:family_id>', methods=['DELETE'])
+@jwt_required()
+def delete_family(family_id):
+    """Delete a family."""
+    current_user_id = get_jwt_identity()
+    project_id = request.args.get('project_id', type=int)
+    if not project_id:
+        return jsonify({'error': 'project_id is required'}), 400
+
+    get_project_or_404(current_user_id, project_id)
+    try:
+        service = FamilyService(db=db.session)
+        deleted_family = service.delete_family(family_id)
+        if not deleted_family:
+            return jsonify({"error": "Family not found"}), 404
+
+        return jsonify(
+            {"message": "Family deleted successfully"}), 200
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(
+            f"DB error deleting family {family_id}: {e}")
+        return jsonify({"error": "Database error"}), 500

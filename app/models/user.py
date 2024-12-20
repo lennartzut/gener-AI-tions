@@ -1,79 +1,53 @@
-"""
-User model for managing user account details and authentication.
-"""
+from sqlalchemy.sql import func
+from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.orm import relationship
+from app.models.base import Base
+from app.utils.password_utils import hash_password, verify_password
 
-from datetime import datetime, timezone
-from app.extensions import db, bcrypt
 
-
-class User(db.Model):
-    """
-    Represents a user in the application.
-    """
-
+class User(Base):
     __tablename__ = 'users'
 
-    # Columns
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(
-        db.String(50), unique=True, nullable=False, index=True
-    )
-    email = db.Column(
-        db.String(150), unique=True, nullable=False, index=True
-    )
-    password_hash = db.Column(db.String(256), nullable=False)
-    created_at = db.Column(
-        db.DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        nullable=False
-    )
-    updated_at = db.Column(
-        db.DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
-        nullable=False
-    )
+    id = Column(Integer, primary_key=True)
+    username = Column(String(50), nullable=False, unique=True,
+                      index=True)
+    email = Column(String(120), nullable=False, unique=True,
+                   index=True)
+    password_hash = Column(String(128), nullable=False)
+    created_at = Column(DateTime(timezone=True),
+                        server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True),
+                        server_default=func.now(),
+                        onupdate=func.now(), nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
-    # Relationships
-    individuals = db.relationship(
-        'Individual',
-        back_populates='user',
-        cascade='all, delete-orphan'
-    )
+    individuals = relationship('Individual', back_populates='user',
+                               cascade='all, delete-orphan')
+    projects = relationship('Project', back_populates='user',
+                            cascade='all, delete-orphan')
+    custom_fields = relationship('CustomField',
+                                 back_populates='user',
+                                 cascade='all, delete-orphan')
+    custom_enums = relationship('CustomEnum', back_populates='user',
+                                cascade='all, delete-orphan')
 
-    # Methods
-    def set_password(self, password: str) -> None:
+    def set_password(self, password: str):
         """
-        Hashes the password using Flask-Bcrypt and stores it.
-
-        Args:
-            password (str): The plaintext password to hash.
+        Hash and set the user's password.
         """
-        self.password_hash = bcrypt.generate_password_hash(
-            password
-        ).decode('utf-8')
+        self.password_hash = hash_password(password)
 
     def check_password(self, password: str) -> bool:
         """
-        Verifies the provided password against the stored hash.
-
-        Args:
-            password (str): The plaintext password to verify.
-
-        Returns:
-            bool: True if the password matches, False otherwise.
+        Verify a given password against the stored password hash.
         """
-        return bcrypt.check_password_hash(self.password_hash,
-                                          password)
+        return verify_password(password, self.password_hash)
 
-    def __repr__(self) -> str:
+    def soft_delete(self):
         """
-        Provides a string representation of the User instance.
+        Mark the user as deleted by setting deleted_at timestamp.
+        """
+        self.deleted_at = func.now()
 
-        Returns:
-            str: A string describing the user.
-        """
-        return (
-            f"<User(id={self.id}, username='{self.username}', "
-            f"email='{self.email}')>"
-        )
+    def __repr__(self):
+        return f"<User(id={self.id}, email='{self.email}', username='{self.username}')>"

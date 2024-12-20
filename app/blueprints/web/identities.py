@@ -1,5 +1,5 @@
 from flask import Blueprint, request, redirect, url_for, flash, \
-    render_template, current_app as app
+    render_template
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.identity import Identity
 from app.models.individual import Individual
@@ -7,11 +7,9 @@ from app.models.enums import GenderEnum
 from app.extensions import db
 from sqlalchemy.exc import SQLAlchemyError
 
-web_identities_bp = Blueprint('web_identities_bp', __name__,
-                              template_folder='templates/identities')
+web_identities_bp = Blueprint('web_identities_bp', __name__)
 
 
-# Add Identity
 @web_identities_bp.route('/<int:individual_id>/add-identity',
                          methods=['GET', 'POST'])
 @jwt_required()
@@ -39,28 +37,27 @@ def add_identity(individual_id):
                 first_name=first_name,
                 last_name=last_name,
                 gender=GenderEnum(gender),
-                valid_from=valid_from,
-                valid_until=valid_until
+                valid_from=valid_from or None,
+                valid_until=valid_until or None
             )
             db.session.add(new_identity)
             db.session.commit()
             flash('Identity added successfully.', 'success')
         except ValueError:
-            flash(f"Invalid gender value: {gender}", 'danger')
-        except SQLAlchemyError as e:
             db.session.rollback()
-            app.logger.error(f"Error adding identity: {e}")
-            flash('An error occurred while adding the identity.',
-                  'danger')
+            flash("Invalid gender value.", 'danger')
+        except SQLAlchemyError:
+            db.session.rollback()
+            flash('Error adding identity.', 'danger')
 
-        return redirect(url_for('web_family_card_bp.get_family_card',
+        return redirect(url_for('web_individuals_bp.get_individuals',
+                                project_id=individual.project_id,
                                 individual_id=individual_id))
 
-    return render_template('add_identity.html',
+    return render_template('partials/forms/add_identity_form.html',
                            GenderEnum=GenderEnum)
 
 
-# Update Identity
 @web_identities_bp.route(
     '/<int:individual_id>/update-identity/<int:identity_id>',
     methods=['GET', 'POST'])
@@ -68,9 +65,8 @@ def add_identity(individual_id):
 def update_identity(individual_id, identity_id):
     current_user_id = get_jwt_identity()
     identity = Identity.query.filter_by(id=identity_id).join(
-        Individual).filter(
-        Individual.id == individual_id,
-        Individual.user_id == current_user_id).first_or_404()
+        Individual).filter(Individual.id == individual_id,
+                           Individual.user_id == current_user_id).first_or_404()
 
     if request.method == 'POST':
         first_name = request.form.get('first_name')
@@ -83,28 +79,28 @@ def update_identity(individual_id, identity_id):
             identity.first_name = first_name
             identity.last_name = last_name
             identity.gender = GenderEnum(gender)
-            identity.valid_from = valid_from
-            identity.valid_until = valid_until
+            identity.valid_from = valid_from or None
+            identity.valid_until = valid_until or None
 
             db.session.commit()
             flash('Identity updated successfully.', 'success')
         except ValueError:
             db.session.rollback()
-            flash(f"Invalid gender value: {gender}", 'danger')
-        except SQLAlchemyError as e:
+            flash("Invalid gender value.", 'danger')
+        except SQLAlchemyError:
             db.session.rollback()
-            app.logger.error(f"Error updating identity: {e}")
-            flash('An error occurred while updating the identity.',
-                  'danger')
+            flash('Error updating identity.', 'danger')
 
-        return redirect(url_for('web_family_card_bp.get_family_card',
+        return redirect(url_for('web_individuals_bp.get_individuals',
+                                project_id=identity.individual.project_id,
                                 individual_id=individual_id))
 
-    return render_template('update_identity.html', identity=identity,
+    return render_template(
+        'partials/forms/update_identity_modal.html',
+                           identity=identity,
                            GenderEnum=GenderEnum)
 
 
-# Delete Identity
 @web_identities_bp.route(
     '/<int:individual_id>/delete-identity/<int:identity_id>',
     methods=['POST'])
@@ -112,19 +108,17 @@ def update_identity(individual_id, identity_id):
 def delete_identity(individual_id, identity_id):
     current_user_id = get_jwt_identity()
     identity = Identity.query.filter_by(id=identity_id).join(
-        Individual).filter(
-        Individual.id == individual_id,
-        Individual.user_id == current_user_id).first_or_404()
+        Individual).filter(Individual.id == individual_id,
+                           Individual.user_id == current_user_id).first_or_404()
 
     try:
         db.session.delete(identity)
         db.session.commit()
         flash('Identity deleted successfully.', 'success')
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         db.session.rollback()
-        app.logger.error(f"Error deleting identity: {e}")
-        flash('An error occurred while deleting the identity.',
-              'danger')
+        flash('Error deleting identity.', 'danger')
 
-    return redirect(url_for('web_family_card_bp.get_family_card',
+    return redirect(url_for('web_individuals_bp.get_individuals',
+                            project_id=identity.individual.project_id,
                             individual_id=individual_id))

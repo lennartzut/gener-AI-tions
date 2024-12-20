@@ -1,0 +1,60 @@
+<!-- File: templates/partials/modals/edit_partner_modal.html -->
+
+<div class="modal fade" id="editPartnerModal" tabindex="-1" aria-labelledby="editPartnerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editPartnerForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editPartnerModalLabel">Edit Partner Relationship</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editRelationshipId" name="relationship_id">
+                    <input type="hidden" id="editFamilyId" name="family_id">
+
+                    <!-- Union Details -->
+                    <div class="mb-3">
+                        <label for="editUnionType" class="form-label">Union Type</label>
+                        <select id="editUnionType" name="union_type" class="form-select" required>
+                            <option value="" disabled selected>Select Union Type</option>
+                            <option value="Marriage">Marriage</option>
+                            <option value="Civil Partnership">Civil Partnership</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editStartDate" class="form-label">Start Date</label>
+                        <input type="date" id="editStartDate" name="start_date" class="form-control">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editEndDate" class="form-label">End Date</label>
+                        <input type="date" id="editEndDate" name="end_date" class="form-control">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editDescription" class="form-label">Description</label>
+                        <textarea id="editDescription" name="description" class="form-control" maxlength="500"></textarea>
+                    </div>
+
+                    <!-- Relationship Details -->
+                    <div class="mb-3">
+                        <label for="editRelationshipType" class="form-label">Relationship Type</label>
+                        <select id="editRelationshipType" name="relationship_type" class="form-select" required>
+                            <option value="" disabled selected>Select Relationship Type</option>
+                            <option value="Biological Parent">Biological Parent</option>
+                            <option value="Adoptive Parent">Adoptive Parent</option>
+                            <option value="Guardian">Guardian</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

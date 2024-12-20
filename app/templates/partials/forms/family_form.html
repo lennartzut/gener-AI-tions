@@ -1,0 +1,46 @@
+<!-- family_form.html -->
+<form id="familyForm" method="POST" action="{{ url_for('api_families_bp.update_family', family_id=family.id, project_id=project_id) }}">
+    {{ form.hidden_tag() }}
+
+    <!-- Union Details -->
+    <div class="mb-3">
+        <label for="unionType" class="form-label">Union Type</label>
+        <select id="unionType" name="union_type" class="form-select">
+            <option value="" disabled selected>Select Union Type</option>
+            <option value="Marriage" {% if family.union_type == 'Marriage' %}selected{% endif %}>Marriage</option>
+            <option value="Civil Partnership" {% if family.union_type == 'Civil Partnership' %}selected{% endif %}>Civil Partnership</option>
+            <option value="Other" {% if family.union_type == 'Other' %}selected{% endif %}>Other</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label for="startDate" class="form-label">Start Date</label>
+        <input type="date" id="startDate" name="start_date" class="form-control" value="{{ family.start_date }}">
+    </div>
+
+    <div class="mb-3">
+        <label for="endDate" class="form-label">End Date</label>
+        <input type="date" id="endDate" name="end_date" class="form-control" value="{{ family.end_date }}">
+    </div>
+
+    <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <textarea id="description" name="description" class="form-control" maxlength="500">{{ family.description }}</textarea>
+    </div>
+
+    <!-- Relationship Details -->
+    <div class="mb-3">
+        <label for="relationshipType" class="form-label">Relationship Type</label>
+        <select id="relationshipType" name="relationship_type" class="form-select">
+            <option value="" disabled selected>Select Relationship Type</option>
+            <option value="Biological Parent" {% if family.relationship_type == 'Biological Parent' %}selected{% endif %}>Biological Parent</option>
+            <option value="Adoptive Parent" {% if family.relationship_type == 'Adoptive Parent' %}selected{% endif %}>Adoptive Parent</option>
+            <option value="Guardian" {% if family.relationship_type == 'Guardian' %}selected{% endif %}>Guardian</option>
+            <option value="Other" {% if family.relationship_type == 'Other' %}selected{% endif %}>Other</option>
+        </select>
+    </div>
+
+    <!-- Submit Button -->
+    <button type="submit" class="btn btn-primary">Save</button>
+    <button type="button" class="btn btn-secondary" onclick="window.history.back()">Cancel</button>
+</form>

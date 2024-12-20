@@ -1,8 +1,8 @@
 from pydantic import BaseModel, Field, ConfigDict, model_validator
-from typing import Optional
+from typing import Optional, List
 from datetime import date
 from app.models.enums import LegalRelationshipEnum
-from app.schemas.user_schema import UserOut
+from app.schemas.individual_schema import IndividualOut
 
 
 class FamilyBase(BaseModel):
@@ -41,22 +41,11 @@ class FamilyUpdate(FamilyBase):
 
 class FamilyOut(FamilyBase):
     id: int = Field(..., description="ID of the family")
-    partner1: UserOut = Field(...,
-                              description="First partner in the family")
-    partner2: Optional[UserOut] = Field(None,
-                                        description="Second partner in the family")
-    duration: Optional[int] = Field(None,
-                                    description="Duration of the union in years")
+    partner1: IndividualOut = Field(...,
+                                    description="First partner in the family")
+    partner2: Optional[IndividualOut] = Field(None,
+                                              description="Second partner in the family")
+    children_ids: List[int] = Field(default_factory=list,
+                                    description="List of child IDs in the family")
 
-    @property
-    def duration(self):
-        if self.union_date and self.dissolution_date:
-            return (
-                        self.dissolution_date - self.union_date).days // 365
-        elif self.union_date:
-            return (date.today() - self.union_date).days // 365
-        return None
-
-
-# Resolve forward references
-FamilyOut.model_rebuild()
+    model_config = ConfigDict(from_attributes=True)

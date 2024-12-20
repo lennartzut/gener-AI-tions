@@ -1,0 +1,22 @@
+<div class="modal fade" id="addIdentityModal" tabindex="-1" aria-labelledby="addIdentityModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            {% if selected_individual %}
+            <form method="POST" action="{{ url_for('web_identities_bp.add_identity', individual_id=selected_individual.id, project_id=project_id) }}">
+            {% else %}
+            <form method="POST" action="#" onsubmit="alert('No individual selected');return false;">
+            {% endif %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addIdentityModalLabel">Add Identity</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {% include "partials/forms/add_identity_form.html" %}
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" {% if not selected_individual %}disabled{% endif %}>Add Identity</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

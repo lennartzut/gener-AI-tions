@@ -1,23 +1,13 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, redirect, url_for
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
-web_main_bp = Blueprint(
-    'web_main_bp',
-    __name__,
-    template_folder='templates/main'
-)
+web_main_bp = Blueprint('web_main_bp', __name__)
 
 
 @web_main_bp.route('/', methods=['GET'])
-def home():
-    """
-    Renders the home page.
-    """
-    return render_template('main.html')
-
-
-@web_main_bp.route('/templates/partials/forms/identity_form.html')
-def identity_form():
-    """
-    Serves the identity form partial template.
-    """
-    return render_template('partials/forms/identity_form.html')
+@jwt_required(optional=True)
+def main_landing():
+    current_user_id = get_jwt_identity()
+    if current_user_id:
+        return redirect(url_for('web_projects_bp.list_projects'))
+    return render_template('main/main_landing.html')

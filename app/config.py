@@ -13,17 +13,24 @@ class Config:
     """
     SECRET_KEY = os.getenv('SECRET_KEY') or secrets.token_urlsafe(32)
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
+    if not SQLALCHEMY_DATABASE_URI:
+        raise RuntimeError("DATABASE_URL is not set in .env file.")
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # JWT Configuration
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY') or secrets.token_urlsafe(32)
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
-    JWT_COOKIE_SECURE = os.getenv('JWT_COOKIE_SECURE', 'False').lower() == 'true'
+    JWT_COOKIE_SECURE = False
     JWT_TOKEN_LOCATION = ['cookies']
     JWT_ACCESS_COOKIE_PATH = '/'
     JWT_REFRESH_COOKIE_PATH = '/'
-    JWT_COOKIE_CSRF_PROTECT = os.getenv('JWT_COOKIE_CSRF_PROTECT', 'True').lower() == 'true'
+    JWT_COOKIE_CSRF_PROTECT = False
+
+    # CORS and Bcrypt
+    CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '*')
+    BCRYPT_LOG_ROUNDS = int(os.getenv('BCRYPT_LOG_ROUNDS', 12))
 
 
 class DevelopmentConfig(Config):
@@ -54,4 +61,18 @@ class ProductionConfig(Config):
     SQLALCHEMY_ECHO = False
     JWT_COOKIE_SECURE = True
     JWT_COOKIE_CSRF_PROTECT = True
-    SECRET_KEY = os.getenv('SECRET_KEY')
+    SECRET_KEY = os.getenv('SECRET_KEY')  # Use SECRET_KEY from env in production
+
+
+env_config = {
+    'development': DevelopmentConfig,
+    'testing': TestingConfig,
+    'production': ProductionConfig
+}
+
+
+def get_config(env: str):
+    """
+    Retrieve the appropriate configuration class for the given environment.
+    """
+    return env_config.get(env, DevelopmentConfig)

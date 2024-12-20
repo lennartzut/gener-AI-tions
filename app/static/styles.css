@@ -1,49 +1,97 @@
-/* styles.css */
-
-/* General Styles */
+/* Global Styles */
 body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: #212529;
     margin: 0;
-    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
-/* Navbar Styles */
-.navbar {
-    margin-bottom: 20px;
-}
-
-/* Container */
 .container {
     max-width: 960px;
 }
 
-/* Form Styles */
+/* Navbar */
+.navbar {
+    margin-bottom: 20px;
+}
+
+/* Footer sticky at the bottom */
+footer {
+    background-color: #f0f0f0;
+    padding: 1rem;
+    text-align: center;
+    font-size: 0.9rem;
+    border-top: 1px solid #ddd;
+    margin-top: auto;
+}
+
+/* Lists and Dropzones */
+.scrollable-list {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.list-group-item {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Dropzone Styles */
+.dropzone {
+    min-height: 100px;
+    background-color: #fff;
+    border: 2px dashed #ddd;
+    border-radius: 4px;
+    text-align: center;
+    padding: 1rem;
+    transition: background-color 0.3s;
+}
+
+.dropzone-hover {
+    background-color: #e9ecef;
+    border-color: #ccc;
+}
+
+/* Forms */
 .form-label {
     font-weight: bold;
 }
 
-/* List Group */
-.list-group-item {
-    cursor: pointer;
+/* Buttons */
+.btn-link {
+    padding: 0;
 }
 
-/* Suggestions Box */
-#suggestions,
-#searchSuggestions,
-#parentSuggestions,
-#partnerSuggestions {
+/* Suggestions */
+#searchSuggestions {
     max-height: 200px;
     overflow-y: auto;
 }
 
-/* Modal Styles */
-.modal-header,
-.modal-footer {
+/* Modal Headers */
+.modal-header, .modal-footer {
     background-color: #f8f9fa;
 }
 
-/* Button Styles */
-.btn-link {
-    padding: 0;
+/* Checkboxes in select mode */
+.form-check-input {
+    margin-top: 0.3rem;
+    margin-right: 0.5rem;
+}
+
+/* Spacing */
+.mb-3 {
+    margin-bottom: 1rem !important;
+}
+
+.btn-secondary {
+    margin-left: 1rem;
 }
 
 /* Identity Section */
@@ -54,11 +102,4 @@ body {
 /* Collapse Sections */
 .collapse {
     margin-top: 15px;
-}
-
-/* Footer Styles */
-.footer {
-    background-color: #343a40;
-    color: white;
-    padding: 10px 0;
 }

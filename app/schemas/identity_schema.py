@@ -1,34 +1,29 @@
-from pydantic import BaseModel, Field, ConfigDict, constr, \
-    model_validator
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing import Optional
 from datetime import date
 from app.models.enums import GenderEnum
 
 
 class IdentityBase(BaseModel):
-    first_name: Optional[
-        constr(min_length=1, max_length=100)] = Field(None,
-                                                      description="First name of the individual")
-    last_name: Optional[
-        constr(min_length=1, max_length=100)] = Field(None,
-                                                      description="Last name of the individual")
-    gender: Optional[GenderEnum] = Field(None,
-                                         description="Gender of the individual")
+    first_name: str = Field(..., min_length=1, max_length=50,
+                            description="First name")
+    last_name: str = Field(..., min_length=1, max_length=50,
+                           description="Last name")
+    gender: GenderEnum = Field(...,
+                               description="Gender of the identity")
     valid_from: Optional[date] = Field(None,
                                        description="Start date of the identity's validity")
     valid_until: Optional[date] = Field(None,
                                         description="End date of the identity's validity")
 
-    model_config = ConfigDict(from_attributes=True)
-
-    @model_validator(mode='before')
-    def check_date_range(cls, values):
-        valid_from = values.get('valid_from')
-        valid_until = values.get('valid_until')
-        if valid_from and valid_until and valid_until < valid_from:
+    @model_validator(mode='after')
+    def validate_dates(self):
+        if self.valid_from and self.valid_until and self.valid_from > self.valid_until:
             raise ValueError(
-                "valid_until cannot be earlier than valid_from")
-        return values
+                "Valid from date cannot be after valid until date.")
+        return self
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class IdentityCreate(IdentityBase):
