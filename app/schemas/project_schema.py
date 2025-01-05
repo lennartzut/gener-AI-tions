@@ -1,42 +1,49 @@
-from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from typing import Optional, Dict
 
+from pydantic import BaseModel, Field, ConfigDict
+
 
 class ProjectBase(BaseModel):
+    """
+    Base schema for a project, including common fields.
+    """
     name: str = Field(..., description="Name of the project")
+
     model_config = ConfigDict(from_attributes=True)
 
 
 class ProjectCreate(ProjectBase):
+    """
+    Schema for creating a new project.
+    """
     pass
 
 
 class ProjectUpdate(BaseModel):
+    """
+    Schema for updating an existing project.
+    """
     name: Optional[str] = Field(None,
                                 description="Updated name of the project")
+
     model_config = ConfigDict(from_attributes=True)
 
 
 class ProjectOut(ProjectBase):
-    id: int = Field(..., description="ID of the project")
+    """
+    Schema for returning project data.
+    """
+    id: int = Field(..., description="The unique ID of the project")
     user_id: int = Field(...,
-                         description="ID of the user who owns this project")
-    created_at: datetime = Field(..., description="Creation time")
-    updated_at: datetime = Field(..., description="Last update time")
-    deleted_at: Optional[datetime] = Field(None,
-                                           description="Soft deletion timestamp")
-    entity_counts: Optional[Dict[str, int]] = Field(None,
-                                                    description="Count of related entities")
+                         description="The unique ID of the user who owns the project")
+    created_at: datetime = Field(...,
+                                 description="The timestamp when the project was created")
+    updated_at: datetime = Field(...,
+                                 description="The timestamp when the project was last updated")
+    entity_counts: Optional[Dict[str, int]] = Field(
+        None,
+        description="Counts of related entities, such as individuals and relationships"
+    )
 
-    model_config = ConfigDict(from_attributes=True)
-
-
-class ProjectWithEntities(ProjectOut):
-    individuals: Optional[int] = Field(None,
-                                       description="Count of individuals")
-    families: Optional[int] = Field(None,
-                                    description="Count of families")
-    relationships: Optional[int] = Field(None,
-                                         description="Count of relationships")
     model_config = ConfigDict(from_attributes=True)
