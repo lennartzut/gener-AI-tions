@@ -1,50 +1,52 @@
-from flask_sqlalchemy import SQLAlchemy
+from flask import redirect, url_for
 from flask_jwt_extended import JWTManager
-from flask_migrate import Migrate
 from flask_cors import CORS
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
-from app.models.base import Base
+import os
 
-# Instantiate Flask extensions
-db = SQLAlchemy(model_class=Base)
+from app.models.base_model import Base
+from app.config import get_config
+
 jwt = JWTManager()
-migrate = Migrate()
 cors = CORS()
 
-# Global variables for direct SQLAlchemy usage without Flask
 engine = None
 SessionLocal = scoped_session(sessionmaker())
 
 
 def initialize_extensions(app):
     """
-    Initialize and configure Flask and SQLAlchemy-related extensions.
-    Sets up the SQLAlchemy engine, session, JWT, migrate, and CORS.
+    Initialize and configure all extensions:
+    - SQLAlchemy (engine, session)
+    - Flask-JWT-Extended
+    - Flask-CORS
     """
     global engine, SessionLocal
 
-    app.logger.debug("Initializing Flask extensions...")
+    app.logger.debug("Initializing SQLAlchemy extensions...")
 
-    # Create the SQLAlchemy engine manually to allow flexibility
+    # Create the SQLAlchemy engine
     engine = create_engine(
         app.config["SQLALCHEMY_DATABASE_URI"],
         echo=app.config.get("SQLALCHEMY_ECHO", False),
+        pool_size=int(app.config.get("SQLALCHEMY_POOL_SIZE", 5)),
+        max_overflow=int(app.config.get("SQLALCHEMY_MAX_OVERFLOW", 10)),
     )
     app.logger.debug(f"Database engine created: {engine}")
 
-    # Configure scoped_session
     SessionLocal.configure(bind=engine)
-    app.extensions['engine'] = engine
-
-    # Initialize Flask-SQLAlchemy, using the engine from above
-    # Since db is a SQLAlchemy instance tied to app, db.init_app sets up the session
-    db.init_app(app)
-    migrate.init_app(app, db)
+    app.extensions["engine"] = engine
 
     # Initialize JWT
     jwt.init_app(app)
 
     # Initialize CORS
-    cors.init_app(app, resources={r"/*": {"origins": app.config["CORS_ALLOWED_ORIGINS"]}})
+    cors.init_app(app, resources={r"/*": {"origins": app.config.get("CORS_ALLOWED_ORIGINS", "*")}})
+
+    @jwt.expired_token_loader
+    def handle_expired_token(jwt_header, jwt_data):
+        app.logger.warning("Token expired; redirecting to login.")
+        return redirect(url_for("web_auth_bp.login"))
+
     app.logger.debug("All extensions initialized.")

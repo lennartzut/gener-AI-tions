@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 from datetime import timedelta
 import secrets
 
-# Load environment variables from a .env file
 load_dotenv()
 
 
@@ -18,7 +17,6 @@ class Config:
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # JWT Configuration
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY') or secrets.token_urlsafe(32)
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
@@ -28,9 +26,15 @@ class Config:
     JWT_REFRESH_COOKIE_PATH = '/'
     JWT_COOKIE_CSRF_PROTECT = False
 
-    # CORS and Bcrypt
-    CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '*')
+    CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS',
+                                     'http://localhost:3000')
     BCRYPT_LOG_ROUNDS = int(os.getenv('BCRYPT_LOG_ROUNDS', 12))
+
+    SQLALCHEMY_POOL_SIZE = int(os.getenv('SQLALCHEMY_POOL_SIZE', 5))
+    SQLALCHEMY_MAX_OVERFLOW = int(
+        os.getenv('SQLALCHEMY_MAX_OVERFLOW', 10))
+
+    WTF_CSRF_ENABLED = False
 
 
 class DevelopmentConfig(Config):
@@ -48,7 +52,8 @@ class TestingConfig(Config):
     """
     TESTING = True
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL', 'sqlite:///:memory:')
+    SQLALCHEMY_DATABASE_URI = os.getenv('TEST_DATABASE_URL',
+                                        'sqlite:///:memory:')
     JWT_COOKIE_CSRF_PROTECT = False
     SQLALCHEMY_ECHO = False
 
@@ -61,7 +66,7 @@ class ProductionConfig(Config):
     SQLALCHEMY_ECHO = False
     JWT_COOKIE_SECURE = True
     JWT_COOKIE_CSRF_PROTECT = True
-    SECRET_KEY = os.getenv('SECRET_KEY')  # Use SECRET_KEY from env in production
+    SECRET_KEY = os.getenv('SECRET_KEY')
 
 
 env_config = {
