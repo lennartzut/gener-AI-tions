@@ -1,104 +1,117 @@
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
+    set_access_cookies,
+    set_refresh_cookies,
     jwt_required,
+    unset_jwt_cookies,
     get_jwt_identity
 )
-from flask_pydantic import validate
 from sqlalchemy.exc import SQLAlchemyError
-from app.services.user_service import UserService
-from app.schemas.user_schema import UserLogin, UserCreate
-from app.extensions import db
+from werkzeug.exceptions import BadRequest
+
+from app.extensions import SessionLocal
+from app.schemas.user_schema import UserCreate, UserLogin
+from app.services.user_service import UserService, \
+    UserAlreadyExistsError
 
 api_auth_bp = Blueprint('api_auth_bp', __name__)
 
 
-@api_auth_bp.route('/login', methods=['POST'])
-@validate()
-def login():
-    """User login endpoint."""
-    try:
-        data = request.get_json() or {}
-        login_data = UserLogin(**data)
-
-        user_service = UserService(db=db.session)
-        user = user_service.authenticate_user(login_data.email,
-                                              login_data.password)
-        if not user:
-            return jsonify(
-                {'error': 'Invalid email or password'}), 401
-
-        access_token = create_access_token(identity=str(user.id))
-        refresh_token = create_refresh_token(identity=str(user.id))
-
-        return jsonify({
-            'message': 'Login successful',
-            'access_token': access_token,
-            'refresh_token': refresh_token
-        }), 200
-    except (ValueError, TypeError) as e:
-        current_app.logger.error(
-            f"Validation error during login: {e}")
-        return jsonify({'error': 'Invalid login data'}), 400
-    except Exception as e:
-        current_app.logger.error(
-            f"Unexpected error during login: {e}")
-        return jsonify({'error': 'Unexpected server error'}), 500
-
-
 @api_auth_bp.route('/signup', methods=['POST'])
-@validate()
 def signup():
-    """User signup endpoint."""
+    data = request.get_json()
+    if not data:
+        raise BadRequest("No input data provided.")
+
     try:
-        data = request.get_json() or {}
-        user_data = UserCreate(**data)
+        user_create = UserCreate.model_validate(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
-        user_service = UserService(db=db.session)
-        if user_service.email_or_username_exists(user_data.email,
-                                                 user_data.username):
-            return jsonify(
-                {'error': 'Email or username already in use'}), 409
-
-        user_service.create_user(username=user_data.username,
-                                 email=user_data.email,
-                                 password=user_data.password)
-
-        return jsonify(
-            {'message': 'User signed up successfully'}), 201
+    try:
+        with SessionLocal() as session:
+            service = UserService(db=session)
+            new_user = service.create_user(user_create=user_create)
+            if new_user:
+                return jsonify({
+                    "message": "Signup successful! Please log in."
+                }), 201
+            else:
+                return jsonify({
+                    "error": "Email or username already in use."
+                }), 409
+    except UserAlreadyExistsError as e:
+        return jsonify({"error": str(e)}), 409
     except SQLAlchemyError as e:
-        db.session.rollback()
-        current_app.logger.error(
-            f"Database error during signup: {e}")
-        return jsonify({'error': 'Database error occurred'}), 500
-    except ValueError as ve:
-        current_app.logger.error(f"Signup validation error: {ve}")
-        return jsonify({'error': str(ve)}), 400
+        current_app.logger.error(f"Signup DB error: {e}")
+        return jsonify({"error": "Database error"}), 500
     except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(f"Unexpected signup error: {e}")
-        return jsonify({'error': 'Unexpected error occurred'}), 500
+        current_app.logger.error(f"Signup error: {e}")
+        return jsonify({"error": "An error occurred."}), 500
 
 
-@api_auth_bp.route('/refresh', methods=['POST'])
-@jwt_required(refresh=True)
-@validate()
-def refresh():
-    """Refresh access token using a valid refresh token."""
+@api_auth_bp.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    if not data:
+        raise BadRequest("No input data provided.")
+
     try:
-        current_user_id = get_jwt_identity()
-        access_token = create_access_token(identity=current_user_id)
-        return jsonify({'access_token': access_token,
-                        'message': 'Token refreshed successfully'}), 200
+        user_login = UserLogin.model_validate(data)
     except Exception as e:
-        current_app.logger.error(f"Token refresh error: {e}")
-        return jsonify({'error': 'Unable to refresh token'}), 500
+        return jsonify({"error": str(e)}), 400
+
+    try:
+        with SessionLocal() as session:
+            service = UserService(db=session)
+            user = service.authenticate_user(
+                email=user_login.email,
+                password=user_login.password
+            )
+            if user and user.id:
+                user_id_str = str(user.id)
+                access_token = create_access_token(
+                    identity=user_id_str)
+                refresh_token = create_refresh_token(
+                    identity=user_id_str)
+                response = jsonify({"message": "Login successful!"})
+                set_access_cookies(response, access_token)
+                set_refresh_cookies(response, refresh_token)
+                return response, 200
+            else:
+                return jsonify(
+                    {"error": "Invalid email or password."}), 401
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Login DB error: {e}")
+        return jsonify({"error": "Database error"}), 500
+    except Exception as e:
+        current_app.logger.error(f"Login error: {e}")
+        return jsonify({"error": "Unexpected error occurred"}), 500
 
 
 @api_auth_bp.route('/logout', methods=['POST'])
 @jwt_required()
-@validate()
 def logout():
-    """Logout user by client-side token removal."""
-    return jsonify({'message': 'Logout successful'}), 200
+    response = jsonify({"message": "Logged out successfully."})
+    unset_jwt_cookies(response)
+    return response, 200
+
+
+@api_auth_bp.route('/refresh', methods=['POST'])
+@jwt_required(refresh=True)
+def refresh():
+    try:
+        user_id = get_jwt_identity()
+        if not user_id or not user_id.strip():
+            return jsonify(
+                {"error": "No user identity in token."}), 401
+        access_token = create_access_token(identity=user_id)
+        response = jsonify(
+            {"message": "Token refreshed successfully."})
+        set_access_cookies(response, access_token)
+        return response, 200
+    except Exception as e:
+        current_app.logger.error(f"Token refresh error: {e}")
+        return jsonify({"error": "An error occurred."}), 500
