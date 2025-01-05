@@ -1,57 +1,105 @@
+import logging
+from typing import List, Optional
+
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
-from typing import Optional, List
-from app.models.project import Project
+
+from app.models.project_model import Project
+from app.schemas.project_schema import ProjectCreate, ProjectUpdate
+
+logger = logging.getLogger(__name__)
 
 
 class ProjectService:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_project(self, user_id: int, name: str) -> Project:
-        """Creates a new project."""
-        new_project = Project(user_id=user_id, name=name)
-        self.db.add(new_project)
-        self.db.commit()
-        self.db.refresh(new_project)
-        return new_project
-
-    def get_project_by_id(self, project_id: int) -> Optional[
-        Project]:
-        """Fetches a project by its ID."""
-        return self.db.query(Project).filter(
-            Project.id == project_id).first()
-
     def get_projects_by_user(self, user_id: int) -> List[Project]:
-        """Fetches all projects for a given user."""
-        return (self.db.query(Project)
-                .filter(Project.user_id == user_id,
-                        Project.deleted_at.is_(None))
-                .all())
+        """
+        Fetches all projects belonging to a specific user.
+        """
+        try:
+            projects = self.db.query(Project).filter(Project.user_id == user_id).all()
+            return projects
+        except SQLAlchemyError as e:
+            logger.error(f"Error retrieving projects for user {user_id}: {e}")
+            return []
 
-    def update_project(self, project_id: int, name: str) -> Optional[
-        Project]:
-        """Updates a project's name."""
-        project = self.get_project_by_id(project_id)
-        if project and project.deleted_at is None:
-            project.name = name
+    def create_project(
+        self, user_id: int, project_create: ProjectCreate
+    ) -> Optional[Project]:
+        """
+        Creates a new project for a user.
+        """
+        try:
+            new_project = Project(
+                user_id=user_id,
+                name=project_create.name,
+            )
+            self.db.add(new_project)
+            self.db.commit()
+            self.db.refresh(new_project)
+            return new_project
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            logger.error(f"Error creating project for user {user_id}: {e}")
+            return None
+
+    def get_project_by_id(self, project_id: int) -> Optional[Project]:
+        """
+        Fetches a specific project by its ID.
+        """
+        try:
+            project = self.db.query(Project).filter(Project.id == project_id).first()
+            return project
+        except SQLAlchemyError as e:
+            logger.error(f"Error retrieving project by ID {project_id}: {e}")
+            return None
+
+    def update_project(
+        self, project_id: int, user_id: int, project_update: ProjectUpdate
+    ) -> Optional[Project]:
+        """
+        Updates an existing project for a user.
+        """
+        try:
+            project = self.db.query(Project).filter(
+                Project.id == project_id, Project.user_id == user_id
+            ).first()
+            if not project:
+                raise ValueError(f"Project {project_id} not found for user {user_id}.")
+
+            if project_update.name:
+                project.name = project_update.name
+
             self.db.commit()
             self.db.refresh(project)
             return project
-        return None
+        except ValueError as e:
+            logger.warning(f"Validation error while updating project: {e}")
+            return None
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            logger.error(f"Error updating project for user {user_id}: {e}")
+            return None
 
-    def soft_delete_project(self, project_id: int) -> Optional[
-        Project]:
-        """Soft deletes a project."""
-        project = self.get_project_by_id(project_id)
-        if project and project.deleted_at is None:
-            project.soft_delete()
+    def delete_project(self, project_id: int, user_id: int) -> bool:
+        """
+        Deletes a project by its ID.
+        """
+        try:
+            project = self.db.query(Project).filter(
+                Project.id == project_id, Project.user_id == user_id
+            ).first()
+            if not project:
+                logger.warning(f"Project {project_id} not found for user {user_id}.")
+                return False
+
+            self.db.delete(project)
             self.db.commit()
-            return project
-        return None
-
-    def count_project_entities(self, project_id: int):
-        """Counts related individuals, families, and relationships."""
-        project = self.get_project_by_id(project_id)
-        if project:
-            return project.count_related_entities()
-        return None
+            logger.info(f"Project deleted successfully: ID={project_id}")
+            return True
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            logger.error(f"Error deleting project {project_id}: {e}")
+            return False
