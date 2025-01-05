@@ -1,20 +1,17 @@
-from sqlalchemy.sql import func
-from sqlalchemy import (Column, Boolean, Integer, String, Date,
-                        DateTime, Enum,
-                        ForeignKey, CheckConstraint,
-                        UniqueConstraint)
-from sqlalchemy.orm import relationship
 from datetime import date
-from app.models.base import Base
-from app.models.enums import GenderEnum
+from sqlalchemy import Column, Boolean, Integer, String, Date, \
+    DateTime, Enum, ForeignKey, CheckConstraint, UniqueConstraint
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from app.models.base_model import Base
+from app.models.enums_model import GenderEnum
 
 
 class Identity(Base):
     __tablename__ = 'identities'
     __table_args__ = (
         UniqueConstraint('individual_id', 'valid_from',
-                         'valid_until',
-                         name='uix_identity_validity'),
+                         name='uix_identity_valid_from'),
         CheckConstraint(
             'valid_until IS NULL OR valid_until > valid_from',
             name='chk_validity_dates'),
@@ -37,21 +34,26 @@ class Identity(Base):
                         server_default=func.now(),
                         onupdate=func.now(), nullable=False)
 
+    # Relationships
     individual = relationship('Individual',
                               back_populates='identities')
 
-    def __repr__(self):
-        gender_val = self.gender.value if self.gender else 'None'
-        return f"<Identity(id={self.id}, first_name='{self.first_name}', last_name='{self.last_name}', gender='{gender_val}')>"
-
-    def full_name(self):
+    def full_name(self) -> str:
+        """Returns the full name of the identity."""
         names = [self.first_name, self.last_name]
-        return ' '.join(filter(None, names)).strip() or "Unnamed"
+        full_name = ' '.join(filter(None, names)).strip()
+        return full_name if full_name else "Unnamed"
 
-    def is_valid(self):
+    def is_valid(self) -> bool:
+        """Checks if the identity is valid based on the current date."""
         today = date.today()
-        if self.valid_from and today < self.valid_from:
-            return False
-        if self.valid_until and today > self.valid_until:
+        if (self.valid_from and today < self.valid_from) or (
+                self.valid_until and today > self.valid_until):
             return False
         return True
+
+    def __repr__(self) -> str:
+        return (
+            f"<Identity(id={self.id}, individual_id={self.individual_id}, "
+            f"first_name='{self.first_name}', last_name='{self.last_name}', gender='{self.gender}')>"
+        )

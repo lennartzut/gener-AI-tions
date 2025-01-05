@@ -1,7 +1,8 @@
-from sqlalchemy.sql import func
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship
-from app.models.base import Base
+from sqlalchemy.sql import func
+
+from app.models.base_model import Base
 from app.utils.password_utils import hash_password, verify_password
 
 
@@ -19,35 +20,20 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True),
                         server_default=func.now(),
                         onupdate=func.now(), nullable=False)
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
+    # Relationships
     individuals = relationship('Individual', back_populates='user',
                                cascade='all, delete-orphan')
     projects = relationship('Project', back_populates='user',
                             cascade='all, delete-orphan')
-    custom_fields = relationship('CustomField',
-                                 back_populates='user',
-                                 cascade='all, delete-orphan')
-    custom_enums = relationship('CustomEnum', back_populates='user',
-                                cascade='all, delete-orphan')
 
     def set_password(self, password: str):
-        """
-        Hash and set the user's password.
-        """
+        """Hashes and sets the user's password."""
         self.password_hash = hash_password(password)
 
     def check_password(self, password: str) -> bool:
-        """
-        Verify a given password against the stored password hash.
-        """
+        """Verifies a plaintext password against the hashed password."""
         return verify_password(password, self.password_hash)
-
-    def soft_delete(self):
-        """
-        Mark the user as deleted by setting deleted_at timestamp.
-        """
-        self.deleted_at = func.now()
 
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}', username='{self.username}')>"
