@@ -1,8 +1,11 @@
 from datetime import date
+
 from sqlalchemy import Column, Boolean, Integer, String, Date, \
-    DateTime, Enum, ForeignKey, CheckConstraint, UniqueConstraint
+    DateTime, \
+    Enum, ForeignKey, CheckConstraint, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
 from app.models.base_model import Base
 from app.models.enums_model import GenderEnum
 
@@ -14,7 +17,8 @@ class Identity(Base):
                          name='uix_identity_valid_from'),
         CheckConstraint(
             'valid_until IS NULL OR valid_until > valid_from',
-            name='chk_validity_dates'),
+            name='chk_validity_dates'
+        ),
     )
 
     id = Column(Integer, primary_key=True)

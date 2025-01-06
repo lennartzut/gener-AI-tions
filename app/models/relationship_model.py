@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Date, DateTime, \
     ForeignKey, CheckConstraint, Enum as SAEnum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
 from app.models.base_model import Base
 from app.models.enums_model import InitialRelationshipEnum, \
     HorizontalRelationshipTypeEnum, VerticalRelationshipTypeEnum
@@ -30,10 +31,12 @@ class Relationship(Base):
                                   nullable=False)
     relationship_detail_horizontal = Column(
         SAEnum(HorizontalRelationshipTypeEnum,
-               name='horizontal_relationship_enum'), nullable=True)
+               name='horizontal_relationship_enum'), nullable=True
+    )
     relationship_detail_vertical = Column(
         SAEnum(VerticalRelationshipTypeEnum,
-               name='vertical_relationship_enum'), nullable=True)
+               name='vertical_relationship_enum'), nullable=True
+    )
 
     union_date = Column(Date, nullable=True)
     union_place = Column(String(100), nullable=True)
@@ -48,19 +51,25 @@ class Relationship(Base):
 
     # Relationships
     project = relationship('Project', back_populates='relationships')
-    individual = relationship('Individual',
-                              foreign_keys=[individual_id],
-                              back_populates='relationships_as_individual',
-                              lazy='joined')
-    related = relationship('Individual', foreign_keys=[related_id],
-                           back_populates='relationships_as_related',
-                           lazy='joined')
+    individual = relationship(
+        'Individual',
+        foreign_keys=[individual_id],
+        back_populates='relationships_as_individual',
+        lazy='joined'
+    )
+    related = relationship(
+        'Individual',
+        foreign_keys=[related_id],
+        back_populates='relationships_as_related',
+        lazy='joined'
+    )
 
     def validate_relationship(self):
         """Validates the relationship to ensure consistency."""
         if self.individual_id == self.related_id:
             raise ValueError(
                 "An individual cannot have a relationship with themselves.")
+
         if self.initial_relationship == InitialRelationshipEnum.PARTNER:
             if not (self.union_date and self.union_place):
                 raise ValueError(
