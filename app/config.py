@@ -5,7 +5,6 @@ import secrets
 
 load_dotenv()
 
-
 class Config:
     """
     Base configuration with default settings.
@@ -18,55 +17,40 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY') or secrets.token_urlsafe(32)
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
-    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
-    JWT_COOKIE_SECURE = False
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(seconds=int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', 3600)))
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(seconds=int(os.getenv('JWT_REFRESH_TOKEN_EXPIRES', 604800)))
+    JWT_COOKIE_SECURE = os.getenv('JWT_COOKIE_SECURE', 'False').lower() == 'true'
     JWT_TOKEN_LOCATION = ['cookies']
     JWT_ACCESS_COOKIE_PATH = '/'
     JWT_REFRESH_COOKIE_PATH = '/'
-    JWT_COOKIE_CSRF_PROTECT = False
+    JWT_COOKIE_CSRF_PROTECT = os.getenv('JWT_COOKIE_CSRF_PROTECT', 'False').lower() == 'true'
 
-    CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS',
-                                     'http://localhost:3000')
+    CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000').split(',')
+
     BCRYPT_LOG_ROUNDS = int(os.getenv('BCRYPT_LOG_ROUNDS', 12))
-
     SQLALCHEMY_POOL_SIZE = int(os.getenv('SQLALCHEMY_POOL_SIZE', 5))
-    SQLALCHEMY_MAX_OVERFLOW = int(
-        os.getenv('SQLALCHEMY_MAX_OVERFLOW', 10))
+    SQLALCHEMY_MAX_OVERFLOW = int(os.getenv('SQLALCHEMY_MAX_OVERFLOW', 10))
 
     WTF_CSRF_ENABLED = False
 
 
 class DevelopmentConfig(Config):
-    """
-    Development-specific configurations.
-    """
     DEBUG = True
     SQLALCHEMY_ECHO = True
-    JWT_COOKIE_CSRF_PROTECT = False
 
 
 class TestingConfig(Config):
-    """
-    Testing-specific configurations.
-    """
     TESTING = True
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.getenv('TEST_DATABASE_URL',
-                                        'sqlite:///:memory:')
-    JWT_COOKIE_CSRF_PROTECT = False
+    SQLALCHEMY_DATABASE_URI = os.getenv('TEST_DATABASE_URL', 'sqlite:///:memory:')
     SQLALCHEMY_ECHO = False
 
 
 class ProductionConfig(Config):
-    """
-    Production-specific configurations.
-    """
     DEBUG = False
     SQLALCHEMY_ECHO = False
     JWT_COOKIE_SECURE = True
     JWT_COOKIE_CSRF_PROTECT = True
-    SECRET_KEY = os.getenv('SECRET_KEY')
 
 
 env_config = {
@@ -77,7 +61,4 @@ env_config = {
 
 
 def get_config(env: str):
-    """
-    Retrieve the appropriate configuration class for the given environment.
-    """
     return env_config.get(env, DevelopmentConfig)
