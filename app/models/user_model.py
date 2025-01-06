@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -15,6 +15,8 @@ class User(Base):
     email = Column(String(120), nullable=False, unique=True,
                    index=True)
     password_hash = Column(String(128), nullable=False)
+    is_admin = Column(Boolean, default=False,
+                      nullable=False)  # Nieuw veld
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True),
@@ -36,4 +38,4 @@ class User(Base):
         return verify_password(password, self.password_hash)
 
     def __repr__(self):
-        return f"<User(id={self.id}, email='{self.email}', username='{self.username}')>"
+        return f"<User(id={self.id}, email='{self.email}', username='{self.username}', is_admin={self.is_admin})>"

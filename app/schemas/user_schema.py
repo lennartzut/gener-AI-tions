@@ -66,9 +66,10 @@ class UserLogin(BaseModel):
 
 class UserOut(UserBase):
     """
-    Schema for returning user data, including related entity IDs.
+    Schema for returning user data, including related entity IDs and admin status.
     """
     id: int = Field(..., description="The unique ID of the user")
+    is_admin: bool = Field(..., description="Indicates if the user has admin privileges")  # Nieuw veld toegevoegd
     created_at: datetime = Field(...,
                                  description="The timestamp when the user was created")
     updated_at: datetime = Field(...,

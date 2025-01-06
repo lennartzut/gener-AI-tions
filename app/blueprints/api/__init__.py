@@ -1,3 +1,4 @@
+from .admin import api_admin_bp
 from .auth import api_auth_bp
 from .identities import api_identities_bp
 from .individuals import api_individuals_bp

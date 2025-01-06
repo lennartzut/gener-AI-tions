@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Optional, List
 
 from sqlalchemy import or_
 from sqlalchemy.exc import SQLAlchemyError
@@ -22,10 +22,7 @@ class UserService:
         """
         try:
             if self.email_or_username_exists(user_create.email, user_create.username):
-                logger.warning(
-                    f"User creation failed: Email '{user_create.email}' or Username '{user_create.username}' already in use."
-                )
-                raise UserAlreadyExistsError("Email or username already in use.")
+                raise UserAlreadyExistsError("Email or username already in use.", field="email or username")
 
             new_user = User(
                 username=user_create.username,
@@ -80,18 +77,16 @@ class UserService:
                 logger.warning(f"Update failed: User not found with ID={user_id}.")
                 return None
 
-            if user_update.username:
-                if user_update.username != user.username and self.email_or_username_exists(
-                    email=user.email, username=user_update.username
-                ):
-                    raise UserAlreadyExistsError("Username already in use.")
+            # Check for conflicting username
+            if user_update.username and user_update.username != user.username:
+                if self.db.query(User).filter(User.username == user_update.username, User.id != user_id).first():
+                    raise UserAlreadyExistsError("Username already in use.", field="username")
                 user.username = user_update.username
 
-            if user_update.email:
-                if user_update.email != user.email and self.email_or_username_exists(
-                    email=user_update.email, username=user.username
-                ):
-                    raise UserAlreadyExistsError("Email already in use.")
+            # Check for conflicting email
+            if user_update.email and user_update.email != user.email:
+                if self.db.query(User).filter(User.email == user_update.email, User.id != user_id).first():
+                    raise UserAlreadyExistsError("Email already in use.", field="email")
                 user.email = user_update.email
 
             if user_update.password:
@@ -101,9 +96,10 @@ class UserService:
             self.db.refresh(user)
             logger.info(f"User updated successfully: ID={user_id}")
             return user
+
         except UserAlreadyExistsError as e:
             self.db.rollback()
-            logger.warning(f"User update failed due to conflict: {e}")
+            logger.warning(f"User update failed due to conflict: {e.field}")
             return None
         except SQLAlchemyError as e:
             self.db.rollback()
@@ -143,3 +139,16 @@ class UserService:
         except SQLAlchemyError as e:
             logger.error(f"Error checking email/username existence: {e}")
             return False
+
+    def get_all_users(self) -> List[User]:
+        """
+        Haalt alle gebruikers op.
+        """
+        try:
+            users = self.db.query(User).all()
+            logger.info(
+                f"Retrieved all users successfully. Count: {len(users)}")
+            return users
+        except SQLAlchemyError as e:
+            logger.error(f"Error retrieving all users: {e}")
+            return []
