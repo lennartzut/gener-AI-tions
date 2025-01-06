@@ -104,14 +104,15 @@ def logout():
 def refresh():
     try:
         user_id = get_jwt_identity()
-        if not user_id or not user_id.strip():
-            return jsonify(
-                {"error": "No user identity in token."}), 401
-        access_token = create_access_token(identity=user_id)
-        response = jsonify(
-            {"message": "Token refreshed successfully."})
-        set_access_cookies(response, access_token)
+        if not user_id:
+            return jsonify({"error": "No user identity in token."}), 401
+
+        # Create a new access token
+        new_access_token = create_access_token(identity=user_id)
+        response = jsonify({"message": "Token refreshed successfully."})
+        set_access_cookies(response, new_access_token)
         return response, 200
+
     except Exception as e:
-        current_app.logger.error(f"Token refresh error: {e}")
-        return jsonify({"error": "An error occurred."}), 500
+        current_app.logger.error(f"Error refreshing token: {e}")
+        return jsonify({"error": "Token refresh failed."}), 500

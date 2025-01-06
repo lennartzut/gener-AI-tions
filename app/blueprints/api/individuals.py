@@ -159,7 +159,7 @@ def get_individual(individual_id):
         return jsonify({"error": "Individual not found."}), 404
 
 
-@api_individuals_bp.route('/<int:individual_id>', methods=['PUT'])
+@api_individuals_bp.route('/<int:individual_id>', methods=['PATCH'])
 @jwt_required()
 def update_individual(individual_id):
     """
@@ -188,13 +188,9 @@ def update_individual(individual_id):
             individual_update=individual_update
         )
         if updated_individual:
-            individual_data = IndividualOut.from_orm(updated_individual).dict()
-            individual_data['identities'] = [
-                IdentityOut.from_orm(identity).model_dump() for identity in updated_individual.identities
-            ]
             return jsonify({
                 "message": "Individual updated successfully.",
-                "data": individual_data
+                "data": IndividualOut.from_orm(updated_individual).model_dump()
             }), 200
         return jsonify({"error": "Failed to update individual."}), 400
 

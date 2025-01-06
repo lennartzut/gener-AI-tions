@@ -43,7 +43,7 @@ def create_identity():
         return jsonify({"error": "Failed to create identity."}), 400
 
 
-@api_identities_bp.route('/<int:identity_id>', methods=['PUT'])
+@api_identities_bp.route('/<int:identity_id>', methods=['PATCH'])
 @jwt_required()
 def update_identity(identity_id):
     """

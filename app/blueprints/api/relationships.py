@@ -77,9 +77,9 @@ def create_relationship():
             return jsonify({"error": "An unexpected error occurred."}), 500
 
 
-@api_relationships_bp.route('/<int:relationship_id>', methods=['PUT'])
+@api_relationships_bp.route('/', methods=['PATCH'])
 @jwt_required()
-def update_relationship(relationship_id):
+def update_relationship():
     """
     Update details of a specific relationship.
     """
@@ -95,6 +95,10 @@ def update_relationship(relationship_id):
         relationship_update = RelationshipUpdate.model_validate(data)
     except ValidationError as e:
         return jsonify({"error": e.errors()}), 400
+
+    relationship_id = data.get('relationship_id')
+    if not relationship_id:
+        return jsonify({"error": "relationship_id is required."}), 400
 
     with SessionLocal() as session:
         service = RelationshipService(session)
