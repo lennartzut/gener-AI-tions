@@ -105,3 +105,21 @@ def update_relationship(relationship_id):
                 "data": RelationshipOut.from_orm(updated_relationship).model_dump()
             }), 200
         return jsonify({"error": "Failed to update relationship."}), 400
+
+
+@api_relationships_bp.route('/<int:relationship_id>', methods=['DELETE'])
+@jwt_required()
+def delete_relationship(relationship_id):
+    """
+    Delete a specific relationship by its ID.
+    """
+    project_id = request.args.get('project_id', type=int)
+    if not project_id:
+        return jsonify({"error": "Project ID is required."}), 400
+
+    with SessionLocal() as session:
+        service = RelationshipService(session)
+        success = service.delete_relationship(relationship_id, project_id)
+        if success:
+            return jsonify({"message": "Relationship deleted successfully."}), 200
+        return jsonify({"error": "Failed to delete relationship."}), 400
