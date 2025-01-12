@@ -65,11 +65,10 @@ def initialize_extensions(app):
         app.logger.warning("Token has been revoked.")
         return jsonify({"error": "Token revoked. Please log in again."}), 401
 
-    # Voeg additional_claims_loader toe
     @jwt.additional_claims_loader
     def add_claims_to_jwt(identity):
         """
-        Voeg extra claims toe aan de JWT.
+        Adds extra claims to JWT.
         """
         try:
             user_id = int(identity)

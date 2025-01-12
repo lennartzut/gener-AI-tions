@@ -42,7 +42,7 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     TESTING = True
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.getenv('TEST_DATABASE_URL', 'sqlite:///:memory:')
+    SQLALCHEMY_DATABASE_URI = os.getenv('TEST_DATABASE_URL')
     SQLALCHEMY_ECHO = False
 
 

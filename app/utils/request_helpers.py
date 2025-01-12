@@ -1,6 +1,7 @@
 from flask_jwt_extended import get_jwt_identity
 from werkzeug.exceptions import Unauthorized
 
+
 def get_current_user_id_or_401() -> int:
     """
     Retrieve the current user's ID from the JWT or raise Unauthorized.

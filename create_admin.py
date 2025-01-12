@@ -6,7 +6,8 @@ from app.models.user_model import User
 
 def main():
     if len(sys.argv) != 4:
-        print("Usage: python create_admin.py <username> <email> <password>")
+        print("Usage: python3 create_admin.py <username> <email> "
+              "<password>")
         sys.exit(1)
 
     username = sys.argv[1]
