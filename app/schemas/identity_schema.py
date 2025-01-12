@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, ConfigDict
 
 from app.models.enums_model import GenderEnum
 from app.utils.validators_utils import ValidationUtils
@@ -26,20 +26,18 @@ class IdentityBase(BaseModel):
 
     @model_validator(mode='after')
     def validate_dates(cls,
-                       values: 'IdentityBase') -> 'IdentityBase':
+                       values: "IdentityBase") -> "IdentityBase":
         """
         Validates that `valid_from` is earlier than `valid_until`.
         """
         if values.valid_from and values.valid_until:
             ValidationUtils.validate_date_order(
-                values.valid_from,
-                values.valid_until,
+                values.valid_from, values.valid_until,
                 "Valid from date cannot be after valid until date."
             )
         return values
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class IdentityCreate(IdentityBase):
@@ -71,20 +69,18 @@ class IdentityUpdate(BaseModel):
 
     @model_validator(mode='after')
     def validate_dates(cls,
-                       values: 'IdentityUpdate') -> 'IdentityUpdate':
+                       values: "IdentityUpdate") -> "IdentityUpdate":
         """
         Validates that `valid_from` is earlier than `valid_until`.
         """
         if values.valid_from and values.valid_until:
             ValidationUtils.validate_date_order(
-                values.valid_from,
-                values.valid_until,
+                values.valid_from, values.valid_until,
                 "Valid from date cannot be after valid until date."
             )
         return values
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class IdentityOut(IdentityBase):
@@ -94,6 +90,9 @@ class IdentityOut(IdentityBase):
     id: int = Field(..., description="The unique ID of the identity")
     individual_id: int = Field(...,
                                description="The ID of the associated individual")
+    identity_number: int = Field(...,
+                        description="A unique number assigned to "
+                                    "the identity")
     is_primary: bool = Field(...,
                              description="Indicates if this is the primary identity")
     created_at: datetime = Field(...,
@@ -101,5 +100,13 @@ class IdentityOut(IdentityBase):
     updated_at: datetime = Field(...,
                                  description="The timestamp when this identity was last updated")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class IdentityIdOut(BaseModel):
+    """
+    Minimal schema that only includes the 'id' field from an Identity.
+    """
+    id: int = Field(..., description="The unique ID of the identity")
+
+    model_config = ConfigDict(from_attributes=True)

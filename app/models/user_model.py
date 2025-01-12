@@ -9,7 +9,7 @@ from app.utils.password_utils import hash_password, verify_password
 class User(Base):
     __tablename__ = 'users'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(50), nullable=False, unique=True,
                       index=True)
     email = Column(String(120), nullable=False, unique=True,

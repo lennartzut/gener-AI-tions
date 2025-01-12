@@ -1,6 +1,6 @@
 from sqlalchemy import (
     Column, Integer, String, Text, ForeignKey, Date, DateTime, func,
-    UniqueConstraint, Sequence, text
+    UniqueConstraint, Sequence
 )
 from sqlalchemy.orm import relationship
 
@@ -11,17 +11,17 @@ from app.models.enums_model import InitialRelationshipEnum
 class Individual(Base):
     __tablename__ = 'individuals'
     __table_args__ = (
-        UniqueConstraint('project_id', 'number',
-                         name='uix_project_number'),
+        UniqueConstraint('project_id', 'individual_number',
+                         name='uix_project_individual_number'),
     )
 
-    id = Column(Integer, primary_key=True)
-    number = Column(
+    individual_number_seq = Sequence('individual_number_seq')
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    individual_number = Column(
         Integer,
-        Sequence('individual_number_seq'),
+        individual_number_seq,
         nullable=False,
         unique=True,
-        server_default=text("nextval('individual_number_seq')")
     )
     user_id = Column(Integer,
                      ForeignKey('users.id', ondelete='CASCADE'),
@@ -47,6 +47,12 @@ class Individual(Base):
                               back_populates='individual',
                               cascade='all, delete-orphan',
                               lazy='joined')
+    # Relationship to primary identity
+    primary_identity = relationship(
+        "Identity",
+        uselist=False,
+        primaryjoin="and_(Individual.id == Identity.individual_id, Identity.is_primary == True)"
+    )
     relationships_as_individual = relationship(
         'Relationship', foreign_keys='Relationship.individual_id',
         back_populates='individual', cascade='all, delete-orphan'
@@ -176,38 +182,39 @@ class Individual(Base):
                     "relationship_id": rel.id
                 })
 
-        for child in self.children:
-            child_obj = next(
-                (rel.related for rel in
-                 self.relationships_as_individual if
-                 rel.related.id == child["id"]),
-                None
-            ) or next(
-                (rel.individual for rel in
-                 self.relationships_as_related if
-                 rel.individual.id == child["id"]),
-                None
-            )
-
-            if child_obj:
-                for parent_rel in child_obj.relationships_as_related:
-                    if parent_rel.initial_relationship == InitialRelationshipEnum.PARENT and parent_rel.individual.id != self.id:
-                        other_parent = parent_rel.individual
-                        if other_parent.id not in seen_ids:
-                            existing_partner_rel = next(
-                                (rel for rel in
-                                 self.relationships_as_individual if
-                                 rel.initial_relationship == InitialRelationshipEnum.PARTNER and rel.related.id == other_parent.id),
-                                None
-                            )
-                            relationship_id = existing_partner_rel.id if existing_partner_rel else None
-                            seen_ids.add(other_parent.id)
-                            unique_partners.append({
-                                "id": other_parent.id,
-                                "first_name": other_parent.primary_identity.first_name if other_parent.primary_identity else None,
-                                "last_name": other_parent.primary_identity.last_name if other_parent.primary_identity else None,
-                                "relationship_id": relationship_id
-                            })
+        # Dynamically combine partners - to do!
+        # for child in self.children:
+        #     child_obj = next(
+        #         (rel.related for rel in
+        #          self.relationships_as_individual if
+        #          rel.related.id == child["id"]),
+        #         None
+        #     ) or next(
+        #         (rel.individual for rel in
+        #          self.relationships_as_related if
+        #          rel.individual.id == child["id"]),
+        #         None
+        #     )
+        #
+        #     if child_obj:
+        #         for parent_rel in child_obj.relationships_as_related:
+        #             if parent_rel.initial_relationship == InitialRelationshipEnum.PARENT and parent_rel.individual.id != self.id:
+        #                 other_parent = parent_rel.individual
+        #                 if other_parent.id not in seen_ids:
+        #                     existing_partner_rel = next(
+        #                         (rel for rel in
+        #                          self.relationships_as_individual if
+        #                          rel.initial_relationship == InitialRelationshipEnum.PARTNER and rel.related.id == other_parent.id),
+        #                         None
+        #                     )
+        #                     relationship_id = existing_partner_rel.id if existing_partner_rel else None
+        #                     seen_ids.add(other_parent.id)
+        #                     unique_partners.append({
+        #                         "id": other_parent.id,
+        #                         "first_name": other_parent.primary_identity.first_name if other_parent.primary_identity else None,
+        #                         "last_name": other_parent.primary_identity.last_name if other_parent.primary_identity else None,
+        #                         "relationship_id": relationship_id
+        #                     })
 
         return unique_partners
 
@@ -229,6 +236,7 @@ class Individual(Base):
 
     def __repr__(self) -> str:
         return (
-            f"<Individual(id={self.id}, number={self.number}, birth_date={self.birth_date}, "
-            f"birth_place='{self.birth_place}', death_date={self.death_date}, death_place='{self.death_place}')>"
+            f"<Individual(id={self.id}, individual_number={self.individual_number}, "
+            f"birth_date={self.birth_date}, birth_place='{self.birth_place}', "
+            f"death_date={self.death_date}, death_place='{self.death_place}')>"
         )

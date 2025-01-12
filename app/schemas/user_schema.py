@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, Field, EmailStr, ConfigDict, \
     field_validator, model_validator
@@ -26,8 +26,7 @@ class UserBase(BaseModel):
         pattern = r'^[A-Za-z][A-Za-z0-9_.]*$'
         if not re.match(pattern, v):
             raise ValueError(
-                'Username must start with a letter and contain only letters, digits, underscores, or dots.'
-            )
+                'Username must start with a letter and contain only letters, digits, underscores, or dots.')
         return v
 
 
@@ -64,20 +63,6 @@ class UserLogin(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserOut(UserBase):
-    """
-    Schema for returning user data, including related entity IDs and admin status.
-    """
-    id: int = Field(..., description="The unique ID of the user")
-    is_admin: bool = Field(..., description="Indicates if the user has admin privileges")  # Nieuw veld toegevoegd
-    created_at: datetime = Field(...,
-                                 description="The timestamp when the user was created")
-    updated_at: datetime = Field(...,
-                                 description="The timestamp when the user was last updated")
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class UserUpdate(BaseModel):
     """
     Schema for updating user details.
@@ -104,3 +89,18 @@ class UserUpdate(BaseModel):
             if self.password != self.confirm_password:
                 raise ValueError("Passwords do not match.")
         return self
+
+
+class UserOut(UserBase):
+    """
+    Schema for returning user data, including related entity IDs and admin status.
+    """
+    id: int = Field(..., description="The unique ID of the user")
+    is_admin: bool = Field(...,
+                           description="Indicates if the user has admin privileges")
+    created_at: datetime = Field(...,
+                                 description="The timestamp when the user was created")
+    updated_at: datetime = Field(...,
+                                 description="The timestamp when the user was last updated")
+
+    model_config = ConfigDict(from_attributes=True)

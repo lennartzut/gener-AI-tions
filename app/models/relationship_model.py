@@ -15,7 +15,7 @@ class Relationship(Base):
                         name='chk_relationship_no_self'),
     )
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     project_id = Column(Integer, ForeignKey('projects.id',
                                             ondelete='CASCADE'),
                         nullable=False, index=True)
@@ -26,16 +26,20 @@ class Relationship(Base):
                                             ondelete='CASCADE'),
                         nullable=False, index=True)
 
-    initial_relationship = Column(SAEnum(InitialRelationshipEnum,
-                                         name='initial_relationship_enum'),
-                                  nullable=False)
+    initial_relationship = Column(
+        SAEnum(InitialRelationshipEnum,
+               name='initial_relationship_enum'),
+        nullable=False
+    )
     relationship_detail_horizontal = Column(
         SAEnum(HorizontalRelationshipTypeEnum,
-               name='horizontal_relationship_enum'), nullable=True
+               name='horizontal_relationship_enum'),
+        nullable=True
     )
     relationship_detail_vertical = Column(
         SAEnum(VerticalRelationshipTypeEnum,
-               name='vertical_relationship_enum'), nullable=True
+               name='vertical_relationship_enum'),
+        nullable=True
     )
 
     union_date = Column(Date, nullable=True)
@@ -64,25 +68,9 @@ class Relationship(Base):
         lazy='joined'
     )
 
-    def validate_relationship(self):
-        """Validates the relationship to ensure consistency."""
-        if self.individual_id == self.related_id:
-            raise ValueError(
-                "An individual cannot have a relationship with themselves.")
-
-        if self.initial_relationship == InitialRelationshipEnum.PARTNER:
-            if not (self.union_date and self.union_place):
-                raise ValueError(
-                    "Union date and place are required for partner relationships.")
-        elif self.initial_relationship in {
-            InitialRelationshipEnum.CHILD,
-            InitialRelationshipEnum.PARENT}:
-            if self.relationship_detail_vertical:
-                raise ValueError(
-                    "Vertical details are invalid for parent-child relationships.")
-
     def __repr__(self) -> str:
         return (
-            f"<Relationship(id={self.id}, individual_id={self.individual_id}, related_id={self.related_id}, "
-            f"initial_relationship={self.initial_relationship}, union_date={self.union_date}, dissolution_date={self.dissolution_date})>"
+            f"<Relationship(id={self.id}, individual_id={self.individual_id}, "
+            f"related_id={self.related_id}, initial_relationship={self.initial_relationship}, "
+            f"union_date={self.union_date}, dissolution_date={self.dissolution_date})>"
         )

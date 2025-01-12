@@ -1,15 +1,12 @@
-import logging
 from datetime import date, datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, ConfigDict
 
 from app.models.enums_model import InitialRelationshipEnum, \
     HorizontalRelationshipTypeEnum, VerticalRelationshipTypeEnum
 from app.schemas.individual_schema import IndividualOut
 from app.utils.validators_utils import ValidationUtils
-
-logger = logging.getLogger(__name__)
 
 
 class RelationshipBase(BaseModel):
@@ -68,8 +65,7 @@ class RelationshipBase(BaseModel):
             )
         return values
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RelationshipCreate(RelationshipBase):
@@ -113,8 +109,7 @@ class RelationshipUpdate(BaseModel):
             )
         return values
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RelationshipOut(RelationshipBase):
@@ -132,5 +127,4 @@ class RelationshipOut(RelationshipBase):
     related: IndividualOut = Field(...,
                                    description="Details of the related individual in the relationship")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

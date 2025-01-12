@@ -1,8 +1,7 @@
 from datetime import date
 
-from sqlalchemy import Column, Boolean, Integer, String, Date, \
-    DateTime, \
-    Enum, ForeignKey, CheckConstraint, UniqueConstraint
+from sqlalchemy import Column, Boolean, Integer, Sequence, String, Date, \
+    DateTime, Enum, ForeignKey, CheckConstraint, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -21,10 +20,17 @@ class Identity(Base):
         ),
     )
 
-    id = Column(Integer, primary_key=True)
+    identity_number_seq = Sequence('identity_number_seq')
+    id = Column(Integer, primary_key=True, autoincrement=True)
     individual_id = Column(Integer, ForeignKey('individuals.id',
                                                ondelete='CASCADE'),
                            nullable=False, index=True)
+    identity_number = Column(
+        Integer,
+        identity_number_seq,
+        nullable=False,
+        unique=True
+    )
     first_name = Column(String(100), nullable=True)
     last_name = Column(String(100), nullable=True)
     gender = Column(Enum(GenderEnum), nullable=True)
