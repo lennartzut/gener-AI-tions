@@ -1,9 +1,9 @@
 {
-  "openapi": "3.0.3",
+  "openapi": "3.0.0",
   "info": {
     "title": "Gener-AI-tions API",
-    "description": "API Documentation for the Gener-AI-tions application.",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "description": "Comprehensive API documentation for Gener-AI-tions application."
   },
   "servers": [
     {
@@ -14,7 +14,7 @@
   "tags": [
     {
       "name": "Admin",
-      "description": "Endpoints for administrative actions, requiring admin privileges."
+      "description": "Endpoints requiring admin privileges."
     },
     {
       "name": "Auth",
@@ -22,7 +22,7 @@
     },
     {
       "name": "Users",
-      "description": "Endpoints related to the currently logged-in user's profile."
+      "description": "Endpoints related to the currently logged-in user (profile)."
     },
     {
       "name": "Projects",
@@ -30,7 +30,7 @@
     },
     {
       "name": "Individuals",
-      "description": "CRUD operations on individuals, including searching."
+      "description": "CRUD operations on individuals."
     },
     {
       "name": "Identities",
@@ -79,7 +79,7 @@
         ],
         "responses": {
           "200": {
-            "description": "A paginated list of users retrieved successfully.",
+            "description": "Paginated list of users retrieved successfully.",
             "content": {
               "application/json": {
                 "schema": {
@@ -101,75 +101,21 @@
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/UserOut"
-                      },
-                      "description": "List of users."
+                      }
                     }
                   }
-                },
-                "example": {
-                  "total": 150,
-                  "page": 1,
-                  "per_page": 20,
-                  "users": [
-                    {
-                      "id": 1,
-                      "username": "johndoe",
-                      "email": "johndoe@example.com",
-                      "is_admin": true,
-                      "created_at": "2023-01-01T12:00:00Z",
-                      "updated_at": "2023-06-01T12:00:00Z"
-                    },
-                    {
-                      "id": 2,
-                      "username": "janedoe",
-                      "email": "janedoe@example.com",
-                      "is_admin": false,
-                      "created_at": "2023-02-15T08:30:00Z",
-                      "updated_at": "2023-07-20T09:45:00Z"
-                    }
-                  ]
                 }
               }
             }
           },
           "401": {
-            "description": "Unauthorized. No valid JWT provided.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "No user identity found in token."
-                }
-              }
-            }
+            "description": "Unauthorized. No valid JWT provided."
           },
           "403": {
-            "description": "Forbidden. The user does not have admin privileges.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Admin privileges required to access this endpoint."
-                }
-              }
-            }
+            "description": "Forbidden. The user does not have admin privileges."
           },
           "500": {
-            "description": "Internal Server Error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "An error occurred while fetching users."
-                }
-              }
-            }
+            "description": "Internal Server Error."
           }
         }
       }
@@ -182,7 +128,6 @@
         "summary": "Sign Up (Registration)",
         "description": "Register a new user account.",
         "requestBody": {
-          "description": "New user data",
           "required": true,
           "content": {
             "application/json": {
@@ -200,59 +145,16 @@
         },
         "responses": {
           "201": {
-            "description": "User created successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Signup successful! Please log in."
-                    }
-                  }
-                }
-              }
-            }
+            "description": "User created successfully"
           },
           "400": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Password confirmation does not match."
-                }
-              }
-            }
+            "description": "Validation error"
           },
           "409": {
-            "description": "Email or username already in use",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Username 'johndoe' is already taken."
-                }
-              }
-            }
+            "description": "Conflict. Email or username already in use."
           },
           "500": {
-            "description": "Signup error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "An unexpected error occurred during signup."
-                }
-              }
-            }
+            "description": "Server error during signup"
           }
         }
       }
@@ -263,9 +165,8 @@
           "Auth"
         ],
         "summary": "Login",
-        "description": "Log in with email and password to obtain access and refresh tokens.",
+        "description": "Log in with email and password to obtain access tokens.",
         "requestBody": {
-          "description": "User login credentials",
           "required": true,
           "content": {
             "application/json": {
@@ -281,59 +182,16 @@
         },
         "responses": {
           "200": {
-            "description": "Login successful",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Login successful!"
-                    }
-                  }
-                }
-              }
-            }
+            "description": "Login successful."
           },
           "400": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Email and password are required."
-                }
-              }
-            }
+            "description": "Validation error or bad request."
           },
           "401": {
-            "description": "Invalid credentials",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Invalid email or password."
-                }
-              }
-            }
+            "description": "Invalid credentials."
           },
           "500": {
-            "description": "Login error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "An unexpected error occurred during login."
-                }
-              }
-            }
+            "description": "Server error during login"
           }
         }
       }
@@ -345,22 +203,17 @@
         ],
         "summary": "Logout",
         "description": "Log out the current user by unsetting JWT cookies.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Logout successful",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Logged out successfully."
-                    }
-                  }
-                }
-              }
-            }
+            "description": "Logout successful."
+          },
+          "401": {
+            "description": "Unauthorized. No valid JWT provided."
           }
         }
       }
@@ -372,9 +225,14 @@
         ],
         "summary": "Get user profile",
         "description": "Retrieve the profile of the currently logged-in user.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Profile retrieved successfully",
+            "description": "Profile retrieved successfully.",
             "content": {
               "application/json": {
                 "schema": {
@@ -384,69 +242,32 @@
                       "$ref": "#/components/schemas/UserOut"
                     }
                   }
-                },
-                "example": {
-                  "user": {
-                    "id": 1,
-                    "username": "johndoe",
-                    "email": "johndoe@example.com",
-                    "is_admin": false,
-                    "created_at": "2023-01-01T12:00:00Z",
-                    "updated_at": "2023-06-01T12:00:00Z"
-                  }
                 }
               }
             }
           },
           "401": {
-            "description": "No user identity in token.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "No user identity found in token."
-                }
-              }
-            }
+            "description": "No user identity in token."
           },
           "404": {
-            "description": "User not found.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "User not found."
-                }
-              }
-            }
+            "description": "User not found."
           },
           "500": {
-            "description": "Error occurred while fetching profile.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "An unexpected error occurred while fetching the profile."
-                }
-              }
-            }
+            "description": "Error occurred while fetching profile."
           }
         }
-      }
-    },
-    "/api/users/update": {
+      },
       "patch": {
         "tags": [
           "Users"
         ],
         "summary": "Update user profile",
         "description": "Update the current user's username, email, or password.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "requestBody": {
           "description": "Fields to update",
           "required": true,
@@ -466,118 +287,42 @@
         },
         "responses": {
           "200": {
-            "description": "Profile updated successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Profile updated successfully."
-                    }
-                  }
-                },
-                "example": {
-                  "message": "Profile updated successfully."
-                }
-              }
-            }
+            "description": "Profile updated successfully."
           },
           "401": {
-            "description": "No user identity in token.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "No user identity found in token."
-                }
-              }
-            }
+            "description": "No user identity in token."
           },
           "409": {
-            "description": "Username or email already in use.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Email 'john.doe.new@example.com' is already in use."
-                }
-              }
-            }
+            "description": "Username or email already in use."
           },
           "500": {
-            "description": "Error updating profile.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "An unexpected error occurred while updating the profile."
-                }
-              }
-            }
+            "description": "Error updating profile."
           }
         }
-      }
-    },
-    "/api/users/delete": {
+      },
       "delete": {
         "tags": [
           "Users"
         ],
         "summary": "Delete user account",
         "description": "Permanently delete the current user's account.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Account deleted successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Account deleted successfully."
-                    }
-                  }
-                },
-                "example": {
-                  "message": "Account deleted successfully."
-                }
-              }
-            }
+            "description": "Account deleted successfully."
+          },
+          "401": {
+            "description": "No user identity in token."
           },
           "400": {
-            "description": "Failed to delete account.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Failed to delete the account."
-                }
-              }
-            }
+            "description": "Failed to delete account."
           },
           "500": {
-            "description": "Error deleting account.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "An unexpected error occurred while deleting the account."
-                }
-              }
-            }
+            "description": "Error deleting account."
           }
         }
       }
@@ -589,76 +334,43 @@
         ],
         "summary": "List Projects",
         "description": "List all projects belonging to the current user.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Page number for pagination (default is 1)."
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "description": "Number of projects per page (default is 20)."
+          }
+        ],
         "responses": {
           "200": {
-            "description": "List of projects retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "projects": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/ProjectOut"
-                      }
-                    }
-                  }
-                },
-                "example": {
-                  "projects": [
-                    {
-                      "id": 1,
-                      "user_id": 1,
-                      "name": "Family Joes",
-                      "created_at": "2023-02-01T12:00:00Z",
-                      "updated_at": "2023-06-01T12:00:00Z",
-                      "entity_counts": {
-                        "individuals": 50,
-                        "relationships": 45
-                      }
-                    },
-                    {
-                      "id": 2,
-                      "user_id": 1,
-                      "name": "Family Johns",
-                      "created_at": "2023-03-15T12:00:00Z",
-                      "updated_at": "2023-07-10T12:00:00Z",
-                      "entity_counts": {
-                        "individuals": 30,
-                        "relationships": 25
-                      }
-                    }
-                  ]
-                }
-              }
-            }
+            "description": "List of projects retrieved successfully."
           },
           "401": {
-            "description": "No user identity in token.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "No user identity found in token."
-                }
-              }
-            }
+            "description": "Unauthorized."
           },
           "500": {
-            "description": "Error fetching projects.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "An unexpected error occurred while fetching projects."
-                }
-              }
-            }
+            "description": "Error fetching projects."
           }
         }
       },
@@ -668,6 +380,11 @@
         ],
         "summary": "Create Project",
         "description": "Create a new project for the current user.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "requestBody": {
           "description": "Project data",
           "required": true,
@@ -675,85 +392,22 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ProjectCreate"
-              },
-              "example": {
-                "name": "New Project"
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Project created successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Project created successfully."
-                    },
-                    "project": {
-                      "$ref": "#/components/schemas/ProjectOut"
-                    }
-                  }
-                },
-                "example": {
-                  "message": "Project created successfully.",
-                  "project": {
-                    "id": 3,
-                    "user_id": 1,
-                    "name": "New Project",
-                    "created_at": "2023-08-01T12:00:00Z",
-                    "updated_at": "2023-08-01T12:00:00Z",
-                    "entity_counts": {
-                      "individuals": 0,
-                      "relationships": 0
-                    }
-                  }
-                }
-              }
-            }
+            "description": "Project created successfully."
           },
           "400": {
-            "description": "Validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Project name is required."
-                }
-              }
-            }
+            "description": "Validation error or bad request."
           },
           "409": {
-            "description": "Project creation failed due to name conflict.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Project name 'Family Tree' already exists."
-                }
-              }
-            }
+            "description": "Conflict. Project name might be taken."
           },
           "500": {
-            "description": "Server error creating project.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "An unexpected error occurred while creating the project."
-                }
-              }
-            }
+            "description": "Server error creating project."
           }
         }
       }
@@ -765,84 +419,34 @@
         ],
         "summary": "Get Project",
         "description": "Retrieve details of a specific project by ID, if owned by the current user.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "project_id",
             "in": "path",
             "required": true,
-            "description": "Project ID",
             "schema": {
               "type": "integer"
-            }
+            },
+            "description": "Project ID"
           }
         ],
         "responses": {
           "200": {
-            "description": "Project retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "project": {
-                      "$ref": "#/components/schemas/ProjectOut"
-                    }
-                  }
-                },
-                "example": {
-                  "project": {
-                    "id": 1,
-                    "user_id": 1,
-                    "name": "Family Tree",
-                    "created_at": "2023-02-01T12:00:00Z",
-                    "updated_at": "2023-06-01T12:00:00Z",
-                    "entity_counts": {
-                      "individuals": 50,
-                      "relationships": 45
-                    }
-                  }
-                }
-              }
-            }
+            "description": "Project retrieved successfully."
           },
           "401": {
-            "description": "No user identity in token.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "No user identity found in token."
-                }
-              }
-            }
+            "description": "Unauthorized. No user identity found in token."
           },
           "404": {
-            "description": "Project not found or not owned by user.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Project not found or access denied."
-                }
-              }
-            }
+            "description": "Project not found or not owned by the user."
           },
           "500": {
-            "description": "Error occurred while fetching the project.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "An unexpected error occurred while fetching the project."
-                }
-              }
-            }
+            "description": "Error occurred while fetching the project."
           }
         }
       },
@@ -852,15 +456,20 @@
         ],
         "summary": "Update Project",
         "description": "Update the name of an existing project, if owned by current user.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "project_id",
             "in": "path",
             "required": true,
-            "description": "Project ID",
             "schema": {
               "type": "integer"
-            }
+            },
+            "description": "Project ID"
           }
         ],
         "requestBody": {
@@ -870,85 +479,25 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ProjectUpdate"
-              },
-              "example": {
-                "name": "Updated Project Name"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Project updated successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Project updated successfully."
-                    },
-                    "project": {
-                      "$ref": "#/components/schemas/ProjectOut"
-                    }
-                  }
-                },
-                "example": {
-                  "message": "Project updated successfully.",
-                  "project": {
-                    "id": 1,
-                    "user_id": 1,
-                    "name": "Updated Project Name",
-                    "created_at": "2023-02-01T12:00:00Z",
-                    "updated_at": "2023-08-01T12:00:00Z",
-                    "entity_counts": {
-                      "individuals": 55,
-                      "relationships": 50
-                    }
-                  }
-                }
-              }
-            }
+            "description": "Project updated successfully."
           },
           "400": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Project name cannot be empty."
-                }
-              }
-            }
+            "description": "Validation error or bad request."
           },
           "404": {
-            "description": "Project not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Project not found."
-                }
-              }
-            }
+            "description": "Project not found or unauthorized access."
+          },
+          "409": {
+            "description": "Conflict. Possibly name is in use or project not found."
           },
           "500": {
-            "description": "Error updating project",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "An unexpected error occurred while updating the project."
-                }
-              }
-            }
+            "description": "Error updating project."
           }
         }
       },
@@ -958,204 +507,31 @@
         ],
         "summary": "Delete Project",
         "description": "Delete a project by ID, if owned by current user.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "project_id",
             "in": "path",
             "required": true,
-            "description": "Project ID",
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Project deleted successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Project deleted successfully."
-                    }
-                  }
-                },
-                "example": {
-                  "message": "Project deleted successfully."
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Project not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Project not found."
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Error occurred while deleting project.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "An unexpected error occurred while deleting the project."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/individuals/search": {
-      "get": {
-        "tags": [
-          "Individuals"
-        ],
-        "summary": "Search Individuals",
-        "description": "Search individuals by name, birth_place, etc., within a specific project.",
-        "parameters": [
-          {
-            "name": "q",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Search query string"
-          },
-          {
-            "name": "project_id",
-            "in": "query",
-            "required": true,
             "schema": {
               "type": "integer"
             },
             "description": "Project ID"
-          },
-          {
-            "name": "exclude_ids",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Comma-separated list of individual IDs to exclude"
           }
         ],
         "responses": {
           "200": {
-            "description": "Search results for individuals",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "individuals": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/IndividualOut"
-                      }
-                    }
-                  }
-                },
-                "example": {
-                  "individuals": [
-                    {
-                      "id": 1,
-                      "number": 1001,
-                      "birth_date": "1990-01-01",
-                      "birth_place": "New York",
-                      "death_date": null,
-                      "death_place": null,
-                      "notes": null,
-                      "age": 33,
-                      "primary_identity": {
-                        "id": 10,
-                        "individual_id": 1,
-                        "first_name": "John",
-                        "last_name": "Doe",
-                        "gender": "male",
-                        "valid_from": "1990-01-01",
-                        "valid_until": null,
-                        "is_primary": true,
-                        "created_at": "2023-01-01T12:00:00Z",
-                        "updated_at": "2023-06-01T12:00:00Z"
-                      },
-                      "identities": [],
-                      "partners": [],
-                      "parents": [],
-                      "children": [],
-                      "siblings": []
-                    },
-                    {
-                      "id": 2,
-                      "number": 1002,
-                      "birth_date": "1992-02-02",
-                      "birth_place": "Los Angeles",
-                      "death_date": null,
-                      "death_place": null,
-                      "notes": null,
-                      "age": 31,
-                      "primary_identity": null,
-                      "identities": [],
-                      "partners": [],
-                      "parents": [],
-                      "children": [],
-                      "siblings": []
-                    }
-                  ]
-                }
-              }
-            }
+            "description": "Project deleted successfully."
           },
-          "400": {
-            "description": "Project ID is required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Project ID is required."
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "No user identity found in token."
-                }
-              }
-            }
+          "404": {
+            "description": "Project not found or no permission."
           },
           "500": {
-            "description": "Unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "An unexpected error occurred during the search."
-                }
-              }
-            }
+            "description": "Error occurred while deleting project."
           }
         }
       }
@@ -1166,7 +542,12 @@
           "Individuals"
         ],
         "summary": "List Individuals",
-        "description": "List all individuals in a specific project.",
+        "description": "List all individuals within a specific project.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "project_id",
@@ -1176,103 +557,25 @@
               "type": "integer"
             },
             "description": "Project ID"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search query (optional)."
           }
         ],
         "responses": {
           "200": {
-            "description": "List of individuals retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "project_id": {
-                      "type": "integer"
-                    },
-                    "individuals": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/IndividualOut"
-                      }
-                    }
-                  }
-                },
-                "example": {
-                  "project_id": 1,
-                  "individuals": [
-                    {
-                      "id": 1,
-                      "number": 1001,
-                      "birth_date": "1990-01-01",
-                      "birth_place": "New York",
-                      "death_date": null,
-                      "death_place": null,
-                      "notes": null,
-                      "age": 33,
-                      "primary_identity": {
-                        "id": 10,
-                        "individual_id": 1,
-                        "first_name": "John",
-                        "last_name": "Doe",
-                        "gender": "male",
-                        "valid_from": "1990-01-01",
-                        "valid_until": null,
-                        "is_primary": true,
-                        "created_at": "2023-01-01T12:00:00Z",
-                        "updated_at": "2023-06-01T12:00:00Z"
-                      },
-                      "identities": [],
-                      "partners": [],
-                      "parents": [],
-                      "children": [],
-                      "siblings": []
-                    },
-                    {
-                      "id": 2,
-                      "number": 1002,
-                      "birth_date": "1992-02-02",
-                      "birth_place": "Los Angeles",
-                      "death_date": null,
-                      "death_place": null,
-                      "notes": null,
-                      "age": 31,
-                      "primary_identity": null,
-                      "identities": [],
-                      "partners": [],
-                      "parents": [],
-                      "children": [],
-                      "siblings": []
-                    }
-                  ]
-                }
-              }
-            }
+            "description": "List of individuals retrieved successfully."
           },
           "400": {
-            "description": "Project ID is required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Project ID is required."
-                }
-              }
-            }
+            "description": "Project ID is required."
           },
-          "404": {
-            "description": "Project not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Project not found."
-                }
-              }
-            }
+          "401": {
+            "description": "Unauthorized. No valid JWT provided."
           }
         }
       },
@@ -1282,6 +585,11 @@
         ],
         "summary": "Create Individual",
         "description": "Create a new individual within a project.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "project_id",
@@ -1300,84 +608,19 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/IndividualCreate"
-              },
-              "example": {
-                "first_name": "Jane",
-                "last_name": "Doe",
-                "birth_date": "1995-03-15",
-                "birth_place": "Chicago",
-                "death_date": null,
-                "death_place": null,
-                "notes": "Deceased in 2050.",
-                "gender": "female"
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Individual created successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Individual created successfully."
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/IndividualOut"
-                    }
-                  }
-                },
-                "example": {
-                  "message": "Individual created successfully.",
-                  "data": {
-                    "id": 3,
-                    "number": 1003,
-                    "birth_date": "1995-03-15",
-                    "birth_place": "Chicago",
-                    "death_date": null,
-                    "death_place": null,
-                    "notes": "Deceased in 2050.",
-                    "age": 28,
-                    "primary_identity": null,
-                    "identities": [],
-                    "partners": [],
-                    "parents": [],
-                    "children": [],
-                    "siblings": []
-                  }
-                }
-              }
-            }
+            "description": "Individual created successfully"
           },
           "400": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "First name is required."
-                }
-              }
-            }
+            "description": "Validation error or bad request"
           },
-          "500": {
-            "description": "Error creating individual",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "An unexpected error occurred while creating the individual."
-                }
-              }
-            }
+          "401": {
+            "description": "Unauthorized."
           }
         }
       }
@@ -1389,15 +632,20 @@
         ],
         "summary": "Get Individual",
         "description": "Retrieve details of an individual by ID within a project.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "individual_id",
             "in": "path",
             "required": true,
-            "description": "Individual ID",
             "schema": {
               "type": "integer"
-            }
+            },
+            "description": "Individual ID"
           },
           {
             "name": "project_id",
@@ -1411,74 +659,16 @@
         ],
         "responses": {
           "200": {
-            "description": "Individual retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "individual": {
-                      "$ref": "#/components/schemas/IndividualOut"
-                    }
-                  }
-                },
-                "example": {
-                  "individual": {
-                    "id": 1,
-                    "number": 1001,
-                    "birth_date": "1990-01-01",
-                    "birth_place": "New York",
-                    "death_date": null,
-                    "death_place": null,
-                    "notes": null,
-                    "age": 33,
-                    "primary_identity": {
-                      "id": 10,
-                      "individual_id": 1,
-                      "first_name": "John",
-                      "last_name": "Doe",
-                      "gender": "male",
-                      "valid_from": "1990-01-01",
-                      "valid_until": null,
-                      "is_primary": true,
-                      "created_at": "2023-01-01T12:00:00Z",
-                      "updated_at": "2023-06-01T12:00:00Z"
-                    },
-                    "identities": [],
-                    "partners": [],
-                    "parents": [],
-                    "children": [],
-                    "siblings": []
-                  }
-                }
-              }
-            }
+            "description": "Individual retrieved successfully."
           },
           "400": {
-            "description": "Missing or invalid project ID",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Project ID is missing or invalid."
-                }
-              }
-            }
+            "description": "Missing or invalid project ID."
+          },
+          "401": {
+            "description": "Unauthorized. No valid JWT provided."
           },
           "404": {
-            "description": "Individual not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Individual not found."
-                }
-              }
-            }
+            "description": "Individual not found."
           }
         }
       },
@@ -1488,12 +678,16 @@
         ],
         "summary": "Update Individual",
         "description": "Update details of an existing individual by ID.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "individual_id",
             "in": "path",
             "required": true,
-            "description": "Individual ID",
             "schema": {
               "type": "integer"
             }
@@ -1504,8 +698,7 @@
             "required": true,
             "schema": {
               "type": "integer"
-            },
-            "description": "Project ID"
+            }
           }
         ],
         "requestBody": {
@@ -1515,90 +708,19 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/IndividualUpdate"
-              },
-              "example": {
-                "first_name": "Jonathan",
-                "birth_place": "Boston",
-                "gender": "male"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Individual updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Individual updated successfully."
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/IndividualOut"
-                    }
-                  }
-                },
-                "example": {
-                  "message": "Individual updated successfully.",
-                  "data": {
-                    "id": 1,
-                    "number": 1001,
-                    "birth_date": "1990-01-01",
-                    "birth_place": "Boston",
-                    "death_date": null,
-                    "death_place": null,
-                    "notes": null,
-                    "age": 33,
-                    "primary_identity": {
-                      "id": 10,
-                      "individual_id": 1,
-                      "first_name": "Jonathan",
-                      "last_name": "Doe",
-                      "gender": "male",
-                      "valid_from": "1990-01-01",
-                      "valid_until": null,
-                      "is_primary": true,
-                      "created_at": "2023-01-01T12:00:00Z",
-                      "updated_at": "2023-08-01T12:00:00Z"
-                    },
-                    "identities": [],
-                    "partners": [],
-                    "parents": [],
-                    "children": [],
-                    "siblings": []
-                  }
-                }
-              }
-            }
+            "description": "Individual updated successfully"
           },
           "400": {
-            "description": "Validation error or bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Invalid gender value."
-                }
-              }
-            }
+            "description": "Validation error or bad request"
           },
           "404": {
-            "description": "Individual not found or unauthorized access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Individual not found or access denied."
-                }
-              }
-            }
+            "description": "Individual not found or unauthorized access"
           }
         }
       },
@@ -1608,12 +730,16 @@
         ],
         "summary": "Delete Individual",
         "description": "Delete an individual by ID.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "individual_id",
             "in": "path",
             "required": true,
-            "description": "Individual ID",
             "schema": {
               "type": "integer"
             }
@@ -1630,47 +756,78 @@
         ],
         "responses": {
           "200": {
-            "description": "Individual deleted successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Individual deleted successfully."
-                    }
-                  }
-                },
-                "example": {
-                  "message": "Individual deleted successfully."
-                }
-              }
-            }
+            "description": "Individual deleted successfully"
           },
           "404": {
-            "description": "Individual not found or unauthorized access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Individual not found or access denied."
-                }
-              }
+            "description": "Individual not found or unauthorized access"
+          }
+        }
+      }
+    },
+    "/api/individuals/search": {
+      "get": {
+        "tags": [
+          "Individuals"
+        ],
+        "summary": "Search Individuals",
+        "description": "Search individuals in a project by query string, excluding specific IDs if desired.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
             }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "exclude_ids",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results for individuals."
+          },
+          "400": {
+            "description": "Project ID required or invalid exclude_ids."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Project not found or not owned by user."
           }
         }
       }
     },
     "/api/identities": {
-      "post": {
+      "get": {
         "tags": [
           "Identities"
         ],
-        "summary": "Create Identity",
-        "description": "Create a new identity for an individual within a project.",
+        "summary": "List Identities",
+        "description": "Retrieve a list of all identities within a specific project.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "project_id",
@@ -1679,23 +836,56 @@
             "schema": {
               "type": "integer"
             },
-            "description": "Project ID"
+            "description": "The ID of the project to filter identities."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of identities retrieved successfully."
+          },
+          "400": {
+            "description": "Project ID is required or invalid."
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Identities"
+        ],
+        "summary": "Create Identity",
+        "description": "Create a new identity for an individual within a project.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
           }
         ],
         "requestBody": {
-          "description": "Identity data",
           "required": true,
+          "description": "Identity data",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/IdentityCreate"
               },
               "example": {
-                "individual_id": 1,
-                "first_name": "Jonathan",
+                "individual_id": 42,
+                "first_name": "Jane",
                 "last_name": "Doe",
-                "gender": "male",
-                "valid_from": "2023-01-01",
+                "gender": "female",
+                "valid_from": "2022-01-01",
                 "valid_until": null
               }
             }
@@ -1703,81 +893,77 @@
         },
         "responses": {
           "201": {
-            "description": "Identity created successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Identity created successfully."
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/IdentityOut"
-                    }
-                  }
-                },
-                "example": {
-                  "message": "Identity created successfully.",
-                  "data": {
-                    "id": 11,
-                    "individual_id": 1,
-                    "first_name": "Jonathan",
-                    "last_name": "Doe",
-                    "gender": "male",
-                    "valid_from": "2023-01-01",
-                    "valid_until": null,
-                    "is_primary": true,
-                    "created_at": "2023-08-01T12:00:00Z",
-                    "updated_at": "2023-08-01T12:00:00Z"
-                  }
-                }
-              }
-            }
+            "description": "Identity created successfully."
           },
           "400": {
-            "description": "Validation error or bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "First name is required."
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Individual not found or unauthorized access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Individual not found or access denied."
-                }
-              }
-            }
+            "description": "Validation error or bad request."
           }
         }
       }
     },
     "/api/identities/{identity_id}": {
+      "get": {
+        "tags": [
+          "Identities"
+        ],
+        "summary": "Get Specific Identity",
+        "description": "Retrieve detailed information of a specific identity by its ID within a project.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "identity_id",
+            "in": "path",
+            "required": true,
+            "description": "The unique ID of the identity to retrieve.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "description": "The ID of the project to which the identity belongs.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Identity retrieved successfully."
+          },
+          "400": {
+            "description": "Missing or invalid project ID."
+          },
+          "401": {
+            "description": "Unauthorized. No valid JWT provided."
+          },
+          "404": {
+            "description": "Identity not found in the specified project."
+          }
+        }
+      },
       "patch": {
         "tags": [
           "Identities"
         ],
         "summary": "Update Identity",
         "description": "Update details of an identity by ID.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "identity_id",
             "in": "path",
             "required": true,
-            "description": "Identity ID",
             "schema": {
               "type": "integer"
             }
@@ -1788,86 +974,37 @@
             "required": true,
             "schema": {
               "type": "integer"
-            },
-            "description": "Project ID"
+            }
           }
         ],
         "requestBody": {
-          "description": "Fields to update",
           "required": true,
+          "description": "Fields to update",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/IdentityUpdate"
               },
               "example": {
-                "first_name": "Jon",
-                "valid_until": "2025-12-31",
-                "is_primary": false
+                "first_name": "Jane",
+                "last_name": "Doe-Smith",
+                "gender": "female",
+                "valid_from": "2023-01-01",
+                "valid_until": null,
+                "is_primary": true
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Identity updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Identity updated successfully."
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/IdentityOut"
-                    }
-                  }
-                },
-                "example": {
-                  "message": "Identity updated successfully.",
-                  "data": {
-                    "id": 11,
-                    "individual_id": 1,
-                    "first_name": "Jon",
-                    "last_name": "Doe",
-                    "gender": "male",
-                    "valid_from": "2023-01-01",
-                    "valid_until": "2025-12-31",
-                    "is_primary": false,
-                    "created_at": "2023-08-01T12:00:00Z",
-                    "updated_at": "2023-09-01T12:00:00Z"
-                  }
-                }
-              }
-            }
+            "description": "Identity updated successfully"
           },
           "400": {
-            "description": "Validation error or bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Invalid gender value."
-                }
-              }
-            }
+            "description": "Validation error or bad request"
           },
           "404": {
-            "description": "Identity not found or unauthorized access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Identity not found or access denied."
-                }
-              }
-            }
+            "description": "Identity not found or unauthorized access"
           }
         }
       },
@@ -1877,12 +1014,16 @@
         ],
         "summary": "Delete Identity",
         "description": "Delete an identity by ID.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "identity_id",
             "in": "path",
             "required": true,
-            "description": "Identity ID",
             "schema": {
               "type": "integer"
             }
@@ -1893,186 +1034,65 @@
             "required": true,
             "schema": {
               "type": "integer"
-            },
-            "description": "Project ID"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Identity deleted successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Identity deleted successfully."
-                    }
-                  }
-                },
-                "example": {
-                  "message": "Identity deleted successfully."
-                }
-              }
-            }
+            "description": "Identity deleted successfully"
           },
           "404": {
-            "description": "Identity not found or unauthorized access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Identity not found or access denied."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/relationships/individual/{individual_id}": {
-      "get": {
-        "tags": [
-          "Relationships"
-        ],
-        "summary": "Get Relationships for Individual",
-        "description": "Retrieve relationships for a specific individual within a project.",
-        "parameters": [
-          {
-            "name": "individual_id",
-            "in": "path",
-            "required": true,
-            "description": "Individual ID",
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "name": "project_id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            },
-            "description": "Project ID"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Relationships retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "relationships": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/RelationshipOut"
-                      }
-                    }
-                  }
-                },
-                "example": {
-                  "relationships": [
-                    {
-                      "id": 100,
-                      "individual": {
-                        "id": 1,
-                        "number": 1001,
-                        "birth_date": "1990-01-01",
-                        "birth_place": "Boston",
-                        "death_date": null,
-                        "death_place": null,
-                        "notes": null,
-                        "age": 33,
-                        "primary_identity": {
-                          "id": 10,
-                          "individual_id": 1,
-                          "first_name": "Jonathan",
-                          "last_name": "Doe",
-                          "gender": "male",
-                          "valid_from": "1990-01-01",
-                          "valid_until": null,
-                          "is_primary": true,
-                          "created_at": "2023-01-01T12:00:00Z",
-                          "updated_at": "2023-09-01T12:00:00Z"
-                        },
-                        "identities": [],
-                        "partners": [],
-                        "parents": [],
-                        "children": [],
-                        "siblings": []
-                      },
-                      "related": {
-                        "id": 2,
-                        "number": 1002,
-                        "birth_date": "1992-02-02",
-                        "birth_place": "Los Angeles",
-                        "death_date": null,
-                        "death_place": null,
-                        "notes": null,
-                        "age": 31,
-                        "primary_identity": null,
-                        "identities": [],
-                        "partners": [],
-                        "parents": [],
-                        "children": [],
-                        "siblings": []
-                      },
-                      "initial_relationship": "partner",
-                      "relationship_detail": "marriage",
-                      "union_date": "2020-05-20",
-                      "union_place": "New York",
-                      "dissolution_date": null,
-                      "notes": null,
-                      "created_at": "2023-07-01T12:00:00Z",
-                      "updated_at": "2023-07-15T12:00:00Z"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Missing project ID",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Project ID is required."
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Individual not found or unauthorized access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Individual not found or access denied."
-                }
-              }
-            }
+            "description": "Identity not found or unauthorized access"
           }
         }
       }
     },
     "/api/relationships": {
+      "get": {
+        "tags": [
+          "Relationships"
+        ],
+        "summary": "List all Relationships by project",
+        "description": "List all relationships for a given project ID.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Project ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of relationships retrieved successfully."
+          },
+          "400": {
+            "description": "Project ID is required or invalid."
+          },
+          "401": {
+            "description": "No valid JWT provided."
+          }
+        }
+      },
       "post": {
         "tags": [
           "Relationships"
         ],
         "summary": "Create Relationship",
-        "description": "Create a new relationship between individuals.",
+        "description": "Create a new relationship between two individuals.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "project_id",
@@ -2085,8 +1105,8 @@
           }
         ],
         "requestBody": {
-          "description": "Relationship data",
           "required": true,
+          "description": "Relationship data",
           "content": {
             "application/json": {
               "schema": {
@@ -2095,118 +1115,76 @@
               "example": {
                 "individual_id": 1,
                 "related_id": 2,
-                "initial_relationship": "partner",
-                "relationship_detail": "marriage",
-                "union_date": "2020-05-20",
-                "union_place": "New York",
+                "initial_relationship": "child",
+                "relationship_detail": "biological",
+                "union_date": null,
+                "union_place": null,
                 "dissolution_date": null,
-                "notes": null
+                "notes": "Example relationship notes"
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Relationship created successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Relationship created successfully."
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/RelationshipOut"
-                    }
-                  }
-                },
-                "example": {
-                  "message": "Relationship created successfully.",
-                  "data": {
-                    "id": 100,
-                    "individual": {
-                      "id": 1,
-                      "number": 1001,
-                      "birth_date": "1990-01-01",
-                      "birth_place": "Boston",
-                      "death_date": null,
-                      "death_place": null,
-                      "notes": null,
-                      "age": 33,
-                      "primary_identity": {
-                        "id": 10,
-                        "individual_id": 1,
-                        "first_name": "Jonathan",
-                        "last_name": "Doe",
-                        "gender": "male",
-                        "valid_from": "1990-01-01",
-                        "valid_until": null,
-                        "is_primary": true,
-                        "created_at": "2023-01-01T12:00:00Z",
-                        "updated_at": "2023-09-01T12:00:00Z"
-                      },
-                      "identities": [],
-                      "partners": [],
-                      "parents": [],
-                      "children": [],
-                      "siblings": []
-                    },
-                    "related": {
-                      "id": 2,
-                      "number": 1002,
-                      "birth_date": "1992-02-02",
-                      "birth_place": "Los Angeles",
-                      "death_date": null,
-                      "death_place": null,
-                      "notes": null,
-                      "age": 31,
-                      "primary_identity": null,
-                      "identities": [],
-                      "partners": [],
-                      "parents": [],
-                      "children": [],
-                      "siblings": []
-                    },
-                    "initial_relationship": "partner",
-                    "relationship_detail": "marriage",
-                    "union_date": "2020-05-20",
-                    "union_place": "New York",
-                    "dissolution_date": null,
-                    "notes": null,
-                    "created_at": "2023-07-01T12:00:00Z",
-                    "updated_at": "2023-07-15T12:00:00Z"
-                  }
-                }
-              }
-            }
+            "description": "Relationship created successfully"
           },
           "400": {
-            "description": "Validation error or bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Initial relationship type is required."
-                }
-              }
-            }
+            "description": "Validation error or bad request"
+          },
+          "401": {
+            "description": "Unauthorized. No valid JWT provided."
           },
           "404": {
-            "description": "Individual not found or unauthorized access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "One or both individuals not found or access denied."
-                }
-              }
+            "description": "One or both individuals not found in this project."
+          }
+        }
+      }
+    },
+    "/api/relationships/{relationship_id}": {
+      "get": {
+        "tags": [
+          "Relationships"
+        ],
+        "summary": "Get Relationship by ID",
+        "description": "Retrieve details of a specific relationship by its ID.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "relationship_id",
+            "in": "path",
+            "required": true,
+            "description": "The unique ID of the relationship.",
+            "schema": {
+              "type": "integer"
             }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "description": "The project ID in which this relationship resides.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Relationship retrieved successfully."
+          },
+          "400": {
+            "description": "Project ID is missing or invalid."
+          },
+          "401": {
+            "description": "No user identity found in token."
+          },
+          "404": {
+            "description": "Relationship not found in this project."
           }
         }
       },
@@ -2216,152 +1194,11 @@
         ],
         "summary": "Update Relationship",
         "description": "Update details of a specific relationship by ID.",
-        "parameters": [
+        "security": [
           {
-            "name": "project_id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            },
-            "description": "Project ID"
+            "BearerAuth": []
           }
         ],
-        "requestBody": {
-          "description": "Fields to update",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RelationshipUpdate"
-              },
-              "example": {
-                "relationship_id": 1,
-                "initial_relationship": "partner",
-                "relationship_detail": "civil union",
-                "union_date": "2021-06-15",
-                "union_place": null,
-                "dissolution_date": null,
-                "notes": "Updated relationship details",
-                "individual_id": 1,
-                "related_id": 2
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Relationship updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Relationship updated successfully."
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/RelationshipOut"
-                    }
-                  }
-                },
-                "example": {
-                  "message": "Relationship updated successfully.",
-                  "data": {
-                    "id": 100,
-                    "individual": {
-                      "id": 1,
-                      "number": 1001,
-                      "birth_date": "1990-01-01",
-                      "birth_place": "Boston",
-                      "death_date": null,
-                      "death_place": null,
-                      "notes": null,
-                      "age": 33,
-                      "primary_identity": {
-                        "id": 10,
-                        "individual_id": 1,
-                        "first_name": "Jonathan",
-                        "last_name": "Doe",
-                        "gender": "male",
-                        "valid_from": "1990-01-01",
-                        "valid_until": null,
-                        "is_primary": true,
-                        "created_at": "2023-01-01T12:00:00Z",
-                        "updated_at": "2023-09-01T12:00:00Z"
-                      },
-                      "identities": [],
-                      "partners": [],
-                      "parents": [],
-                      "children": [],
-                      "siblings": []
-                    },
-                    "related": {
-                      "id": 2,
-                      "number": 1002,
-                      "birth_date": "1992-02-02",
-                      "birth_place": "Los Angeles",
-                      "death_date": null,
-                      "death_place": null,
-                      "notes": null,
-                      "age": 31,
-                      "primary_identity": null,
-                      "identities": [],
-                      "partners": [],
-                      "parents": [],
-                      "children": [],
-                      "siblings": []
-                    },
-                    "initial_relationship": "partner",
-                    "relationship_detail": "civil union",
-                    "union_date": "2021-06-15",
-                    "union_place": null,
-                    "dissolution_date": null,
-                    "notes": "Updated relationship details",
-                    "created_at": "2023-07-01T12:00:00Z",
-                    "updated_at": "2023-09-01T12:00:00Z"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation error or bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Invalid initial relationship type."
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Relationship not found or unauthorized access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Relationship not found or access denied."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/relationships/{relationship_id}": {
-      "delete": {
-        "tags": [
-          "Relationships"
-        ],
-        "summary": "Delete Relationship",
-        "description": "Delete a relationship by ID.",
         "parameters": [
           {
             "name": "relationship_id",
@@ -2382,38 +1219,76 @@
             "description": "Project ID"
           }
         ],
+        "requestBody": {
+          "required": true,
+          "description": "Relationship data to update.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RelationshipUpdate"
+              },
+              "example": {
+                "initial_relationship": "parent",
+                "relationship_detail": "step",
+                "union_date": "2023-05-01",
+                "union_place": null,
+                "dissolution_date": null,
+                "notes": "Updated notes about the relationship",
+                "individual_id": 1,
+                "related_id": 2
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "Relationship deleted successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Relationship deleted successfully."
-                    }
-                  }
-                },
-                "example": {
-                  "message": "Relationship deleted successfully."
-                }
-              }
-            }
+            "description": "Relationship updated successfully"
+          },
+          "400": {
+            "description": "Validation error or bad request."
           },
           "404": {
-            "description": "Relationship not found or unauthorized access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Relationship not found or access denied."
-                }
-              }
+            "description": "Relationship not found or unauthorized access."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Relationships"
+        ],
+        "summary": "Delete Relationship",
+        "description": "Delete a specific relationship by its ID.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "relationship_id",
+            "in": "path",
+            "required": true,
+            "description": "The unique ID of the relationship to delete.",
+            "schema": {
+              "type": "integer"
             }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Project ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Relationship deleted successfully"
+          },
+          "404": {
+            "description": "Relationship not found or unauthorized access"
           }
         }
       }
@@ -2427,23 +1302,19 @@
           "username": {
             "type": "string",
             "minLength": 3,
-            "maxLength": 50,
-            "description": "The username of the user."
+            "maxLength": 50
           },
           "email": {
             "type": "string",
-            "format": "email",
-            "description": "The email address of the user."
+            "format": "email"
           },
           "password": {
             "type": "string",
             "minLength": 8,
-            "maxLength": 128,
-            "description": "The password for the user."
+            "maxLength": 128
           },
           "confirm_password": {
-            "type": "string",
-            "description": "The password confirmation."
+            "type": "string"
           }
         },
         "required": [
@@ -2451,37 +1322,25 @@
           "email",
           "password",
           "confirm_password"
-        ],
-        "example": {
-          "username": "johndoe",
-          "email": "johndoe@example.com",
-          "password": "SecurePass123!",
-          "confirm_password": "SecurePass123!"
-        }
+        ]
       },
       "UserLogin": {
         "type": "object",
         "properties": {
           "email": {
             "type": "string",
-            "format": "email",
-            "description": "The email address of the user."
+            "format": "email"
           },
           "password": {
             "type": "string",
             "minLength": 8,
-            "maxLength": 128,
-            "description": "The password for the user."
+            "maxLength": 128
           }
         },
         "required": [
           "email",
           "password"
-        ],
-        "example": {
-          "email": "johndoe@example.com",
-          "password": "SecurePass123!"
-        }
+        ]
       },
       "UserUpdate": {
         "type": "object",
@@ -2490,25 +1349,21 @@
             "type": "string",
             "minLength": 3,
             "maxLength": 50,
-            "description": "The updated username of the user.",
             "nullable": true
           },
           "email": {
             "type": "string",
             "format": "email",
-            "description": "The updated email address of the user.",
             "nullable": true
           },
           "password": {
             "type": "string",
             "minLength": 8,
             "maxLength": 128,
-            "description": "The updated password.",
             "nullable": true
           },
           "confirm_password": {
             "type": "string",
-            "description": "The updated password confirmation.",
             "nullable": true
           }
         }
@@ -2517,113 +1372,82 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "integer",
-            "description": "The unique ID of the user."
+            "type": "integer"
           },
           "username": {
-            "type": "string",
-            "description": "The username of the user."
+            "type": "string"
           },
           "email": {
             "type": "string",
-            "format": "email",
-            "description": "The email address of the user."
+            "format": "email"
           },
           "is_admin": {
-            "type": "boolean",
-            "description": "Indicates if the user has admin privileges."
+            "type": "boolean"
           },
           "created_at": {
             "type": "string",
-            "format": "date-time",
-            "description": "The timestamp when the user was created."
+            "format": "date-time"
           },
           "updated_at": {
             "type": "string",
-            "format": "date-time",
-            "description": "The timestamp when the user was last updated."
+            "format": "date-time"
           }
-        },
-        "example": {
-          "id": 1,
-          "username": "johndoe",
-          "email": "johndoe@example.com",
-          "is_admin": true,
-          "created_at": "2023-01-01T12:00:00Z",
-          "updated_at": "2023-06-01T12:00:00Z"
         }
       },
       "ProjectCreate": {
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "description": "Name of the project."
+            "type": "string"
           }
         },
         "required": [
           "name"
-        ],
-        "example": {
-          "name": "New Project"
-        }
+        ]
       },
       "ProjectUpdate": {
         "type": "object",
         "properties": {
           "name": {
             "type": "string",
-            "description": "Updated name of the project.",
             "nullable": true
           }
-        },
-        "example": {
-          "name": "Updated Project Name"
         }
       },
       "ProjectOut": {
         "type": "object",
         "properties": {
           "id": {
-            "type": "integer",
-            "description": "The unique ID of the project."
+            "type": "integer"
+          },
+          "project_number": {
+            "type": "integer"
           },
           "user_id": {
-            "type": "integer",
-            "description": "The unique ID of the user who owns the project."
+            "type": "integer"
           },
           "name": {
-            "type": "string",
-            "description": "Name of the project."
+            "type": "string"
           },
           "created_at": {
             "type": "string",
-            "format": "date-time",
-            "description": "The timestamp when the project was created."
+            "format": "date-time"
           },
           "updated_at": {
             "type": "string",
-            "format": "date-time",
-            "description": "The timestamp when the project was last updated."
+            "format": "date-time"
           },
           "entity_counts": {
             "type": "object",
-            "description": "Counts of related entities, such as individuals and relationships.",
-            "additionalProperties": {
-              "type": "integer"
-            },
-            "nullable": true
-          }
-        },
-        "example": {
-          "id": 1,
-          "user_id": 1,
-          "name": "Family Tree",
-          "created_at": "2023-02-01T12:00:00Z",
-          "updated_at": "2023-06-01T12:00:00Z",
-          "entity_counts": {
-            "individuals": 50,
-            "relationships": 45
+            "nullable": true,
+            "properties": {
+              "individuals": {
+                "type": "integer"
+              },
+              "relationships": {
+                "type": "integer"
+              }
+            }
           }
         }
       },
@@ -2633,64 +1457,46 @@
           "first_name": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 50,
-            "description": "First name of the individual."
+            "maxLength": 50
           },
           "last_name": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 50,
-            "description": "Last name of the individual."
+            "maxLength": 50
+          },
+          "gender": {
+            "$ref": "#/components/schemas/GenderEnum"
           },
           "birth_date": {
             "type": "string",
             "format": "date",
-            "description": "Birth date of the individual.",
             "nullable": true
           },
           "birth_place": {
             "type": "string",
             "maxLength": 100,
-            "description": "Birthplace of the individual.",
             "nullable": true
           },
           "death_date": {
             "type": "string",
             "format": "date",
-            "description": "Death date of the individual.",
             "nullable": true
           },
           "death_place": {
             "type": "string",
             "maxLength": 100,
-            "description": "Place of death for the individual.",
             "nullable": true
           },
           "notes": {
             "type": "string",
-            "description": "Additional notes about the individual.",
             "nullable": true
-          },
-          "gender": {
-            "$ref": "#/components/schemas/GenderEnum",
-            "description": "Gender of the individual."
           }
         },
         "required": [
           "first_name",
           "last_name",
           "gender"
-        ],
-        "example": {
-          "first_name": "Jane",
-          "last_name": "Doe",
-          "birth_date": "1995-03-15",
-          "birth_place": "Chicago",
-          "death_date": null,
-          "death_place": null,
-          "notes": "string",
-          "gender": "female"
-        }
+        ]
       },
       "IndividualUpdate": {
         "type": "object",
@@ -2699,48 +1505,40 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 50,
-            "description": "Updated first name.",
             "nullable": true
           },
           "last_name": {
             "type": "string",
             "minLength": 1,
             "maxLength": 50,
-            "description": "Updated last name.",
+            "nullable": true
+          },
+          "gender": {
+            "$ref": "#/components/schemas/GenderEnum",
             "nullable": true
           },
           "birth_date": {
             "type": "string",
             "format": "date",
-            "description": "Birth date of the individual.",
             "nullable": true
           },
           "birth_place": {
             "type": "string",
             "maxLength": 100,
-            "description": "Birthplace of the individual.",
             "nullable": true
           },
           "death_date": {
             "type": "string",
             "format": "date",
-            "description": "Death date of the individual.",
             "nullable": true
           },
           "death_place": {
             "type": "string",
             "maxLength": 100,
-            "description": "Place of death for the individual.",
             "nullable": true
           },
           "notes": {
             "type": "string",
-            "description": "Additional notes about the individual.",
-            "nullable": true
-          },
-          "gender": {
-            "$ref": "#/components/schemas/GenderEnum",
-            "description": "Gender of the individual.",
             "nullable": true
           }
         }
@@ -2749,152 +1547,76 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "integer",
-            "description": "The unique ID of the individual."
+            "type": "integer"
           },
-          "number": {
-            "type": "integer",
-            "description": "A unique number assigned to the individual."
+          "individual_number": {
+            "type": "integer"
           },
           "birth_date": {
             "type": "string",
             "format": "date",
-            "description": "Birth date of the individual.",
             "nullable": true
           },
           "birth_place": {
             "type": "string",
-            "description": "Birthplace of the individual.",
             "nullable": true
           },
           "death_date": {
             "type": "string",
             "format": "date",
-            "description": "Death date of the individual.",
             "nullable": true
           },
           "death_place": {
             "type": "string",
-            "description": "Place of death for the individual.",
             "nullable": true
           },
           "notes": {
             "type": "string",
-            "description": "Additional notes about the individual.",
             "nullable": true
           },
           "age": {
             "type": "integer",
-            "description": "Age of the individual, calculated if applicable.",
             "nullable": true
           },
           "primary_identity": {
             "$ref": "#/components/schemas/IdentityOut",
-            "description": "The primary identity associated with the individual.",
             "nullable": true
           },
           "identities": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/IdentityOut"
-            },
-            "description": "All identities associated with the individual.",
-            "nullable": true
-          },
-          "partners": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/IndividualOut"
-            },
-            "description": "List of partners.",
-            "nullable": true
-          },
-          "parents": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/IndividualOut"
-            },
-            "description": "List of parents.",
-            "nullable": true
-          },
-          "children": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/IndividualOut"
-            },
-            "description": "List of children.",
-            "nullable": true
-          },
-          "siblings": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/IndividualOut"
-            },
-            "description": "List of siblings.",
-            "nullable": true
+              "$ref": "#/components/schemas/IdentityIdOut"
+            }
           }
-        },
-        "example": {
-          "id": 1,
-          "number": 1001,
-          "birth_date": "1990-01-01",
-          "birth_place": "Boston",
-          "death_date": null,
-          "death_place": null,
-          "notes": null,
-          "age": 33,
-          "primary_identity": {
-            "id": 10,
-            "individual_id": 1,
-            "first_name": "Jonathan",
-            "last_name": "Doe",
-            "gender": "male",
-            "valid_from": "1990-01-01",
-            "valid_until": null,
-            "is_primary": true,
-            "created_at": "2023-01-01T12:00:00Z",
-            "updated_at": "2023-09-01T12:00:00Z"
-          },
-          "identities": [],
-          "partners": [],
-          "parents": [],
-          "children": [],
-          "siblings": []
         }
       },
       "IdentityCreate": {
         "type": "object",
         "properties": {
           "individual_id": {
-            "type": "integer",
-            "description": "ID of the associated individual."
+            "type": "integer"
           },
           "first_name": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 50,
-            "description": "First name of the individual."
+            "maxLength": 50
           },
           "last_name": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 50,
-            "description": "Last name of the individual."
+            "maxLength": 50
           },
           "gender": {
-            "$ref": "#/components/schemas/GenderEnum",
-            "description": "Gender of the individual."
+            "$ref": "#/components/schemas/GenderEnum"
           },
           "valid_from": {
             "type": "string",
             "format": "date",
-            "description": "The start date of this identity's validity.",
             "nullable": true
           },
           "valid_until": {
             "type": "string",
             "format": "date",
-            "description": "The end date of this identity's validity.",
             "nullable": true
           }
         },
@@ -2903,15 +1625,7 @@
           "first_name",
           "last_name",
           "gender"
-        ],
-        "example": {
-          "individual_id": 1,
-          "first_name": "Jonathan",
-          "last_name": "Doe",
-          "gender": "male",
-          "valid_from": "2023-01-01",
-          "valid_until": null
-        }
+        ]
       },
       "IdentityUpdate": {
         "type": "object",
@@ -2920,36 +1634,30 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 50,
-            "description": "Updated first name.",
             "nullable": true
           },
           "last_name": {
             "type": "string",
             "minLength": 1,
             "maxLength": 50,
-            "description": "Updated last name.",
             "nullable": true
           },
           "gender": {
             "$ref": "#/components/schemas/GenderEnum",
-            "description": "Updated gender.",
             "nullable": true
           },
           "valid_from": {
             "type": "string",
             "format": "date",
-            "description": "Updated start date of validity.",
             "nullable": true
           },
           "valid_until": {
             "type": "string",
             "format": "date",
-            "description": "Updated end date of validity.",
             "nullable": true
           },
           "is_primary": {
             "type": "boolean",
-            "description": "Whether this identity is the primary identity.",
             "nullable": true
           }
         }
@@ -2958,305 +1666,201 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "integer",
-            "description": "The unique ID of the identity."
+            "type": "integer"
           },
           "individual_id": {
-            "type": "integer",
-            "description": "The ID of the associated individual."
+            "type": "integer"
+          },
+          "identity_number": {
+            "type": "integer"
           },
           "first_name": {
             "type": "string",
-            "description": "First name of the individual.",
             "nullable": true
           },
           "last_name": {
             "type": "string",
-            "description": "Last name of the individual.",
             "nullable": true
           },
           "gender": {
             "$ref": "#/components/schemas/GenderEnum",
-            "description": "Gender of the individual.",
             "nullable": true
           },
           "valid_from": {
             "type": "string",
             "format": "date",
-            "description": "The start date of this identity's validity.",
             "nullable": true
           },
           "valid_until": {
             "type": "string",
             "format": "date",
-            "description": "The end date of this identity's validity.",
             "nullable": true
           },
           "is_primary": {
-            "type": "boolean",
-            "description": "Indicates if this is the primary identity.",
-            "nullable": true
+            "type": "boolean"
           },
           "created_at": {
             "type": "string",
-            "format": "date-time",
-            "description": "The timestamp when this identity was created."
+            "format": "date-time"
           },
           "updated_at": {
             "type": "string",
-            "format": "date-time",
-            "description": "The timestamp when this identity was last updated."
+            "format": "date-time"
           }
-        },
-        "example": {
-          "id": 10,
-          "individual_id": 1,
-          "first_name": "Jonathan",
-          "last_name": "Doe",
-          "gender": "male",
-          "valid_from": "1990-01-01",
-          "valid_until": null,
-          "is_primary": true,
-          "created_at": "2023-01-01T12:00:00Z",
-          "updated_at": "2023-09-01T12:00:00Z"
+        }
+      },
+      "IdentityIdOut": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          }
         }
       },
       "RelationshipCreate": {
         "type": "object",
         "properties": {
           "individual_id": {
-            "type": "integer",
-            "description": "The ID of the primary individual in the relationship."
+            "type": "integer"
           },
           "related_id": {
-            "type": "integer",
-            "description": "The ID of the related individual in the relationship."
+            "type": "integer"
           },
           "initial_relationship": {
-            "$ref": "#/components/schemas/InitialRelationshipEnum",
-            "description": "The initial type of relationship (e.g., child, parent, partner)."
+            "$ref": "#/components/schemas/InitialRelationshipEnum"
           },
           "relationship_detail": {
             "type": "string",
-            "description": "Further detail about the relationship.",
             "nullable": true
           },
           "union_date": {
             "type": "string",
             "format": "date",
-            "description": "The union date for partner relationships.",
             "nullable": true
           },
           "union_place": {
             "type": "string",
-            "description": "The union place for partner relationships.",
             "nullable": true
           },
           "dissolution_date": {
             "type": "string",
             "format": "date",
-            "description": "The dissolution date for the relationship.",
             "nullable": true
           },
           "notes": {
             "type": "string",
-            "maxLength": 255,
-            "description": "Additional notes about the relationship.",
-            "nullable": true
+            "nullable": true,
+            "maxLength": 255
           }
         },
         "required": [
           "individual_id",
           "related_id",
           "initial_relationship"
-        ],
-        "example": {
-          "individual_id": 1,
-          "related_id": 2,
-          "initial_relationship": "partner",
-          "relationship_detail": "marriage",
-          "union_date": "2020-05-20",
-          "union_place": "New York",
-          "dissolution_date": null,
-          "notes": null
-        }
+        ]
       },
       "RelationshipUpdate": {
         "type": "object",
         "properties": {
-          "relationship_id": {
-            "type": "integer",
-            "description": "The unique ID of the relationship."
-          },
           "initial_relationship": {
             "$ref": "#/components/schemas/InitialRelationshipEnum",
-            "description": "Updated initial type of relationship.",
             "nullable": true
           },
           "relationship_detail": {
             "type": "string",
-            "description": "Updated relationship detail.",
             "nullable": true
           },
           "union_date": {
             "type": "string",
             "format": "date",
-            "description": "Updated union date for partner relationships.",
             "nullable": true
           },
           "union_place": {
             "type": "string",
-            "description": "Updated union place for partner relationships.",
             "nullable": true
           },
           "dissolution_date": {
             "type": "string",
             "format": "date",
-            "description": "Updated dissolution date for the relationship.",
             "nullable": true
           },
           "notes": {
             "type": "string",
             "maxLength": 255,
-            "description": "Updated additional notes about the relationship.",
             "nullable": true
           },
           "individual_id": {
             "type": "integer",
-            "description": "Updated primary individual ID in the relationship.",
+            "nullable": true
           },
           "related_id": {
             "type": "integer",
-            "description": "Updated related individual ID in the relationship.",
-          },
-        "required": [
-          "relationship_id",
-          "individual_id",
-          "related_id"
-        ]
-        },
-        "example": {
-          "relationship_id": 1,
-          "initial_relationship": "partner",
-          "relationship_detail": "civil union",
-          "union_date": "2021-06-15",
-          "union_place": null,
-          "dissolution_date": null,
-          "notes": "Updated relationship details",
-          "individual_id": 1,
-          "related_id": 2
+            "nullable": true
+          }
         }
       },
       "RelationshipOut": {
         "type": "object",
         "properties": {
           "id": {
+            "type": "integer"
+          },
+          "individual_id": {
             "type": "integer",
-            "description": "The unique ID of the relationship."
+            "description": "The ID of the primary individual in the relationship"
           },
-          "individual": {
-            "$ref": "#/components/schemas/IndividualOut",
-            "description": "Details of the primary individual in the relationship."
-          },
-          "related": {
-            "$ref": "#/components/schemas/IndividualOut",
-            "description": "Details of the related individual in the relationship."
+          "related_id": {
+            "type": "integer",
+            "description": "The ID of the related individual in the relationship"
           },
           "initial_relationship": {
-            "$ref": "#/components/schemas/InitialRelationshipEnum",
-            "description": "The initial type of relationship."
+            "$ref": "#/components/schemas/InitialRelationshipEnum"
           },
           "relationship_detail": {
             "type": "string",
-            "description": "Further detail about the relationship.",
             "nullable": true
           },
           "union_date": {
             "type": "string",
             "format": "date",
-            "description": "The union date for partner relationships.",
             "nullable": true
           },
           "union_place": {
             "type": "string",
-            "description": "The union place for partner relationships.",
             "nullable": true
           },
           "dissolution_date": {
             "type": "string",
             "format": "date",
-            "description": "The dissolution date for the relationship.",
             "nullable": true
           },
           "notes": {
             "type": "string",
-            "description": "Additional notes about the relationship.",
+            "maxLength": 255,
             "nullable": true
           },
           "created_at": {
             "type": "string",
-            "format": "date-time",
-            "description": "The timestamp when the relationship was created."
+            "format": "date-time"
           },
           "updated_at": {
             "type": "string",
-            "format": "date-time",
-            "description": "The timestamp when the relationship was last updated."
-          }
-        },
-        "example": {
-          "id": 100,
+            "format": "date-time"
+          },
           "individual": {
-            "id": 1,
-            "number": 1001,
-            "birth_date": "1990-01-01",
-            "birth_place": "Boston",
-            "death_date": null,
-            "death_place": null,
-            "notes": null,
-            "age": 33,
-            "primary_identity": {
-              "id": 10,
-              "individual_id": 1,
-              "first_name": "Jonathan",
-              "last_name": "Doe",
-              "gender": "male",
-              "valid_from": "1990-01-01",
-              "valid_until": null,
-              "is_primary": true,
-              "created_at": "2023-01-01T12:00:00Z",
-              "updated_at": "2023-09-01T12:00:00Z"
-            },
-            "identities": [],
-            "partners": [],
-            "parents": [],
-            "children": [],
-            "siblings": []
+            "$ref": "#/components/schemas/IndividualOut"
           },
           "related": {
-            "id": 2,
-            "number": 1002,
-            "birth_date": "1992-02-02",
-            "birth_place": "Los Angeles",
-            "death_date": null,
-            "death_place": null,
-            "notes": null,
-            "age": 31,
-            "primary_identity": null,
-            "identities": [],
-            "partners": [],
-            "parents": [],
-            "children": [],
-            "siblings": []
-          },
-          "initial_relationship": "partner",
-          "relationship_detail": "marriage",
-          "union_date": "2020-05-20",
-          "union_place": "New York",
-          "dissolution_date": null,
-          "notes": null,
-          "created_at": "2023-07-01T12:00:00Z",
-          "updated_at": "2023-07-15T12:00:00Z"
+            "$ref": "#/components/schemas/IndividualOut"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
         }
       },
       "GenderEnum": {
@@ -3284,7 +1888,7 @@
           "parent",
           "partner"
         ],
-        "description": "The initial type of relationship (e.g., child, parent, partner)."
+        "description": "The initial type of relationship."
       },
       "HorizontalRelationshipTypeEnum": {
         "type": "string",
@@ -3295,7 +1899,7 @@
           "foster",
           "other"
         ],
-        "description": "Types of horizontal relationships."
+        "description": "Types of horizontal relationships for child/parent."
       },
       "VerticalRelationshipTypeEnum": {
         "type": "string",
@@ -3304,19 +1908,7 @@
           "civil union",
           "partnership"
         ],
-        "description": "Types of vertical relationships."
-      },
-      "Error": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "example": "Detailed error message."
-          }
-        },
-        "example": {
-          "error": "An unexpected error occurred."
-        }
+        "description": "Types of vertical relationships for partners."
       }
     },
     "securitySchemes": {
