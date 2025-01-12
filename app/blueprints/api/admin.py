@@ -1,10 +1,11 @@
 from flask import Blueprint, jsonify, current_app, request
 from flask_jwt_extended import jwt_required
-from app.services.user_service import UserService
+
 from app.extensions import SessionLocal
-from app.utils.decorators import admin_required
-from app.schemas.user_schema import UserOut
 from app.models.user_model import User
+from app.schemas.user_schema import UserOut
+from app.services.user_service import UserService
+from app.utils.decorators import admin_required
 
 api_admin_bp = Blueprint('api_admin_bp', __name__)
 
@@ -14,29 +15,27 @@ api_admin_bp = Blueprint('api_admin_bp', __name__)
 @admin_required
 def list_users():
     """
-    Admins can retrieve a list of all users.
+    Admins can retrieve a list of all users with optional pagination.
     """
     try:
-        # Optional: Pagination parameters
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
 
         with SessionLocal() as session:
             service = UserService(db=session)
-            users_query = session.query(User)
-            total = users_query.count()
-            users = users_query.offset((page - 1) * per_page).limit(
-                per_page).all()
+            users = service.get_paginated_users(page=page,
+                                                per_page=per_page)
+            total = session.query(User).count()
 
-            # Serialize users with Pydantic
-            users_data = [UserOut.from_orm(user).model_dump() for
+            users_out = [UserOut.model_validate(user).model_dump()
+                         for
                           user in users]
 
             return jsonify({
                 "total": total,
                 "page": page,
                 "per_page": per_page,
-                "users": users_data
+                "users": users_out
             }), 200
 
     except Exception as e:
