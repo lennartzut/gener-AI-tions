@@ -54,15 +54,11 @@ class RelationshipBase(BaseModel):
 
     @model_validator(mode='after')
     def validate_dates(cls,
-                       values: 'RelationshipBase') -> 'RelationshipBase':
-        """
-        Ensures that `union_date` is earlier than `dissolution_date`, if both are provided.
-        """
-        if values.union_date and values.dissolution_date:
-            ValidationUtils.validate_date_order(
-                values.union_date, values.dissolution_date,
-                "Union date must be before dissolution date."
-            )
+                       values: "RelationshipBase") -> "RelationshipBase":
+        ValidationUtils.validate_date_order([
+            (values.union_date, values.dissolution_date,
+             "Union date must be before dissolution date.")
+        ])
         return values
 
     model_config = ConfigDict(from_attributes=True)
@@ -98,15 +94,11 @@ class RelationshipUpdate(BaseModel):
 
     @model_validator(mode='after')
     def validate_dates(cls,
-                       values: 'RelationshipUpdate') -> 'RelationshipUpdate':
-        """
-        Ensures that `union_date` is earlier than `dissolution_date`, if both are provided.
-        """
-        if values.union_date and values.dissolution_date:
-            ValidationUtils.validate_date_order(
-                values.union_date, values.dissolution_date,
-                "Union date must be before dissolution date."
-            )
+                       values: "RelationshipBase") -> "RelationshipBase":
+        ValidationUtils.validate_date_order([
+            (values.union_date, values.dissolution_date,
+             "Union date must be before dissolution date.")
+        ])
         return values
 
     model_config = ConfigDict(from_attributes=True)

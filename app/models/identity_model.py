@@ -1,7 +1,9 @@
 from datetime import date
 
-from sqlalchemy import Column, Boolean, Integer, Sequence, String, Date, \
-    DateTime, Enum, ForeignKey, CheckConstraint, UniqueConstraint
+from sqlalchemy import (Column, Boolean, Integer, String, Date, \
+                        DateTime, Enum, ForeignKey, CheckConstraint,
+                        UniqueConstraint,
+                        Index, text)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -12,32 +14,34 @@ from app.models.enums_model import GenderEnum
 class Identity(Base):
     __tablename__ = 'identities'
     __table_args__ = (
-        UniqueConstraint('individual_id', 'valid_from',
-                         name='uix_identity_valid_from'),
+        UniqueConstraint('individual_id', 'identity_number',
+                         name='uix_identity_identity_number'),
         CheckConstraint(
             'valid_until IS NULL OR valid_until > valid_from',
             name='chk_validity_dates'
         ),
+        Index(
+            'uix_individual_primary_identity',
+            'individual_id',
+            unique=True,
+            postgresql_where=text('is_primary = true')
+        ),
     )
 
-    identity_number_seq = Sequence('identity_number_seq')
     id = Column(Integer, primary_key=True, autoincrement=True)
     individual_id = Column(Integer, ForeignKey('individuals.id',
                                                ondelete='CASCADE'),
                            nullable=False, index=True)
     identity_number = Column(
         Integer,
-        identity_number_seq,
-        nullable=False,
-        unique=True
+        nullable=False
     )
     first_name = Column(String(100), nullable=True)
     last_name = Column(String(100), nullable=True)
     gender = Column(Enum(GenderEnum), nullable=True)
     valid_from = Column(Date, nullable=True)
     valid_until = Column(Date, nullable=True)
-    is_primary = Column(Boolean, nullable=False,
-                        server_default='false')
+    is_primary = Column(Boolean, nullable=False, server_default='false')
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True),

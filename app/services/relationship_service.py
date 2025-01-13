@@ -64,11 +64,10 @@ class RelationshipService:
             if existing:
                 raise ValueError("This relationship already exists.")
 
-            # Validate date order (union_date <= dissolution_date)
-            ValidationUtils.validate_date_order(
+            ValidationUtils.validate_date_order([(
                 relationship_create.union_date,
                 relationship_create.dissolution_date,
-                "Union date must be before dissolution date."
+                "Union date must be before dissolution date.")]
             )
 
             # Exclude 'relationship_detail' from direct constructor
@@ -96,9 +95,13 @@ class RelationshipService:
             logger.info(f"Created relationship: ID={new_rel.id}")
             return new_rel
 
-        except (ValueError, SQLAlchemyError) as e:
+        except SQLAlchemyError as e:
             self.db.rollback()
-            logger.error(f"Error creating relationship: {e}")
+            logger.error(
+                f"Database error during Relationship creation: {e}")
+            if "chk_relationship_dates" in str(e).lower():
+                raise ValueError(
+                    "Union date must be before dissolution date.")
             return None
 
     def update_relationship(
@@ -123,10 +126,10 @@ class RelationshipService:
                 setattr(relationship, field, value)
 
             # Check date order
-            ValidationUtils.validate_date_order(
+            ValidationUtils.validate_date_order([(
                 relationship.union_date,
                 relationship.dissolution_date,
-                "Union date must be before dissolution date."
+                "Union date must be before dissolution date.")]
             )
 
             # If the updated payload includes a new relationship_detail,

@@ -1,6 +1,6 @@
 from sqlalchemy import (
     Column, Integer, String, Text, ForeignKey, Date, DateTime, func,
-    UniqueConstraint, Sequence
+    UniqueConstraint, CheckConstraint
 )
 from sqlalchemy.orm import relationship
 
@@ -13,15 +13,16 @@ class Individual(Base):
     __table_args__ = (
         UniqueConstraint('project_id', 'individual_number',
                          name='uix_project_individual_number'),
+        CheckConstraint(
+            'death_date IS NULL OR birth_date IS NULL OR birth_date <= death_date',
+            name='chk_individual_dates'
+        ),
     )
 
-    individual_number_seq = Sequence('individual_number_seq')
     id = Column(Integer, primary_key=True, autoincrement=True)
     individual_number = Column(
         Integer,
-        individual_number_seq,
-        nullable=False,
-        unique=True,
+        nullable=False
     )
     user_id = Column(Integer,
                      ForeignKey('users.id', ondelete='CASCADE'),
@@ -181,40 +182,6 @@ class Individual(Base):
                     "last_name": rel.individual.primary_identity.last_name if rel.individual.primary_identity else None,
                     "relationship_id": rel.id
                 })
-
-        # Dynamically combine partners - to do!
-        # for child in self.children:
-        #     child_obj = next(
-        #         (rel.related for rel in
-        #          self.relationships_as_individual if
-        #          rel.related.id == child["id"]),
-        #         None
-        #     ) or next(
-        #         (rel.individual for rel in
-        #          self.relationships_as_related if
-        #          rel.individual.id == child["id"]),
-        #         None
-        #     )
-        #
-        #     if child_obj:
-        #         for parent_rel in child_obj.relationships_as_related:
-        #             if parent_rel.initial_relationship == InitialRelationshipEnum.PARENT and parent_rel.individual.id != self.id:
-        #                 other_parent = parent_rel.individual
-        #                 if other_parent.id not in seen_ids:
-        #                     existing_partner_rel = next(
-        #                         (rel for rel in
-        #                          self.relationships_as_individual if
-        #                          rel.initial_relationship == InitialRelationshipEnum.PARTNER and rel.related.id == other_parent.id),
-        #                         None
-        #                     )
-        #                     relationship_id = existing_partner_rel.id if existing_partner_rel else None
-        #                     seen_ids.add(other_parent.id)
-        #                     unique_partners.append({
-        #                         "id": other_parent.id,
-        #                         "first_name": other_parent.primary_identity.first_name if other_parent.primary_identity else None,
-        #                         "last_name": other_parent.primary_identity.last_name if other_parent.primary_identity else None,
-        #                         "relationship_id": relationship_id
-        #                     })
 
         return unique_partners
 

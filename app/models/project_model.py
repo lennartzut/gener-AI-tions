@@ -1,4 +1,5 @@
-from sqlalchemy import (Column, Integer, Sequence, String, DateTime, ForeignKey)
+from sqlalchemy import (Column, Integer, String, DateTime, ForeignKey,
+                        UniqueConstraint)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -7,14 +8,15 @@ from app.models.base_model import Base
 
 class Project(Base):
     __tablename__ = 'projects'
+    __table_args__ = (
+        UniqueConstraint('user_id', 'project_number',
+                         name='uix_user_project_number'),
+    )
 
-    project_number_seq = Sequence('project_number_seq')
     id = Column(Integer, primary_key=True, autoincrement=True)
     project_number = Column(
         Integer,
-        project_number_seq,
-        nullable=False,
-        unique=True
+        nullable=False
     )
     user_id = Column(Integer,
                      ForeignKey('users.id', ondelete='CASCADE'),

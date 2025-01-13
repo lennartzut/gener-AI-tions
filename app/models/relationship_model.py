@@ -13,6 +13,11 @@ class Relationship(Base):
     __table_args__ = (
         CheckConstraint('individual_id != related_id',
                         name='chk_relationship_no_self'),
+        CheckConstraint(
+            'dissolution_date IS NULL OR union_date IS NULL OR union_date <= dissolution_date',
+            name='chk_relationship_dates'
+        ),
+
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)

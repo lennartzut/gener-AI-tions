@@ -6,6 +6,7 @@ from pydantic import ValidationError
 
 from app.extensions import SessionLocal
 from app.schemas.individual_schema import IndividualCreate, IndividualUpdate, IndividualOut
+from app.schemas.identity_schema import IdentityIdOut
 from app.services.individual_service import IndividualService
 from app.services.project_service import ProjectService
 from app.utils.auth_utils import validate_token_and_get_user
@@ -47,11 +48,17 @@ def create_individual():
                 individual_create=ind_create
             )
         except ValueError as ve:
+            logger.error(
+                f"ValueError in create_individual route: {ve}")
             return jsonify({"error": str(ve)}), 400
+        except Exception as e:
+            logger.error(
+                f"Unexpected exception in create_individual route: {type(e)} | {e}")
+            raise e
 
         if new_ind:
             individual_out = IndividualOut.model_validate(new_ind, from_attributes=True)
-            individual_out.identities = [identity.id for identity in new_ind.identities]
+            individual_out.identities = [IdentityIdOut(id=identity.id) for identity in new_ind.identities]
 
             return jsonify({
                 "message": "Individual created successfully.",
@@ -136,52 +143,44 @@ def get_individual(individual_id):
         individual_data["parents"] = [
             {
                 "id": p.related.id,
-                "first_name": (p.related.primary_identity.first_name
-                               if p.related.primary_identity else None),
-                "last_name": (p.related.primary_identity.last_name
-                              if p.related.primary_identity else None),
+                "first_name": p.related.primary_identity.first_name if p.related.primary_identity else None,
+                "last_name": p.related.primary_identity.last_name if p.related.primary_identity else None,
                 "relationship_id": p.id
             }
             for p in individual.relationships_as_individual
-            if p.related
+            if p.related and p.initial_relationship == "child"
         ]
 
-        individual_data["siblings"] = [
+        individual_data["children"] = [
             {
-                "id": s.related.id,
-                "first_name": (s.related.primary_identity.first_name
-                               if s.related.primary_identity else None),
-                "last_name": (s.related.primary_identity.last_name
-                              if s.related.primary_identity else None)
+                "id": c.related.id,
+                "first_name": c.related.primary_identity.first_name if c.related.primary_identity else None,
+                "last_name": c.related.primary_identity.last_name if c.related.primary_identity else None,
+                "relationship_id": c.id
             }
-            for s in individual.relationships_as_individual
-            if s.related and s.initial_relationship == "sibling"
+            for c in individual.relationships_as_individual
+            if c.related and c.initial_relationship == "parent"
         ]
 
         individual_data["partners"] = [
             {
                 "id": prt.related.id,
-                "first_name": (prt.related.primary_identity.first_name
-                               if prt.related.primary_identity else None),
-                "last_name": (prt.related.primary_identity.last_name
-                              if prt.related.primary_identity else None),
+                "first_name": prt.related.primary_identity.first_name if prt.related.primary_identity else None,
+                "last_name": prt.related.primary_identity.last_name if prt.related.primary_identity else None,
                 "relationship_id": prt.id
             }
             for prt in individual.relationships_as_individual
             if prt.related and prt.initial_relationship == "partner"
         ]
 
-        individual_data["children"] = [
+        individual_data["siblings"] = [
             {
-                "id": c.related.id,
-                "first_name": (c.related.primary_identity.first_name
-                               if c.related.primary_identity else None),
-                "last_name": (c.related.primary_identity.last_name
-                              if c.related.primary_identity else None),
-                "relationship_id": c.id
+                "id": s.related.id,
+                "first_name": s.related.primary_identity.first_name if s.related.primary_identity else None,
+                "last_name": s.related.primary_identity.last_name if s.related.primary_identity else None
             }
-            for c in individual.relationships_as_individual
-            if c.related and c.initial_relationship == "child"
+            for s in individual.relationships_as_individual
+            if s.related and s.initial_relationship == "sibling"
         ]
 
     return jsonify({"data": individual_data}), 200
@@ -223,7 +222,9 @@ def update_individual(individual_id):
 
         if updated_ind:
             individual_out = IndividualOut.model_validate(updated_ind, from_attributes=True)
-            individual_out.identities = [identity.id for identity in updated_ind.identities]
+            individual_out.identities = [IdentityIdOut(
+                id=identity.id) for identity in
+                updated_ind.identities]
             return jsonify({
                 "message": "Individual updated successfully.",
                 "data": individual_out.model_dump()

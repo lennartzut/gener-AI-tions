@@ -1,3 +1,4 @@
+import logging
 from datetime import date
 from typing import Optional, List
 
@@ -6,6 +7,8 @@ from pydantic import BaseModel, Field, model_validator, ConfigDict
 from app.models.enums_model import GenderEnum
 from app.schemas.identity_schema import IdentityOut, IdentityIdOut
 from app.utils.validators_utils import ValidationUtils
+
+logger = logging.getLogger(__name__)
 
 
 class IndividualBase(BaseModel):
@@ -28,16 +31,19 @@ class IndividualBase(BaseModel):
     )
 
     @model_validator(mode='after')
-    def validate_date_order(cls,
-                            values: "IndividualBase") -> "IndividualBase":
-        ValidationUtils.validate_date_order(
-            values.birth_date,
-            values.death_date,
-            "Birth date must be before death date."
-        )
+    def validate_dates(cls,
+                       values: "IndividualBase") -> "IndividualBase":
+        try:
+            ValidationUtils.validate_date_order([
+                (values.birth_date, values.death_date,
+                 "Birth date must be before death date.")
+            ])
+        except ValueError as ve:
+            logger.error(f"Validation failed: {ve}")
+            raise ValueError(str(ve)) from ve
         return values
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=False)
 
 
 class IndividualCreate(IndividualBase):
@@ -70,7 +76,7 @@ class IndividualOut(BaseModel):
     id: int = Field(...,
                     description="The unique ID of the individual")
     individual_number: int = Field(...,
-                        description="A unique number assigned to the individual")
+                                   description="A unique number assigned to the individual")
     birth_date: Optional[date] = Field(
         None, description="Birth date of the individual"
     )

@@ -24,17 +24,14 @@ class IdentityBase(BaseModel):
     valid_until: Optional[date] = Field(None,
                                         description="The end date of this identity's validity")
 
-    @model_validator(mode='after')
+    model_validator(mode='after')
+
     def validate_dates(cls,
                        values: "IdentityBase") -> "IdentityBase":
-        """
-        Validates that `valid_from` is earlier than `valid_until`.
-        """
-        if values.valid_from and values.valid_until:
-            ValidationUtils.validate_date_order(
-                values.valid_from, values.valid_until,
-                "Valid from date cannot be after valid until date."
-            )
+        ValidationUtils.validate_date_order([
+            (values.valid_from, values.valid_until,
+             "Valid from date cannot be after valid until date.")
+        ])
         return values
 
     model_config = ConfigDict(from_attributes=True)
@@ -67,17 +64,14 @@ class IdentityUpdate(BaseModel):
     is_primary: Optional[bool] = Field(None,
                                        description="Whether this identity is the primary identity")
 
-    @model_validator(mode='after')
+    model_validator(mode='after')
+
     def validate_dates(cls,
-                       values: "IdentityUpdate") -> "IdentityUpdate":
-        """
-        Validates that `valid_from` is earlier than `valid_until`.
-        """
-        if values.valid_from and values.valid_until:
-            ValidationUtils.validate_date_order(
-                values.valid_from, values.valid_until,
-                "Valid from date cannot be after valid until date."
-            )
+                       values: "IdentityBase") -> "IdentityBase":
+        ValidationUtils.validate_date_order([
+            (values.valid_from, values.valid_until,
+             "Valid from date cannot be after valid until date.")
+        ])
         return values
 
     model_config = ConfigDict(from_attributes=True)

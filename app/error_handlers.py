@@ -4,7 +4,6 @@ from werkzeug.exceptions import HTTPException
 from pydantic import ValidationError
 from jwt import ExpiredSignatureError
 
-
 def register_error_handlers(app):
     """
     Registers error handlers for the Flask application.
@@ -17,7 +16,8 @@ def register_error_handlers(app):
 
     @app.errorhandler(ValueError)
     def handle_value_error(e):
-        app.logger.error(f"ValueError captured: {e}")
+        current_app.logger.error(
+            f"ValueError captured in global handler: {e}")
         return jsonify({'error': str(e)}), 400
 
     @app.errorhandler(404)
@@ -49,12 +49,13 @@ def register_error_handlers(app):
 
     @app.errorhandler(Exception)
     def handle_general_exception(e):
-        """
-        Catch-all for any unhandled exception.
-        If it's actually a ValueError, re-raise so handle_value_error catches it.
-        Otherwise, return 500.
-        """
+        if isinstance(e, ValidationError):
+            return handle_validation_error(e)
         if isinstance(e, ValueError):
-            raise e
-        app.logger.error("Unhandled Exception: %s", str(e))
-        return jsonify({'error': 'An unexpected error occurred.'}), 500
+            return handle_value_error(e)
+        if hasattr(e, "__cause__") and isinstance(e.__cause__, ValueError):
+            return handle_value_error(e.__cause__)
+        current_app.logger.error(f"Unhandled Exception Type:"
+                                 f" {type(e)} | Exception: {e}")
+        return jsonify(
+            {'error': 'An unexpected error occurred.'}), 500
