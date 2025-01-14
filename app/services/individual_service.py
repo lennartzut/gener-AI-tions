@@ -66,7 +66,7 @@ class IndividualService:
             logger.error(f"Database error during Individual creation: {e}")
             if "chk_individual_dates" in str(e).lower():
                 raise ValueError("Birth date must be before death date.")
-            return None
+            raise e
         except ValueError as ve:
             logger.error(f"ValueError raised in IndividualService: {ve}")
             raise ve

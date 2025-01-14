@@ -44,7 +44,7 @@ def get_user():
                                "error": "An error occurred fetching the profile."}), 500
 
 
-@api_users_bp.route('/update', methods=['PATCH'])
+@api_users_bp.route('/', methods=['PATCH'])
 @jwt_required()
 def update_user():
     """
@@ -95,7 +95,7 @@ def update_user():
                 {"error": "Unexpected error occurred."}), 500
 
 
-@api_users_bp.route('/delete', methods=['DELETE'])
+@api_users_bp.route('/', methods=['DELETE'])
 @jwt_required()
 def delete_user():
     """

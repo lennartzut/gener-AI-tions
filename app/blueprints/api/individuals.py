@@ -34,38 +34,25 @@ def create_individual():
     if not data:
         return jsonify({"error": "No input data provided."}), 400
 
-    try:
-        ind_create = IndividualCreate.model_validate(data)
-    except ValidationError as e:
-        return jsonify({"error": e.errors()}), 400
+    ind_create = IndividualCreate.model_validate(data)
 
     with SessionLocal() as session:
         service = IndividualService(db=session)
-        try:
-            new_ind = service.create_individual(
-                user_id=user_id,
-                project_id=project_id,
-                individual_create=ind_create
-            )
-        except ValueError as ve:
-            logger.error(
-                f"ValueError in create_individual route: {ve}")
-            return jsonify({"error": str(ve)}), 400
-        except Exception as e:
-            logger.error(
-                f"Unexpected exception in create_individual route: {type(e)} | {e}")
-            raise e
+        new_ind = service.create_individual(
+            user_id=user_id,
+            project_id=project_id,
+            individual_create=ind_create
+        )
+        if not new_ind:
+            return jsonify({"error": "Failed to create individual."}), 400
 
-        if new_ind:
-            individual_out = IndividualOut.model_validate(new_ind, from_attributes=True)
-            individual_out.identities = [IdentityIdOut(id=identity.id) for identity in new_ind.identities]
+        individual_out = IndividualOut.model_validate(new_ind, from_attributes=True)
+        individual_out.identities = [IdentityIdOut(id=identity.id) for identity in new_ind.identities]
 
-            return jsonify({
-                "message": "Individual created successfully.",
-                "data": individual_out.model_dump()
-            }), 201
-
-        return jsonify({"error": "Failed to create individual."}), 400
+        return jsonify({
+            "message": "Individual created successfully.",
+            "data": individual_out.model_dump()
+        }), 201
 
 
 @api_individuals_bp.route("/", methods=["GET"])
