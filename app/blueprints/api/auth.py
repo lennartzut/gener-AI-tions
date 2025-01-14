@@ -23,6 +23,11 @@ api_auth_bp = Blueprint('api_auth_bp', __name__)
 def signup():
     """
     Register a new user.
+
+    Expects a JSON payload with 'username', 'email', and 'password'.
+
+    Returns:
+        JSON response with a success message or error details.
     """
     data = request.get_json()
     if not data:
@@ -42,23 +47,31 @@ def signup():
                     "message": "Signup successful! Please log in."
                 }), 201
             return jsonify(
-                {"error": "Email or username already in use."}), 409
+                {"error": "Email or username already in use."}
+            ), 409
         except UserAlreadyExistsError as e:
             return jsonify({"error": str(e)}), 409
         except SQLAlchemyError as e:
             current_app.logger.error(f"Signup DB error: {e}")
             return jsonify(
-                {"error": "Database error occurred."}), 500
+                {"error": "Database error occurred."}
+            ), 500
         except Exception as e:
             current_app.logger.error(f"Signup error: {e}")
             return jsonify(
-                {"error": "An unexpected error occurred."}), 500
+                {"error": "An unexpected error occurred."}
+            ), 500
 
 
 @api_auth_bp.route('/login', methods=['POST'])
 def login():
     """
-    Log in an existing user.
+    Authenticate an existing user and issue JWT tokens.
+
+    Expects a JSON payload with 'email' and 'password'.
+
+    Returns:
+        JSON response with a success message and sets JWT cookies or error details.
     """
     data = request.get_json()
     if not data:
@@ -85,22 +98,28 @@ def login():
                 set_refresh_cookies(response, refresh_token)
                 return response, 200
             return jsonify(
-                {"error": "Invalid email or password."}), 401
+                {"error": "Invalid email or password."}
+            ), 401
         except SQLAlchemyError as e:
             current_app.logger.error(f"Login DB error: {e}")
             return jsonify(
-                {"error": "Database error occurred."}), 500
+                {"error": "Database error occurred."}
+            ), 500
         except Exception as e:
             current_app.logger.error(f"Login error: {e}")
             return jsonify(
-                {"error": "Unexpected error occurred."}), 500
+                {"error": "Unexpected error occurred."}
+            ), 500
 
 
 @api_auth_bp.route('/refresh', methods=['POST'])
 @jwt_required(refresh=True)
 def refresh():
     """
-    Refresh the access token.
+    Refresh the access token using a valid refresh token.
+
+    Returns:
+        JSON response with a success message and sets a new access token cookie or error details.
     """
     try:
         user_id = get_jwt_identity()
@@ -122,7 +141,10 @@ def refresh():
 @jwt_required()
 def logout():
     """
-    Log out the current user.
+    Log out the current user by unsetting JWT cookies.
+
+    Returns:
+        JSON response with a success message.
     """
     response = jsonify({"message": "Logged out successfully."})
     unset_jwt_cookies(response)

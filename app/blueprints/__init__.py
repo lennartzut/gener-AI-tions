@@ -18,23 +18,33 @@ from .web.users import web_users_bp
 def register_blueprints(app):
     """
     Registers all blueprints with the Flask application.
+
+    Args:
+        app (Flask): The Flask application instance.
     """
     # API routes
     app.register_blueprint(api_admin_bp, url_prefix='/api/admin')
     app.register_blueprint(api_auth_bp, url_prefix='/api/auth')
-    app.register_blueprint(api_identities_bp, url_prefix='/api/identities')
-    app.register_blueprint(api_individuals_bp, url_prefix='/api/individuals')
+    app.register_blueprint(api_identities_bp,
+                           url_prefix='/api/identities')
+    app.register_blueprint(api_individuals_bp,
+                           url_prefix='/api/individuals')
     app.register_blueprint(api_users_bp, url_prefix='/api/users')
-    app.register_blueprint(api_projects_bp, url_prefix='/api/projects')
-    app.register_blueprint(api_relationships_bp, url_prefix='/api/relationships')
+    app.register_blueprint(api_projects_bp,
+                           url_prefix='/api/projects')
+    app.register_blueprint(api_relationships_bp,
+                           url_prefix='/api/relationships')
 
     # Web routes
     app.register_blueprint(web_auth_bp, url_prefix='/auth')
-    app.register_blueprint(web_identities_bp, url_prefix='/identities')
-    app.register_blueprint(web_individuals_bp, url_prefix='/individuals')
+    app.register_blueprint(web_identities_bp,
+                           url_prefix='/identities')
+    app.register_blueprint(web_individuals_bp,
+                           url_prefix='/individuals')
     app.register_blueprint(web_main_bp)
     app.register_blueprint(web_users_bp, url_prefix='/users')
     app.register_blueprint(web_projects_bp, url_prefix='/projects')
 
     # Swagger
     app.register_blueprint(swagger_bp)
+   

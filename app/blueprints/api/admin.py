@@ -15,7 +15,15 @@ api_admin_bp = Blueprint('api_admin_bp', __name__)
 @admin_required
 def list_users():
     """
-    Admins can retrieve a list of all users with optional pagination.
+    Retrieve a paginated list of all users. Accessible only to admins.
+
+    Query Parameters:
+        page (int, optional): The page number to retrieve. Defaults to 1.
+        per_page (int, optional): The number of users per page. Defaults to 20.
+
+    Returns:
+        JSON response containing the total number of users, current page,
+        users per page, and a list of user data.
     """
     try:
         page = request.args.get('page', 1, type=int)
@@ -28,8 +36,7 @@ def list_users():
             total = session.query(User).count()
 
             users_out = [UserOut.model_validate(user).model_dump()
-                         for
-                          user in users]
+                         for user in users]
 
             return jsonify({
                 "total": total,
@@ -41,4 +48,5 @@ def list_users():
     except Exception as e:
         current_app.logger.error(f"Error fetching users: {e}")
         return jsonify({
-                           "error": "An error occurred while fetching users."}), 500
+            "error": "An error occurred while fetching users."
+        }), 500

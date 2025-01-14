@@ -22,6 +22,9 @@ api_users_bp = Blueprint('api_users_bp', __name__)
 def get_user():
     """
     Retrieve the current user's profile.
+
+    Returns:
+        JSON response containing the user's profile data or error details.
     """
     try:
         user_id = get_current_user_id_or_401()
@@ -41,7 +44,8 @@ def get_user():
         except Exception as e:
             current_app.logger.error(f"Get profile error: {e}")
             return jsonify({
-                               "error": "An error occurred fetching the profile."}), 500
+                "error": "An error occurred fetching the profile."
+            }), 500
 
 
 @api_users_bp.route('/', methods=['PATCH'])
@@ -49,6 +53,12 @@ def get_user():
 def update_user():
     """
     Update the current user's profile.
+
+    Expects:
+        JSON payload conforming to the UserUpdate schema.
+
+    Returns:
+        JSON response with a success message and the updated user data or error details.
     """
     try:
         user_id = get_current_user_id_or_401()
@@ -100,6 +110,9 @@ def update_user():
 def delete_user():
     """
     Delete the current user's account.
+
+    Returns:
+        JSON response with a success message or error details.
     """
     try:
         user_id = get_current_user_id_or_401()
@@ -111,7 +124,8 @@ def delete_user():
         try:
             if service.delete_user(user_id=user_id):
                 return jsonify({
-                                   "message": "Account deleted successfully."}), 200
+                    "message": "Account deleted successfully."
+                }), 200
             return jsonify(
                 {"error": "Failed to delete account."}), 400
         except SQLAlchemyError as e:

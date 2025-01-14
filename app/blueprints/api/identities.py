@@ -20,7 +20,16 @@ api_identities_bp = Blueprint('api_identities_bp', __name__)
 @jwt_required()
 def create_identity():
     """
-    Create a new identity for an individual.
+    Create a new identity for an individual within a project.
+
+    Query Parameters:
+        project_id (int): The ID of the project.
+
+    Expects:
+        JSON payload conforming to the IdentityCreate schema.
+
+    Returns:
+        JSON response with a success message and the created identity data or error details.
     """
     user_id = validate_token_and_get_user()
     project_id = request.args.get('project_id', type=int)
@@ -57,7 +66,13 @@ def create_identity():
 @jwt_required()
 def list_identities():
     """
-    List all identities for a project.
+    List all identities associated with a specific project.
+
+    Query Parameters:
+        project_id (int): The ID of the project.
+
+    Returns:
+        JSON response containing a list of all identities or error details.
     """
     user_id = validate_token_and_get_user()
     project_id = request.args.get('project_id', type=int)
@@ -72,8 +87,8 @@ def list_identities():
             project_id=project_id)
 
         identities_out = [
-            IdentityOut.model_validate(identity).model_dump() for identity
-            in identities
+            IdentityOut.model_validate(identity).model_dump() for
+            identity in identities
         ]
 
     return jsonify({"identities": identities_out}), 200
@@ -83,7 +98,16 @@ def list_identities():
 @jwt_required()
 def get_identity(identity_id):
     """
-    Get details of a specific identity.
+    Retrieve details of a specific identity by its ID.
+
+    Query Parameters:
+        project_id (int): The ID of the project.
+
+    Args:
+        identity_id (int): The unique ID of the identity.
+
+    Returns:
+        JSON response containing the identity details or error details.
     """
     user_id = validate_token_and_get_user()
     project_id = request.args.get('project_id', type=int)
@@ -98,15 +122,27 @@ def get_identity(identity_id):
         if not identity:
             return jsonify({"error": "Identity not found."}), 404
 
-    return jsonify(
-        {"data": IdentityOut.model_validate(identity).model_dump()}), 200
+    return jsonify({"data": IdentityOut.model_validate(
+        identity).model_dump()}), 200
 
 
 @api_identities_bp.route('/<int:identity_id>', methods=['PATCH'])
 @jwt_required()
 def update_identity(identity_id):
     """
-    Update an existing identity's details.
+    Update the details of an existing identity.
+
+    Query Parameters:
+        project_id (int): The ID of the project.
+
+    Args:
+        identity_id (int): The unique ID of the identity to update.
+
+    Expects:
+        JSON payload conforming to the IdentityUpdate schema.
+
+    Returns:
+        JSON response with a success message and the updated identity data or error details.
     """
     user_id = validate_token_and_get_user()
     project_id = request.args.get('project_id', type=int)
@@ -141,7 +177,16 @@ def update_identity(identity_id):
 @jwt_required()
 def delete_identity(identity_id):
     """
-    Delete an identity by ID.
+    Delete an identity by its ID.
+
+    Query Parameters:
+        project_id (int): The ID of the project.
+
+    Args:
+        identity_id (int): The unique ID of the identity to delete.
+
+    Returns:
+        JSON response with a success message or error details.
     """
     user_id = validate_token_and_get_user()
     project_id = request.args.get('project_id', type=int)
