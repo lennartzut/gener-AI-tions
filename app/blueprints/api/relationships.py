@@ -6,8 +6,8 @@ from pydantic import ValidationError
 from app.extensions import SessionLocal
 from app.schemas.relationship_schema import RelationshipCreate, RelationshipUpdate
 from app.services.relationship_service import RelationshipService
-from app.utils.project_utils import get_project_or_404
-from app.utils.auth_utils import validate_token_and_get_user
+from app.utils.project import get_project_or_404
+from app.utils.auth import validate_token_and_get_user
 
 logger = logging.getLogger(__name__)
 

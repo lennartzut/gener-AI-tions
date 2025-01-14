@@ -9,8 +9,8 @@ from app.schemas.individual_schema import IndividualCreate, IndividualUpdate, In
 from app.schemas.identity_schema import IdentityIdOut
 from app.services.individual_service import IndividualService
 from app.services.project_service import ProjectService
-from app.utils.auth_utils import validate_token_and_get_user
-from app.utils.project_utils import get_project_or_404
+from app.utils.auth import validate_token_and_get_user
+from app.utils.project import get_project_or_404
 
 logger = logging.getLogger(__name__)
 

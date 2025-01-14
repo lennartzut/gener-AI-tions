@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, model_validator, ConfigDict
 
 from app.models.enums_model import GenderEnum
 from app.schemas.identity_schema import IdentityOut, IdentityIdOut
-from app.utils.validators_utils import ValidationUtils
+from app.utils.validators import ValidationUtils
 
 logger = logging.getLogger(__name__)
 

@@ -8,8 +8,8 @@ from app.extensions import SessionLocal
 from app.schemas.identity_schema import IdentityCreate, \
     IdentityUpdate, IdentityOut
 from app.services.identity_service import IdentityService
-from app.utils.auth_utils import validate_token_and_get_user
-from app.utils.project_utils import get_project_or_404
+from app.utils.auth import validate_token_and_get_user
+from app.utils.project import get_project_or_404
 
 logger = logging.getLogger(__name__)
 

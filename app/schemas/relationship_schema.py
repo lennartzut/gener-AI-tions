@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, model_validator, ConfigDict
 from app.models.enums_model import InitialRelationshipEnum, \
     HorizontalRelationshipTypeEnum, VerticalRelationshipTypeEnum
 from app.schemas.individual_schema import IndividualOut
-from app.utils.validators_utils import ValidationUtils
+from app.utils.validators import ValidationUtils
 
 
 class RelationshipBase(BaseModel):

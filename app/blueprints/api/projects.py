@@ -10,7 +10,7 @@ from app.extensions import SessionLocal
 from app.schemas.project_schema import ProjectCreate, ProjectUpdate, \
     ProjectOut
 from app.services.project_service import ProjectService
-from app.utils.auth_utils import validate_token_and_get_user
+from app.utils.auth import validate_token_and_get_user
 
 logger = logging.getLogger(__name__)
 

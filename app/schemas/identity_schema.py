@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, Field, model_validator, ConfigDict
 
 from app.models.enums_model import GenderEnum
-from app.utils.validators_utils import ValidationUtils
+from app.utils.validators import ValidationUtils
 
 
 class IdentityBase(BaseModel):

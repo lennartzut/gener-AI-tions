@@ -9,7 +9,7 @@ from app.models.individual_model import Individual
 from app.models.relationship_model import Relationship
 from app.models.enums_model import InitialRelationshipEnum
 from app.schemas.relationship_schema import RelationshipCreate, RelationshipUpdate
-from app.utils.validators_utils import ValidationUtils
+from app.utils.validators import ValidationUtils
 
 logger = logging.getLogger(__name__)
 
