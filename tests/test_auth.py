@@ -4,6 +4,13 @@ import pytest
 def test_signup_success(client):
     """
     Test successful user signup.
+
+    Args:
+        client (fixture): Test client for making HTTP requests.
+
+    Asserts:
+        Response status code is 201 (Created) and a success
+        message is returned.
     """
     payload = {
         "username": "newuser",
@@ -19,6 +26,13 @@ def test_signup_success(client):
 def test_signup_conflict(client):
     """
     Test signup conflict with existing username or email.
+
+    Args:
+        client (fixture): Test client for making HTTP requests.
+
+    Asserts:
+        Response status code is 409 (Conflict) and an appropriate
+        error message is returned.
     """
     payload = {
         "username": "testuser",
@@ -34,6 +48,13 @@ def test_signup_conflict(client):
 def test_login_success(client):
     """
     Test successful user login.
+
+    Args:
+        client (fixture): Test client for making HTTP requests.
+
+    Asserts:
+        Response status code is 200 (OK) and a success message is
+        returned.
     """
     payload = {
         "email": "testuser@example.com",
@@ -47,6 +68,13 @@ def test_login_success(client):
 def test_login_failure_wrong_password(client):
     """
     Test login failure due to incorrect password.
+
+    Args:
+        client (fixture): Test client for making HTTP requests.
+
+    Asserts:
+        Response status code is 401 (Unauthorized) and an
+        appropriate error message is returned.
     """
     payload = {
         "email": "testuser@example.com",
@@ -60,6 +88,13 @@ def test_login_failure_wrong_password(client):
 def test_logout(client):
     """
     Test logging out a user.
+
+    Args:
+        client (fixture): Test client for making HTTP requests.
+
+    Asserts:
+        Response status code is 200 (OK) and a success message is
+        returned.
     """
     payload = {
         "email": "testuser@example.com",
