@@ -30,29 +30,27 @@ def create_identity():
     get_project_or_404(user_id=user_id, project_id=project_id)
 
     data = request.get_json() or {}
-    try:
-        identity_create = IdentityCreate.model_validate(data)
-    except ValidationError as e:
-        return jsonify({"error": e.errors()}), 400
+    if not data:
+        return jsonify({"error": "No input data provided."}), 400
+
+    identity_create = IdentityCreate.model_validate(data)
 
     with SessionLocal() as session:
         service_identity = IdentityService(db=session)
-        try:
-            new_identity = service_identity.create_identity(
-                identity_create,
-                is_primary=data.get('is_primary', False)
-            )
-        except ValueError as ve:
-            return jsonify({"error": str(ve)}), 400
+        new_identity = service_identity.create_identity(
+            identity_create=identity_create,
+            is_primary=data.get('is_primary', False)
+        )
+        if not new_identity:
+            return jsonify(
+                {"error": "Failed to create identity."}), 400
 
-        if new_identity:
-            return jsonify({
-                "message": "Identity created successfully",
-                "data": IdentityOut.model_validate(
-                    new_identity).model_dump()
-            }), 201
-
-        return jsonify({"error": "Failed to create identity."}), 400
+        identity_out = IdentityOut.model_validate(new_identity,
+                                                  from_attributes=True)
+        return jsonify({
+            "message": "Identity created successfully",
+            "data": identity_out.model_dump()
+        }), 201
 
 
 @api_identities_bp.route('/', methods=['GET'])
@@ -72,6 +70,7 @@ def list_identities():
         service_identity = IdentityService(db=session)
         identities = service_identity.get_all_identities(
             project_id=project_id)
+
         identities_out = [
             IdentityOut.model_validate(identity).model_dump() for identity
             in identities

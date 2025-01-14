@@ -79,6 +79,9 @@ def test_identity_invalid_date_range(client):
         "valid_until": "2020-01-01"
     }
     resp = client.post("/api/identities/?project_id=1", json=payload)
+    print(f"Raw Response: {resp.data.decode()}")
+    print(f"Response Status Code: {resp.status_code}")
+    print(f"Response Headers: {resp.headers}")
     assert resp.status_code == 400
-    assert "Valid from date cannot be after valid until date." in \
-           resp.json["error"]
+    assert "Valid from date cannot be after valid until date" in \
+           resp.json["details"][0]["msg"]

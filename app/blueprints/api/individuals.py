@@ -34,20 +34,23 @@ def create_individual():
     if not data:
         return jsonify({"error": "No input data provided."}), 400
 
-    ind_create = IndividualCreate.model_validate(data)
+    individual_create = IndividualCreate.model_validate(data)
 
     with SessionLocal() as session:
-        service = IndividualService(db=session)
-        new_ind = service.create_individual(
+        service_individual = IndividualService(db=session)
+        new_individual = service_individual.create_individual(
             user_id=user_id,
             project_id=project_id,
-            individual_create=ind_create
+            individual_create=individual_create
         )
-        if not new_ind:
+        if not new_individual:
             return jsonify({"error": "Failed to create individual."}), 400
 
-        individual_out = IndividualOut.model_validate(new_ind, from_attributes=True)
-        individual_out.identities = [IdentityIdOut(id=identity.id) for identity in new_ind.identities]
+        individual_out = IndividualOut.model_validate(
+            new_individual, from_attributes=True)
+        individual_out.identities = [IdentityIdOut(id=identity.id)
+                                     for identity in
+                                     new_individual.identities]
 
         return jsonify({
             "message": "Individual created successfully.",
@@ -71,8 +74,8 @@ def list_individuals():
     search_query = request.args.get("q", type=str, default=None)
 
     with SessionLocal() as session:
-        service = IndividualService(db=session)
-        individuals = service.get_individuals_by_project(
+        service_individual = IndividualService(db=session)
+        individuals = service_individual.get_individuals_by_project(
             user_id=user_id,
             project_id=project_id,
             search_query=search_query
@@ -109,8 +112,8 @@ def get_individual(individual_id):
     get_project_or_404(user_id=user_id, project_id=project_id)
 
     with SessionLocal() as session:
-        service = IndividualService(db=session)
-        individual = service.get_individual_by_id(
+        service_individual = IndividualService(db=session)
+        individual = service_individual.get_individual_by_id(
             individual_id=individual_id,
             user_id=user_id,
             project_id=project_id
@@ -195,10 +198,10 @@ def update_individual(individual_id):
     except ValidationError as e:
         return jsonify({"error": e.errors()}), 400
 
-    with SessionLocal() as session:
-        service = IndividualService(db=session)
+    with (SessionLocal() as session):
+        service_individual = IndividualService(db=session)
         try:
-            updated_ind = service.update_individual(
+            updated_individual = service_individual.update_individual(
                 individual_id=individual_id,
                 user_id=user_id,
                 project_id=project_id,
@@ -207,11 +210,12 @@ def update_individual(individual_id):
         except ValueError as ve:
             return jsonify({"error": str(ve)}), 400
 
-        if updated_ind:
-            individual_out = IndividualOut.model_validate(updated_ind, from_attributes=True)
+        if updated_individual:
+            individual_out = IndividualOut.model_validate(
+                updated_individual, from_attributes=True)
             individual_out.identities = [IdentityIdOut(
                 id=identity.id) for identity in
-                updated_ind.identities]
+                updated_individual.identities]
             return jsonify({
                 "message": "Individual updated successfully.",
                 "data": individual_out.model_dump()
@@ -234,8 +238,10 @@ def delete_individual(individual_id):
     get_project_or_404(user_id=user_id, project_id=project_id)
 
     with SessionLocal() as session:
-        service = IndividualService(db=session)
-        if service.delete_individual(individual_id, user_id, project_id):
+        service_individual = IndividualService(db=session)
+        if service_individual.delete_individual(individual_id,
+                                              user_id,
+                                      project_id):
             return jsonify({"message": "Individual deleted successfully."}), 200
         return jsonify({"error": "Failed to delete individual."}), 400
 
