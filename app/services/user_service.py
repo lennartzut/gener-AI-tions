@@ -13,13 +13,35 @@ logger = logging.getLogger(__name__)
 
 
 class UserService:
+    """
+    Service layer for managing users.
+
+    Provides methods to create, retrieve, update, and delete users,
+    as well as authenticate users and check for existing credentials.
+    """
+
     def __init__(self, db: Session):
+        """
+        Initializes the UserService with a database session.
+
+        Args:
+            db (Session): The SQLAlchemy database session.
+        """
         self.db = db
 
-    # CRUD Methods
     def create_user(self, user_create: UserCreate) -> Optional[User]:
         """
         Creates a new user if the username and email are unique.
+
+        Args:
+            user_create (UserCreate): The schema containing user details.
+
+        Returns:
+            Optional[User]: The newly created User object if successful, else None.
+
+        Raises:
+            UserAlreadyExistsError: If the email or username is already in use.
+            SQLAlchemyError: For any database-related errors.
         """
         try:
             if self.email_or_username_exists(user_create.email,
@@ -48,6 +70,12 @@ class UserService:
     def get_user_by_id(self, user_id: int) -> Optional[User]:
         """
         Fetches a user by their ID.
+
+        Args:
+            user_id (int): The unique ID of the user to retrieve.
+
+        Returns:
+            Optional[User]: The User object if found, else None.
         """
         try:
             user = self.db.query(User).filter(
@@ -64,6 +92,17 @@ class UserService:
     Optional[User]:
         """
         Updates user details if the email or username is not already in use.
+
+        Args:
+            user_id (int): The unique ID of the user to update.
+            user_update (UserUpdate): The schema containing updated user details.
+
+        Returns:
+            Optional[User]: The updated User object if successful, else None.
+
+        Raises:
+            UserAlreadyExistsError: If the email or username is already in use.
+            SQLAlchemyError: For any database-related errors.
         """
         try:
             user = self.get_user_by_id(user_id)
@@ -75,7 +114,8 @@ class UserService:
             if user_update.username and user_update.username != user.username:
                 if self.db.query(User).filter(
                         User.username == user_update.username,
-                        User.id != user_id).first():
+                        User.id != user_id
+                ).first():
                     raise UserAlreadyExistsError(
                         "Username already in use.", field="username")
                 user.username = user_update.username
@@ -83,7 +123,8 @@ class UserService:
             if user_update.email and user_update.email != user.email:
                 if self.db.query(User).filter(
                         User.email == user_update.email,
-                        User.id != user_id).first():
+                        User.id != user_id
+                ).first():
                     raise UserAlreadyExistsError(
                         "Email already in use.", field="email")
                 user.email = user_update.email
@@ -106,6 +147,12 @@ class UserService:
     def delete_user(self, user_id: int) -> bool:
         """
         Deletes a user by their ID.
+
+        Args:
+            user_id (int): The unique ID of the user to delete.
+
+        Returns:
+            bool: True if deletion was successful, else False.
         """
         try:
             user = self.get_user_by_id(user_id)
@@ -123,11 +170,17 @@ class UserService:
             logger.error(f"Error deleting user: {e}")
             return False
 
-    # Utility Methods
     def authenticate_user(self, email: str, password: str) -> \
     Optional[User]:
         """
         Authenticates a user by email and password.
+
+        Args:
+            email (str): The email address of the user.
+            password (str): The password provided by the user.
+
+        Returns:
+            Optional[User]: The authenticated User object if credentials are valid, else None.
         """
         try:
             user = self.db.query(User).filter(
@@ -146,6 +199,13 @@ class UserService:
                                  username: str) -> bool:
         """
         Checks if a username or email is already in use.
+
+        Args:
+            email (str): The email address to check.
+            username (str): The username to check.
+
+        Returns:
+            bool: True if either the email or username exists, else False.
         """
         try:
             return (
@@ -163,6 +223,9 @@ class UserService:
     def get_all_users(self) -> List[User]:
         """
         Fetches all users.
+
+        Returns:
+            List[User]: A list of all User objects in the database.
         """
         try:
             users = self.db.query(User).all()
@@ -170,6 +233,7 @@ class UserService:
                 f"Retrieved all users successfully. Count: {len(users)}")
             return users
         except SQLAlchemyError as e:
+            self.db.rollback()
             logger.error(f"Error retrieving all users: {e}")
             return []
 
@@ -177,6 +241,13 @@ class UserService:
         User]:
         """
         Fetches a paginated list of users.
+
+        Args:
+            page (int): The page number to retrieve.
+            per_page (int): The number of users per page.
+
+        Returns:
+            List[User]: A list of User objects for the specified page.
         """
         try:
             query = self.db.query(User)

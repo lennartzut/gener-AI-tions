@@ -1,6 +1,6 @@
 import logging
-from typing import List, Optional
 from datetime import date, timedelta
+from typing import List, Optional
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload
@@ -37,19 +37,26 @@ class IdentityService:
         """
         Creates a new identity for an individual.
 
-        Automatically assigns an `identity_number` based on existing identities.
-        If `is_primary` is True or the `valid_from` date is later than the current primary's,
-        the new identity is set as primary, and the previous primary's `valid_until` is updated.
+        Automatically assigns an `identity_number` based on
+        existing identities.
+        If `is_primary` is True or the `valid_from` date is later
+        than the current primary's,
+        the new identity is set as primary, and the previous
+        primary's `valid_until` is updated.
 
         Args:
-            identity_create (IdentityCreate): The schema containing identity details.
-            is_primary (bool, optional): Flag indicating if the new identity should be primary. Defaults to False.
+            identity_create (IdentityCreate): The schema
+            containing identity details.
+            is_primary (bool, optional): Flag indicating if the
+            new identity should be primary. Defaults to False.
 
         Returns:
-            Optional[Identity]: The newly created Identity object if successful, else None.
+            Optional[Identity]: The newly created Identity object
+            if successful, else None.
 
         Raises:
-            ValueError: If the `valid_from` date is after the `valid_until` date.
+            ValueError: If the `valid_from` date is after the
+            `valid_until` date.
             SQLAlchemyError: For any database-related errors.
         """
         try:
@@ -73,11 +80,11 @@ class IdentityService:
             ).first()
 
             if is_primary or (
-                    current_primary and identity_create.valid_from and
-                    identity_create.valid_from > current_primary.valid_from):
+                    current_primary and identity_create.valid_from and identity_create.valid_from > current_primary.valid_from):
                 self.assign_primary_identity(
                     identity_create.individual_id, new_identity.id,
-                    identity_create.valid_from)
+                    identity_create.valid_from
+                )
 
             self.db.commit()
             self.db.refresh(new_identity)
@@ -123,18 +130,18 @@ class IdentityService:
         Retrieves all identities associated with a specific project.
 
         Args:
-            project_id (int): The ID of the project whose identities are to be retrieved.
+            project_id (int): The ID of the project whose
+            identities are to be retrieved.
 
         Returns:
-            List[Identity]: A list of Identity objects associated with the project.
+            List[Identity]: A list of Identity objects associated
+            with the project.
         """
         try:
             identities = self.db.query(Identity).join(
                 Individual).filter(
                 Individual.project_id == project_id
-            ).options(
-                joinedload(Identity.individual)
-            ).all()
+            ).options(joinedload(Identity.individual)).all()
             logger.info(
                 f"Retrieved {len(identities)} identities for project {project_id}")
             return identities
@@ -150,16 +157,19 @@ class IdentityService:
         """
         Updates the details of an existing identity.
 
-        If `is_primary` is set to True and the identity is not already primary,
-        it assigns this identity as primary and updates the `valid_until` date
-        of the previous primary identity accordingly.
+        If `is_primary` is set to True and the identity is not
+        already primary, it assigns this identity as primary and
+        updates the `valid_until` date of the previous primary
+        identity accordingly.
 
         Args:
             identity_id (int): The unique ID of the identity to update.
-            identity_update (IdentityUpdate): The schema containing updated identity details.
+            identity_update (IdentityUpdate): The schema
+            containing updated identity details.
 
         Returns:
-            Optional[Identity]: The updated Identity object if successful, else None.
+            Optional[Identity]: The updated Identity object if
+            successful, else None.
 
         Raises:
             ValueError: If `valid_until` is not after `valid_from`.
@@ -190,7 +200,8 @@ class IdentityService:
                 self.assign_primary_identity(
                     individual_id=identity.individual_id,
                     new_identity_id=identity_id,
-                    new_valid_from=new_valid_from)
+                    new_valid_from=new_valid_from
+                )
 
             for field, value in updates.items():
                 setattr(identity, field, value)
@@ -212,8 +223,9 @@ class IdentityService:
         """
         Deletes an identity by its unique identifier.
 
-        If the deleted identity was primary, the most recent remaining identity
-        is set as the new primary. The `valid_until` date of the new primary
+        If the deleted identity was primary, the most recent
+        remaining identity is set as the new primary. The
+        `valid_until` date of the new primary
         is adjusted accordingly to maintain validity constraints.
 
         Args:

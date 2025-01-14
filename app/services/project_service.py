@@ -12,16 +12,38 @@ logger = logging.getLogger(__name__)
 
 
 class ProjectService:
+    """
+    Service layer for managing projects.
+
+    Provides methods to create, retrieve, update, and delete projects
+    associated with users.
+    """
+
     def __init__(self, db: Session):
+        """
+        Initializes the ProjectService with a database session.
+
+        Args:
+            db (Session): The SQLAlchemy database session.
+        """
         self.db = db
 
     def create_project(self, user_id: int,
-                       project_create: ProjectCreate) -> Optional[Project]:
+                       project_create: ProjectCreate) -> Optional[
+        Project]:
         """
-        Create a new project for a user.
+        Creates a new project for a user.
+
+        Args:
+            user_id (int): The ID of the user creating the project.
+            project_create (ProjectCreate): The schema containing project details.
+
+        Returns:
+            Optional[Project]: The newly created Project object if successful, else None.
         """
         try:
-            max_project_number = self.db.query(func.max(Project.project_number)) \
+            max_project_number = self.db.query(
+                func.max(Project.project_number)) \
                 .filter(Project.user_id == user_id) \
                 .scalar()
             next_project_number = 1 if max_project_number is None else max_project_number + 1
@@ -38,26 +60,43 @@ class ProjectService:
             return new_project
         except SQLAlchemyError as e:
             self.db.rollback()
-            logger.error(f"Error creating project for user {user_id}: {e}")
+            logger.error(
+                f"Error creating project for user {user_id}: {e}")
             return None
 
     def get_projects_by_user(self, user_id: int) -> List[Project]:
         """
-        Fetch all projects for a specific user.
+        Fetches all projects for a specific user.
+
+        Args:
+            user_id (int): The ID of the user whose projects are to be retrieved.
+
+        Returns:
+            List[Project]: A list of Project objects associated with the user.
         """
         try:
             projects = self.db.query(Project).filter(
-                Project.user_id == user_id).all()
-            logger.info(f"Retrieved {len(projects)} projects for user {user_id}")
+                Project.user_id == user_id
+            ).all()
+            logger.info(
+                f"Retrieved {len(projects)} projects for user {user_id}")
             return projects
         except SQLAlchemyError as e:
             self.db.rollback()
-            logger.error(f"Error retrieving projects for user {user_id}: {e}")
+            logger.error(
+                f"Error retrieving projects for user {user_id}: {e}")
             return []
 
-    def get_project_by_id(self, project_id: int) -> Optional[Project]:
+    def get_project_by_id(self, project_id: int) -> Optional[
+        Project]:
         """
-        Fetch a project by its ID.
+        Fetches a project by its ID.
+
+        Args:
+            project_id (int): The unique ID of the project to retrieve.
+
+        Returns:
+            Optional[Project]: The Project object if found, else None.
         """
         try:
             project = self.db.query(Project).filter(
@@ -66,20 +105,32 @@ class ProjectService:
                 logger.warning(f"Project not found: ID={project_id}")
             return project
         except SQLAlchemyError as e:
-            logger.error(f"Error retrieving project by ID {project_id}: {e}")
+            logger.error(
+                f"Error retrieving project by ID {project_id}: {e}")
             return None
 
     def update_project(self, project_id: int, user_id: int,
-                       project_update: ProjectUpdate) -> Optional[Project]:
+                       project_update: ProjectUpdate) -> Optional[
+        Project]:
         """
-        Update an existing project for a user.
+        Updates an existing project for a user.
+
+        Args:
+            project_id (int): The unique ID of the project to update.
+            user_id (int): The ID of the user requesting the update.
+            project_update (ProjectUpdate): The schema containing updated project details.
+
+        Returns:
+            Optional[Project]: The updated Project object if successful, else None.
         """
         try:
             project = self.db.query(Project).filter(
                 Project.id == project_id,
-                Project.user_id == user_id).first()
+                Project.user_id == user_id
+            ).first()
             if not project:
-                logger.warning(f"Project not found for update: ID={project_id}, User={user_id}")
+                logger.warning(
+                    f"Project not found for update: ID={project_id}, User={user_id}")
                 return None
 
             if project_update.name:
@@ -91,19 +142,29 @@ class ProjectService:
             return project
         except SQLAlchemyError as e:
             self.db.rollback()
-            logger.error(f"Error updating project for user {user_id}: {e}")
+            logger.error(
+                f"Error updating project for user {user_id}: {e}")
             return None
 
     def delete_project(self, project_id: int, user_id: int) -> bool:
         """
-        Delete a project by its ID.
+        Deletes a project by its ID.
+
+        Args:
+            project_id (int): The unique ID of the project to delete.
+            user_id (int): The ID of the user requesting the deletion.
+
+        Returns:
+            bool: True if deletion was successful, else False.
         """
         try:
             project = self.db.query(Project).filter(
                 Project.id == project_id,
-                Project.user_id == user_id).first()
+                Project.user_id == user_id
+            ).first()
             if not project:
-                logger.warning(f"Project not found for deletion: ID={project_id}, User={user_id}")
+                logger.warning(
+                    f"Project not found for deletion: ID={project_id}, User={user_id}")
                 return False
 
             self.db.delete(project)
@@ -112,5 +173,6 @@ class ProjectService:
             return True
         except SQLAlchemyError as e:
             self.db.rollback()
-            logger.error(f"Error deleting project for user {user_id}: {e}")
+            logger.error(
+                f"Error deleting project for user {user_id}: {e}")
             return False
