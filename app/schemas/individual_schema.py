@@ -12,27 +12,48 @@ logger = logging.getLogger(__name__)
 
 
 class IndividualBase(BaseModel):
+    """
+    Base schema for an individual, including common fields.
+    """
     birth_date: Optional[date] = Field(
-        None, description="Birth date of the individual"
+        None,
+        description="Birth date of the individual"
     )
     birth_place: Optional[str] = Field(
-        None, max_length=100,
+        None,
+        max_length=100,
         description="Birthplace of the individual"
     )
     death_date: Optional[date] = Field(
-        None, description="Death date of the individual"
+        None,
+        description="Death date of the individual"
     )
     death_place: Optional[str] = Field(
-        None, max_length=100,
+        None,
+        max_length=100,
         description="Place of death for the individual"
     )
     notes: Optional[str] = Field(
-        None, description="Additional notes about the individual"
+        None,
+        description="Additional notes about the individual"
     )
 
     @model_validator(mode='after')
     def validate_dates(cls,
                        values: "IndividualBase") -> "IndividualBase":
+        """
+        Validates that the `birth_date` is not after the `death_date`.
+
+        Args:
+            values (IndividualBase): The model instance containing
+            the dates.
+
+        Returns:
+            IndividualBase: The validated model instance.
+
+        Raises:
+            ValueError: If `birth_date` is after `death_date`.
+        """
         try:
             ValidationUtils.validate_date_order([
                 (values.birth_date, values.death_date,
@@ -47,50 +68,80 @@ class IndividualBase(BaseModel):
 
 
 class IndividualCreate(IndividualBase):
+    """
+    Schema for creating a new individual.
+    """
     first_name: str = Field(
-        ..., min_length=1, max_length=50,
+        ...,
+        min_length=1,
+        max_length=50,
         description="First name of the individual"
     )
     last_name: str = Field(
-        ..., min_length=1, max_length=50,
+        ...,
+        min_length=1,
+        max_length=50,
         description="Last name of the individual"
     )
-    gender: GenderEnum = Field(...,
-                               description="Gender of the individual")
+    gender: GenderEnum = Field(
+        ...,
+        description="Gender of the individual"
+    )
 
 
 class IndividualUpdate(IndividualBase):
+    """
+    Schema for updating an existing individual.
+    """
     first_name: Optional[str] = Field(
-        None, min_length=1, max_length=50,
+        None,
+        min_length=1,
+        max_length=50,
         description="Updated first name"
     )
     last_name: Optional[str] = Field(
-        None, min_length=1, max_length=50,
+        None,
+        min_length=1,
+        max_length=50,
         description="Updated last name"
     )
-    gender: Optional[GenderEnum] = Field(None,
-                                         description="Updated gender")
+    gender: Optional[GenderEnum] = Field(
+        None,
+        description="Updated gender"
+    )
 
 
 class IndividualOut(BaseModel):
-    id: int = Field(...,
-                    description="The unique ID of the individual")
-    individual_number: int = Field(...,
-                                   description="A unique number assigned to the individual")
+    """
+    Schema for returning individual data.
+    """
+    id: int = Field(
+        ...,
+        description="The unique ID of the individual"
+    )
+    individual_number: int = Field(
+        ...,
+        description="A unique number assigned to the individual"
+    )
     birth_date: Optional[date] = Field(
-        None, description="Birth date of the individual"
+        None,
+        description="Birth date of the individual"
     )
     birth_place: Optional[str] = Field(
-        None, description="Birthplace of the individual"
+        None,
+        description="Birthplace of the individual"
     )
     death_date: Optional[date] = Field(
-        None, description="Death date of the individual"
+        None,
+        description="Death date of the individual"
     )
     death_place: Optional[str] = Field(
-        None, description="Place of death for the individual"
+        None,
+        description="Place of death for the individual"
     )
     notes: Optional[str] = Field(
-        None, description="Additional notes about the individual"
+        None,
+        description="Additional notes about the individual"
     )
     age: Optional[int] = Field(
         None,
@@ -108,6 +159,16 @@ class IndividualOut(BaseModel):
     @model_validator(mode='after')
     def populate_age(cls,
                      values: "IndividualOut") -> "IndividualOut":
+        """
+        Calculates and populates the age based on birth and death
+        dates if not already set.
+
+        Args:
+            values (IndividualOut): The model instance.
+
+        Returns:
+            IndividualOut: The model instance with the age populated.
+        """
         if not values.age and values.birth_date:
             values.age = ValidationUtils.calculate_age(
                 values.birth_date, values.death_date
