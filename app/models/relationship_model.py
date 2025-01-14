@@ -1,14 +1,29 @@
-from sqlalchemy import Column, Integer, String, Date, DateTime, \
-    ForeignKey, CheckConstraint, Enum as SAEnum
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Date,
+    DateTime,
+    ForeignKey,
+    CheckConstraint,
+    Enum as SAEnum
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.models.base_model import Base
-from app.models.enums_model import InitialRelationshipEnum, \
-    HorizontalRelationshipTypeEnum, VerticalRelationshipTypeEnum
+from app.models.enums_model import (
+    InitialRelationshipEnum,
+    HorizontalRelationshipTypeEnum,
+    VerticalRelationshipTypeEnum
+)
 
 
 class Relationship(Base):
+    """
+    Represents a relationship between two individuals within a project.
+    """
+
     __tablename__ = 'relationships'
     __table_args__ = (
         CheckConstraint('individual_id != related_id',
@@ -17,7 +32,6 @@ class Relationship(Base):
             'dissolution_date IS NULL OR union_date IS NULL OR union_date <= dissolution_date',
             name='chk_relationship_dates'
         ),
-
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -58,7 +72,6 @@ class Relationship(Base):
                         server_default=func.now(),
                         onupdate=func.now(), nullable=False)
 
-    # Relationships
     project = relationship('Project', back_populates='relationships')
     individual = relationship(
         'Individual',

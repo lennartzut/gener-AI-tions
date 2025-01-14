@@ -1,6 +1,14 @@
 from sqlalchemy import (
-    Column, Integer, String, Text, ForeignKey, Date, DateTime, func,
-    UniqueConstraint, CheckConstraint
+    Column,
+    Integer,
+    String,
+    Text,
+    ForeignKey,
+    Date,
+    DateTime,
+    func,
+    UniqueConstraint,
+    CheckConstraint
 )
 from sqlalchemy.orm import relationship
 
@@ -9,21 +17,21 @@ from app.models.enums_model import InitialRelationshipEnum
 
 
 class Individual(Base):
+    """
+    Represents an individual within a project.
+    """
+
     __tablename__ = 'individuals'
     __table_args__ = (
         UniqueConstraint('project_id', 'individual_number',
                          name='uix_project_individual_number'),
         CheckConstraint(
             'death_date IS NULL OR birth_date IS NULL OR birth_date <= death_date',
-            name='chk_individual_dates'
-        ),
+            name='chk_individual_dates'),
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    individual_number = Column(
-        Integer,
-        nullable=False
-    )
+    individual_number = Column(Integer, nullable=False)
     user_id = Column(Integer,
                      ForeignKey('users.id', ondelete='CASCADE'),
                      nullable=False, index=True)
@@ -41,14 +49,12 @@ class Individual(Base):
                         server_default=func.now(),
                         onupdate=func.now(), nullable=False)
 
-    # Relationships
     user = relationship('User', back_populates='individuals')
     project = relationship('Project', back_populates='individuals')
     identities = relationship('Identity',
                               back_populates='individual',
                               cascade='all, delete-orphan',
                               lazy='joined')
-    # Relationship to primary identity
     primary_identity = relationship(
         "Identity",
         uselist=False,
@@ -65,7 +71,12 @@ class Individual(Base):
 
     @property
     def parents(self):
-        """Return a list of parent individuals with relationship IDs."""
+        """
+        Retrieves a list of parent individuals associated with this individual.
+
+        Returns:
+            list: List of dictionaries containing parent details and relationship IDs.
+        """
         unique_parents = []
         seen_ids = set()
 
@@ -93,7 +104,12 @@ class Individual(Base):
 
     @property
     def siblings(self):
-        """Return a list of sibling individuals."""
+        """
+        Retrieves a list of sibling individuals associated with this individual.
+
+        Returns:
+            list: List of dictionaries containing sibling details.
+        """
         siblings_set = []
         seen_ids = set()
         parents = self.parents
@@ -131,7 +147,12 @@ class Individual(Base):
 
     @property
     def children(self):
-        """Return a list of child individuals with relationship IDs."""
+        """
+        Retrieves a list of child individuals associated with this individual.
+
+        Returns:
+            list: List of dictionaries containing child details and relationship IDs.
+        """
         unique_children = []
         seen_ids = set()
 
@@ -159,7 +180,12 @@ class Individual(Base):
 
     @property
     def partners(self):
-        """Return a list of partner individuals with relationship IDs."""
+        """
+        Retrieves a list of partner individuals associated with this individual.
+
+        Returns:
+            list: List of dictionaries containing partner details and relationship IDs.
+        """
         unique_partners = []
         seen_ids = set()
 
@@ -187,18 +213,33 @@ class Individual(Base):
 
     @property
     def primary_identity(self):
-        """Return the primary identity if available."""
+        """
+        Retrieves the primary identity associated with this individual.
+
+        Returns:
+            Identity: The primary identity object or None if not set.
+        """
         return next((identity for identity in self.identities if
                      identity.is_primary), None)
 
     @property
     def first_name(self):
-        """Return the first name from the primary identity."""
+        """
+        Retrieves the first name from the primary identity.
+
+        Returns:
+            str: The first name or None if primary identity is absent.
+        """
         return self.primary_identity.first_name if self.primary_identity else None
 
     @property
     def last_name(self):
-        """Return the last name from the primary identity."""
+        """
+        Retrieves the last name from the primary identity.
+
+        Returns:
+            str: The last name or None if primary identity is absent.
+        """
         return self.primary_identity.last_name if self.primary_identity else None
 
     def __repr__(self) -> str:

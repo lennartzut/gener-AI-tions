@@ -1,5 +1,11 @@
-from sqlalchemy import (Column, Integer, String, DateTime, ForeignKey,
-                        UniqueConstraint)
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    DateTime,
+    ForeignKey,
+    UniqueConstraint
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -7,6 +13,10 @@ from app.models.base_model import Base
 
 
 class Project(Base):
+    """
+    Represents a project managed by a user.
+    """
+
     __tablename__ = 'projects'
     __table_args__ = (
         UniqueConstraint('user_id', 'project_number',
@@ -14,10 +24,7 @@ class Project(Base):
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    project_number = Column(
-        Integer,
-        nullable=False
-    )
+    project_number = Column(Integer, nullable=False)
     user_id = Column(Integer,
                      ForeignKey('users.id', ondelete='CASCADE'),
                      nullable=False)
@@ -28,7 +35,6 @@ class Project(Base):
                         server_default=func.now(),
                         onupdate=func.now(), nullable=False)
 
-    # Relationships
     user = relationship('User', back_populates='projects')
     individuals = relationship('Individual',
                                back_populates='project',
@@ -42,7 +48,10 @@ class Project(Base):
 
     def count_related_entities(self):
         """
-        Counts the number of individuals and relationships in this project.
+        Counts the number of individuals and relationships within this project.
+
+        Returns:
+            dict: Dictionary containing counts of individuals and relationships.
         """
         return {
             'individuals': len(self.individuals),
