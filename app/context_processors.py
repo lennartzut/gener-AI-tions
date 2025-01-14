@@ -1,14 +1,19 @@
 from flask import current_app
 from flask_jwt_extended import verify_jwt_in_request, \
     get_jwt_identity
-from app.services.user_service import UserService
-from app.extensions import SessionLocal
 from jwt.exceptions import ExpiredSignatureError, DecodeError
+
+from app.extensions import SessionLocal
+from app.services.user_service import UserService
 
 
 def inject_current_user():
     """
-    Injects the current user into the template context if a valid JWT exists.
+    Injects the current user into the template context if a valid
+    JWT exists.
+
+    Returns:
+        dict: Dictionary containing the current user or None.
     """
     user = None
     try:

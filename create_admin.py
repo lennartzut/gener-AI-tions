@@ -1,13 +1,31 @@
 import sys
+
 from app import create_app
 from app.extensions import initialize_extensions, SessionLocal
-from app.services.user_service import UserService
 from app.models.user_model import User
+from app.services.user_service import UserService
+
 
 def main():
+    """
+    Main function to create an admin user.
+
+    Expects three command-line arguments:
+        1. username: The desired username for the admin.
+        2. email: The admin's email address.
+        3. password: The admin's password.
+
+    Usage:
+        python3 create_admin.py <username> <email> <password>
+
+    Output:
+        Prints a success message with the admin user's details or
+        an error message if the user already exists.
+    """
     if len(sys.argv) != 4:
-        print("Usage: python3 create_admin.py <username> <email> "
-              "<password>")
+        print(
+            "Usage: python3 create_admin.py <username> <email> "
+            "<password>")
         sys.exit(1)
 
     username = sys.argv[1]
@@ -34,6 +52,7 @@ def main():
             service.db.commit()
             service.db.refresh(admin_user)
             print(f'Admin user successfully created: {admin_user}')
+
 
 if __name__ == '__main__':
     main()
