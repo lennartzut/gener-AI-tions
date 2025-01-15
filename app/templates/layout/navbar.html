@@ -1,13 +1,14 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
   <div class="container-fluid">
     <a class="navbar-brand" href="{{ url_for('web_projects_bp.list_projects') }}">Gener-AI-tions</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       {% if current_user %}
       <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('web_profile_bp.profile') }}">Profile</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('web_users_bp.profile') }}">Profile</a></li>
         <li class="nav-item">
           <a href="#" class="nav-link" id="logout-link">Logout</a>
           <form id="logout-form" action="{{ url_for('web_auth_bp.logout') }}" method="POST" style="display: none;"></form>
@@ -23,7 +24,6 @@
   </div>
 </nav>
 {% block scripts %}
-<script type="module" src="{{ url_for('static', filename='scripts/common.js') }}"></script>
 <script>
     const logoutLink = document.getElementById('logout-link');
     const logoutForm = document.getElementById('logout-form');

@@ -1,19 +1,19 @@
 <div class="modal fade" id="createIndividualModal" tabindex="-1" aria-labelledby="createIndividualModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="createIndividualForm" method="POST" action="{{ url_for('api_individuals.create_individual', project_id=project_id) }}">
-                <input type="hidden" id="projectId" name="project_id" value="{{ project_id }}">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="createIndividualModalLabel">Create Individual</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    {% include "partials/forms/individual_form.html" %}
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Create Individual</button>
-                </div>
-            </form>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="createIndividualForm" method="POST" action="#">
+        <input type="hidden" id="modalProjectId" name="project_id" value="{{ project_id }}">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createIndividualModalLabel">Create Individual</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
+        <div class="modal-body">
+          {% include "partials/forms/individual_form.html" %}
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Create Individual</button>
+        </div>
+      </form>
     </div>
+  </div>
 </div>

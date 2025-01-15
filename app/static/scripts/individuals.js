@@ -1,8 +1,8 @@
-import { toggleDeathFields } from './common.js';
+// File: static/scripts/individuals.js
 
 document.addEventListener('DOMContentLoaded', function () {
     const projectPage = document.getElementById('projectPage');
-    const projectId = projectPage ? projectPage.dataset.projectId : null;
+    let projectId = projectPage ? projectPage.dataset.projectId : null;
     const selectedIndividualId = projectPage ? projectPage.dataset.individualId : null;
 
     const searchInput = document.getElementById('searchInput');
@@ -10,77 +10,60 @@ document.addEventListener('DOMContentLoaded', function () {
     const individualsList = document.getElementById('leftIndividualsList');
     const selectModeButton = document.getElementById('selectModeButton');
     const deleteSelectedButton = document.getElementById('deleteSelectedButton');
+    const createIndividualForm = document.getElementById('createIndividualForm');
+
+    let projectIdInputInModal = createIndividualForm?.querySelector('#modalProjectId');
+    if (!projectId && projectIdInputInModal?.value) {
+        projectId = projectIdInputInModal.value;
+    }
 
     let selectMode = false;
-    let excludeIds = selectedIndividualId ? [parseInt(selectedIndividualId)] : [];
-    let currentQuery = ''; // Current search query
+    let excludeIds = [];
+    if (selectedIndividualId) {
+        excludeIds.push(parseInt(selectedIndividualId, 10));
+    }
+    let currentQuery = '';
 
     async function fetchAndRenderIndividuals(query = '') {
         currentQuery = query;
-        const projectParam = projectId ? `&project_id=${encodeURIComponent(projectId)}` : '';
-        const allExcludeIds = excludeIds.join(',');
-        const excludeParam = allExcludeIds ? `&exclude_ids=${allExcludeIds}` : '';
-        const url = `/api/individuals/search?q=${encodeURIComponent(query)}${projectParam}${excludeParam}`;
+        if (!projectId) return;
+
+        const url = `/api/individuals/search?q=${encodeURIComponent(query)}&project_id=${projectId}&exclude_ids=${excludeIds.join(',')}`;
 
         try {
-            const response = await fetch(url, {
-                headers: { 'Content-Type': 'application/json' }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch individuals');
-            }
+            const response = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
+            if (!response.ok) throw new Error('Failed to fetch individuals');
 
             const data = await response.json();
             individualsList.innerHTML = '';
 
             if (!data.individuals || data.individuals.length === 0) {
-                const noResultItem = document.createElement('li');
-                noResultItem.className = 'list-group-item text-muted';
-                noResultItem.textContent = 'No individuals found.';
-                individualsList.appendChild(noResultItem);
+                individualsList.innerHTML = '<li class="list-group-item text-muted">No individuals found.</li>';
                 return;
             }
 
-            // Check duplicates
-            const nameCount = {};
-            data.individuals.forEach(ind => {
-                nameCount[ind.name] = (nameCount[ind.name] || 0) + 1;
-            });
-            for (let name in nameCount) {
-                if (nameCount[name] > 1) {
-                    if (confirm(`Found duplicates for "${name}". Merge them?`)) {
-                        console.log(`Merging duplicates of ${name}...`);
-                        // Implement merging as needed
-                    }
-                }
-            }
-
-            data.individuals.forEach((individual) => {
+            data.individuals.forEach(individual => {
                 const item = document.createElement('li');
                 item.className = 'list-group-item d-flex align-items-center';
                 item.setAttribute('draggable', 'true');
                 item.dataset.individualId = individual.id;
 
-                if (selectMode) {
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.classList.add('form-check-input', 'me-2');
-                    checkbox.value = individual.id;
-                    item.appendChild(checkbox);
-                }
-
                 const nameSpan = document.createElement('span');
-                nameSpan.textContent = individual.name;
+                nameSpan.textContent = `${individual.primary_identity?.first_name || 'Unknown'} ${individual.primary_identity?.last_name || 'Name'}`;
                 nameSpan.classList.add('flex-grow-1');
                 item.appendChild(nameSpan);
 
+                if (selectMode) {
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = individual.id;
+                    checkbox.classList.add('form-check-input', 'me-2');
+                    item.prepend(checkbox);
+                }
+
                 item.addEventListener('click', (e) => {
                     if (selectMode && e.target.type === 'checkbox') return;
-                    if (!selectMode) {
-                        // Navigate to this individual, keeping project_id and individual_id
-                        window.location.href = `/individuals/?project_id=${projectId}&individual_id=${individual.id}`;
-                    }
+                    if (!selectMode) window.location.href = `/individuals/?project_id=${projectId}&individual_id=${individual.id}`;
                 });
 
                 item.addEventListener('dragstart', (e) => {
@@ -94,25 +77,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Initial load: fetch full list with no query
-    if (individualsList) {
-        fetchAndRenderIndividuals('');
-    }
+    if (individualsList) fetchAndRenderIndividuals();
 
-    // Handle search form submit (pressing Enter in the search field)
-    if (searchForm) {
+    if (searchForm && searchInput) {
         searchForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const q = searchInput.value.trim();
-            fetchAndRenderIndividuals(q);
+            fetchAndRenderIndividuals(searchInput.value.trim());
         });
-    }
 
-    // On input changes, fetch on the fly for real-time updates
-    if (searchInput && individualsList) {
-        searchInput.addEventListener('input', function () {
-            const q = searchInput.value.trim();
-            fetchAndRenderIndividuals(q);
+        searchInput.addEventListener('input', () => {
+            fetchAndRenderIndividuals(searchInput.value.trim());
         });
     }
 
@@ -125,20 +99,14 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         deleteSelectedButton.addEventListener('click', async () => {
-            const checkboxes = individualsList.querySelectorAll('input[type="checkbox"]:checked');
-            const idsToDelete = Array.from(checkboxes).map(cb => parseInt(cb.value, 10));
+            const selectedIds = Array.from(individualsList.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => parseInt(checkbox.value, 10));
 
-            for (let id of idsToDelete) {
+            for (const id of selectedIds) {
                 try {
-                    const projectParam = projectId ? `?project_id=${encodeURIComponent(projectId)}` : '';
-                    const response = await fetch(`/api/individuals/${id}${projectParam}`, {
-                        method: 'DELETE'
-                    });
-                    if (!response.ok) {
-                        console.error(`Failed to delete individual ${id}`);
-                    }
-                } catch (err) {
-                    console.error(`Error deleting individual ${id}:`, err);
+                    const response = await fetch(`/api/individuals/${id}?project_id=${projectId}`, { method: 'DELETE' });
+                    if (!response.ok) throw new Error(`Failed to delete individual ${id}`);
+                } catch (error) {
+                    console.error(`Error deleting individual ${id}:`, error);
                 }
             }
 
@@ -146,90 +114,40 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Create Individual Form handling
-    const createIndividualForm = document.getElementById('createIndividualForm');
     if (createIndividualForm) {
-        toggleDeathFields();
-
-        const isDeceasedCheckbox = document.getElementById('isDeceased');
-        const isDeceasedUnknownCheckbox = document.getElementById('isDeceasedUnknown');
-
-        if (isDeceasedCheckbox) {
-            isDeceasedCheckbox.addEventListener('change', () => {
-                if (isDeceasedUnknownCheckbox && isDeceasedUnknownCheckbox.checked) {
-                    isDeceasedUnknownCheckbox.checked = false;
-                }
-                toggleDeathFields();
-            });
-        }
-
-        if (isDeceasedUnknownCheckbox) {
-            isDeceasedUnknownCheckbox.addEventListener('change', () => {
-                if (isDeceasedCheckbox && isDeceasedCheckbox.checked) {
-                    isDeceasedCheckbox.checked = false;
-                }
-                toggleDeathFields();
-            });
-        }
-
         createIndividualForm.addEventListener('submit', async (event) => {
             event.preventDefault();
 
             const formData = new FormData(createIndividualForm);
-            const projectIdFromForm = formData.get('project_id') || projectId;
-
             const individualData = {
-                birth_date: formData.get('birth_date') || null,
-                birth_place: formData.get('birth_place') || null,
-                death_date: formData.get('death_date') || null,
-                death_place: formData.get('death_place') || null,
-                first_name: formData.get('first_name') || null,
-                last_name: formData.get('last_name') || null,
-                gender: formData.get('gender') || null,
+                first_name: formData.get('first_name'),
+                last_name: formData.get('last_name'),
+                gender: formData.get('gender'),
+                birth_date: formData.get('birth_date'),
+                death_date: formData.get('death_date'),
+                birth_place: formData.get('birth_place'),
+                death_place: formData.get('death_place'),
+                notes: formData.get('notes')
             };
 
-            const isDUC = isDeceasedUnknownCheckbox && isDeceasedUnknownCheckbox.checked;
-            if (isDUC) {
-                individualData.death_date = null;
-                individualData.death_place = null;
-            }
-
-            if (!individualData.first_name || !individualData.last_name || !individualData.gender) {
-                alert('Please fill out all required fields: First Name, Last Name, and Gender.');
-                return;
-            }
-
-            const createUrl = `/api/individuals/?project_id=${encodeURIComponent(projectIdFromForm)}`;
             try {
-                const response = await fetch(createUrl, {
+                const response = await fetch(`/api/individuals/?project_id=${projectId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify(individualData),
+                    body: JSON.stringify(individualData)
                 });
 
                 if (response.ok) {
                     alert('Individual created successfully!');
                     fetchAndRenderIndividuals(currentQuery);
                 } else {
-                    const data = await response.json();
-                    console.error('Error creating individual:', data);
-                    alert(data.error || 'An error occurred. Please try again.');
+                    const errorData = await response.json();
+                    alert(errorData.error || 'Failed to create individual.');
                 }
             } catch (error) {
                 console.error('Error creating individual:', error);
-                alert('An unexpected error occurred. Please try again.');
+                alert('An unexpected error occurred.');
             }
-        });
-    }
-
-    // Add Identity Modal
-    const addIdentityBtn = document.getElementById('addIdentityBtn');
-    const addIdentityModal = document.getElementById('addIdentityModal');
-    if (addIdentityBtn && addIdentityModal && selectedIndividualId) {
-        addIdentityBtn.addEventListener('click', () => {
-            const modal = new bootstrap.Modal(addIdentityModal);
-            modal.show();
         });
     }
 });

@@ -2,7 +2,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             {% if selected_individual %}
-            <form method="POST" action="{{ url_for('web_identities_bp.add_identity', individual_id=selected_individual.id, project_id=project_id) }}">
+            <form method="POST" action="{{ url_for('web_identities_bp.add_identity', individual_id=selected_individual.id) }}">
             {% else %}
             <form method="POST" action="#" onsubmit="alert('No individual selected');return false;">
             {% endif %}
