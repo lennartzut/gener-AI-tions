@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Your Projects</h2>
+
+<form method="POST" action="{{ url_for('web_projects_bp.create_project') }}" class="mb-3">
+    <div class="mb-3">
+        <label for="projectName" class="form-label">Project Name</label>
+        <input id="projectName" name="name" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Create Project</button>
+</form>
+
+<h3 class="mt-4">Existing Projects</h3>
+<ul class="list-group">
+    {% for proj in projects %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>{{ proj.name }}</div>
+        <div class="btn-group">
+            <a href="{{ url_for('web_projects_bp.select_project', project_id=proj.id) }}" class="btn btn-sm btn-secondary">Select</a>
+            <button class="btn btn-sm btn-info"
+                    data-bs-toggle="modal" data-bs-target="#updateProjectModal"
+                    data-project-id="{{ proj.id }}"
+                    data-project-name="{{ proj.name }}">
+                Update
+            </button>
+            <button class="btn btn-sm btn-danger"
+                    data-bs-toggle="modal" data-bs-target="#deleteProjectModal"
+                    data-project-id="{{ proj.id }}"
+                    data-project-name="{{ proj.name }}">
+                Delete
+            </button>
+        </div>
+    </li>
+    {% else %}
+    <li class="list-group-item text-muted">No projects yet. Create one above.</li>
+    {% endfor %}
+</ul>
+
+{% include "partials/modals/update_project_modal.html" %}
+{% include "partials/modals/delete_project_modal.html" %}
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='scripts/projects.js') }}"></script>
+{% endblock %}
