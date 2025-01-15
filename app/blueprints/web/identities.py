@@ -1,124 +1,108 @@
-from flask import Blueprint, request, redirect, url_for, flash, \
-    render_template
+from flask import (
+    Blueprint, flash, redirect, url_for, request, render_template
+)
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models.identity import Identity
-from app.models.individual import Individual
-from app.models.enums import GenderEnum
-from app.extensions import db
 from sqlalchemy.exc import SQLAlchemyError
 
-web_identities_bp = Blueprint('web_identities_bp', __name__)
+from app.extensions import SessionLocal
+from app.models.enums_model import GenderEnum
+from app.schemas.identity_schema import IdentityCreate, IdentityUpdate
+from app.services.identity_service import IdentityService
+
+web_identities_bp = Blueprint('web_identities_bp', __name__,
+                               template_folder='templates/identities')
 
 
-@web_identities_bp.route('/<int:individual_id>/add-identity',
-                         methods=['GET', 'POST'])
+@web_identities_bp.route('/<int:individual_id>/add-identity', methods=['GET', 'POST'])
 @jwt_required()
 def add_identity(individual_id):
     current_user_id = get_jwt_identity()
-    individual = Individual.query.filter_by(id=individual_id,
-                                            user_id=current_user_id).first_or_404()
+    if not current_user_id:
+        flash("Please log in.", 'danger')
+        return redirect(url_for('web_auth_bp.login'))
 
     if request.method == 'POST':
-        first_name = request.form.get('first_name')
-        last_name = request.form.get('last_name')
-        gender = request.form.get('gender')
-        valid_from = request.form.get('valid_from')
-        valid_until = request.form.get('valid_until')
-
-        if not first_name or not last_name or not gender:
-            flash("First name, last name, and gender are required.",
-                  'danger')
-            return redirect(url_for('web_identities_bp.add_identity',
-                                    individual_id=individual_id))
+        form_data = request.form.to_dict()
+        try:
+            identity_create = IdentityCreate.model_validate(form_data)
+        except Exception as e:
+            flash(f"Validation error: {e}", 'danger')
+            return render_template('partials/forms/add_identity_form.html', form_data=form_data, GenderEnum=GenderEnum)
 
         try:
-            new_identity = Identity(
-                individual_id=individual.id,
-                first_name=first_name,
-                last_name=last_name,
-                gender=GenderEnum(gender),
-                valid_from=valid_from or None,
-                valid_until=valid_until or None
-            )
-            db.session.add(new_identity)
-            db.session.commit()
-            flash('Identity added successfully.', 'success')
-        except ValueError:
-            db.session.rollback()
-            flash("Invalid gender value.", 'danger')
-        except SQLAlchemyError:
-            db.session.rollback()
-            flash('Error adding identity.', 'danger')
+            with SessionLocal() as session:
+                service = IdentityService(db=session)
+                new_identity = service.create_identity(
+                    identity_create=identity_create, is_primary=False
+                )
+                if new_identity:
+                    flash('Identity added successfully.', 'success')
+                else:
+                    flash('Failed to create identity.', 'danger')
+        except SQLAlchemyError as e:
+            flash(f'Error adding identity: {e}', 'danger')
 
-        return redirect(url_for('web_individuals_bp.get_individuals',
-                                project_id=individual.project_id,
-                                individual_id=individual_id))
+        return redirect(url_for('web_individuals_bp.get_individuals', individual_id=individual_id))
 
-    return render_template('partials/forms/add_identity_form.html',
-                           GenderEnum=GenderEnum)
+    return render_template('partials/forms/add_identity_form.html', GenderEnum=GenderEnum)
 
 
-@web_identities_bp.route(
-    '/<int:individual_id>/update-identity/<int:identity_id>',
-    methods=['GET', 'POST'])
+@web_identities_bp.route('/<int:individual_id>/update-identity/<int:identity_id>', methods=['GET', 'POST'])
 @jwt_required()
 def update_identity(individual_id, identity_id):
     current_user_id = get_jwt_identity()
-    identity = Identity.query.filter_by(id=identity_id).join(
-        Individual).filter(Individual.id == individual_id,
-                           Individual.user_id == current_user_id).first_or_404()
+    if not current_user_id:
+        flash("Please log in.", 'danger')
+        return redirect(url_for('web_auth_bp.login'))
 
     if request.method == 'POST':
-        first_name = request.form.get('first_name')
-        last_name = request.form.get('last_name')
-        gender = request.form.get('gender')
-        valid_from = request.form.get('valid_from')
-        valid_until = request.form.get('valid_until')
+        form_data = request.form.to_dict()
+        try:
+            identity_update = IdentityUpdate.model_validate(form_data)
+        except Exception as e:
+            flash(f"Validation error: {e}", 'danger')
+            return render_template('partials/forms/update_identity_modal.html',
+                                   form_data=form_data, GenderEnum=GenderEnum)
 
         try:
-            identity.first_name = first_name
-            identity.last_name = last_name
-            identity.gender = GenderEnum(gender)
-            identity.valid_from = valid_from or None
-            identity.valid_until = valid_until or None
+            with SessionLocal() as session:
+                service = IdentityService(db=session)
+                updated_identity = service.update_identity(
+                    identity_id=identity_id,
+                    identity_update=identity_update
+                )
+                if updated_identity:
+                    flash('Identity updated successfully.', 'success')
+                else:
+                    flash('Failed to update identity.', 'danger')
+        except SQLAlchemyError as e:
+            flash(f'Error updating identity: {e}', 'danger')
 
-            db.session.commit()
-            flash('Identity updated successfully.', 'success')
-        except ValueError:
-            db.session.rollback()
-            flash("Invalid gender value.", 'danger')
-        except SQLAlchemyError:
-            db.session.rollback()
-            flash('Error updating identity.', 'danger')
-
-        return redirect(url_for('web_individuals_bp.get_individuals',
-                                project_id=identity.individual.project_id,
-                                individual_id=individual_id))
+        return redirect(url_for('web_individuals_bp.get_individuals', individual_id=individual_id))
 
     return render_template(
         'partials/forms/update_identity_modal.html',
-                           identity=identity,
-                           GenderEnum=GenderEnum)
+        GenderEnum=GenderEnum
+    )
 
 
-@web_identities_bp.route(
-    '/<int:individual_id>/delete-identity/<int:identity_id>',
-    methods=['POST'])
+@web_identities_bp.route('/<int:individual_id>/delete-identity/<int:identity_id>', methods=['POST'])
 @jwt_required()
 def delete_identity(individual_id, identity_id):
     current_user_id = get_jwt_identity()
-    identity = Identity.query.filter_by(id=identity_id).join(
-        Individual).filter(Individual.id == individual_id,
-                           Individual.user_id == current_user_id).first_or_404()
+    if not current_user_id:
+        flash("Please log in.", 'danger')
+        return redirect(url_for('web_auth_bp.login'))
 
     try:
-        db.session.delete(identity)
-        db.session.commit()
-        flash('Identity deleted successfully.', 'success')
-    except SQLAlchemyError:
-        db.session.rollback()
-        flash('Error deleting identity.', 'danger')
+        with SessionLocal() as session:
+            service = IdentityService(db=session)
+            success = service.delete_identity(identity_id)
+            if success:
+                flash('Identity deleted successfully.', 'success')
+            else:
+                flash('Failed to delete identity.', 'danger')
+    except SQLAlchemyError as e:
+        flash(f'Error deleting identity: {e}', 'danger')
 
-    return redirect(url_for('web_individuals_bp.get_individuals',
-                            project_id=identity.individual.project_id,
-                            individual_id=individual_id))
+    return redirect(url_for('web_individuals_bp.get_individuals', individual_id=individual_id))
