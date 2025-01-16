@@ -61,166 +61,168 @@ class Individual(Base):
         primaryjoin="and_(Individual.id == Identity.individual_id, Identity.is_primary == True)"
     )
     relationships_as_individual = relationship(
-        'Relationship', foreign_keys='Relationship.individual_id',
-        back_populates='individual', cascade='all, delete-orphan'
+        'Relationship',
+        foreign_keys='Relationship.individual_id',
+        back_populates='individual',
+        cascade='all, delete-orphan'
     )
     relationships_as_related = relationship(
-        'Relationship', foreign_keys='Relationship.related_id',
-        back_populates='related', cascade='all, delete-orphan'
+        'Relationship',
+        foreign_keys='Relationship.related_id',
+        back_populates='related',
+        cascade='all, delete-orphan'
     )
 
     @property
     def parents(self):
         """
-        Retrieves a list of parent individuals associated with this individual.
-
-        Returns:
-            list: List of dictionaries containing parent details and relationship IDs.
+        Returns a list of dictionaries for each parent of this individual.
+        In canonical approach, 'parent' means:
+          - The row has initial_relationship='parent'
+          - The row's `related_id` == self.id (the child)
+          - The row's `individual_id` is the parent's ID
+        So we look in `relationships_as_related` for rel.initial_relationship == 'parent'
         """
         unique_parents = []
         seen_ids = set()
 
-        for rel in self.relationships_as_individual:
-            if rel.initial_relationship == InitialRelationshipEnum.CHILD and rel.related.id not in seen_ids:
-                seen_ids.add(rel.related.id)
-                unique_parents.append({
-                    "id": rel.related.id,
-                    "first_name": rel.related.primary_identity.first_name if rel.related.primary_identity else None,
-                    "last_name": rel.related.primary_identity.last_name if rel.related.primary_identity else None,
-                    "relationship_id": rel.id
-                })
-
         for rel in self.relationships_as_related:
-            if rel.initial_relationship == InitialRelationshipEnum.PARENT and rel.individual.id not in seen_ids:
-                seen_ids.add(rel.individual.id)
-                unique_parents.append({
-                    "id": rel.individual.id,
-                    "first_name": rel.individual.primary_identity.first_name if rel.individual.primary_identity else None,
-                    "last_name": rel.individual.primary_identity.last_name if rel.individual.primary_identity else None,
-                    "relationship_id": rel.id
-                })
+            if rel.initial_relationship == InitialRelationshipEnum.PARENT:
+                parent_id = rel.individual.id
+                if parent_id not in seen_ids:
+                    seen_ids.add(parent_id)
+                    parent_first_name = (rel.individual.primary_identity.first_name
+                                         if rel.individual.primary_identity else None)
+                    parent_last_name = (rel.individual.primary_identity.last_name
+                                        if rel.individual.primary_identity else None)
+
+                    unique_parents.append({
+                        "id": parent_id,
+                        "first_name": parent_first_name,
+                        "last_name": parent_last_name,
+                        "relationship_id": rel.id
+                    })
 
         return unique_parents
 
     @property
-    def siblings(self):
-        """
-        Retrieves a list of sibling individuals associated with this individual.
-
-        Returns:
-            list: List of dictionaries containing sibling details.
-        """
-        siblings_set = []
-        seen_ids = set()
-        parents = self.parents
-
-        for parent in parents:
-            parent_id = parent["id"]
-
-            parent_obj = next(
-                (rel.individual for rel in
-                 self.relationships_as_related if
-                 rel.initial_relationship == InitialRelationshipEnum.PARENT and rel.individual.id == parent_id),
-                None
-            ) or next(
-                (rel.related for rel in
-                 self.relationships_as_individual if
-                 rel.initial_relationship == InitialRelationshipEnum.PARENT and rel.related.id == parent_id),
-                None
-            )
-
-            if parent_obj:
-                for child_rel in parent_obj.relationships_as_individual:
-                    if (
-                            child_rel.initial_relationship == InitialRelationshipEnum.PARENT
-                            and child_rel.related.id != self.id
-                            and child_rel.related.id not in seen_ids
-                    ):
-                        seen_ids.add(child_rel.related.id)
-                        siblings_set.append({
-                            "id": child_rel.related.id,
-                            "first_name": child_rel.related.primary_identity.first_name if child_rel.related.primary_identity else None,
-                            "last_name": child_rel.related.primary_identity.last_name if child_rel.related.primary_identity else None,
-                        })
-
-        return siblings_set
-
-    @property
     def children(self):
         """
-        Retrieves a list of child individuals associated with this individual.
-
-        Returns:
-            list: List of dictionaries containing child details and relationship IDs.
+        Returns a list of dictionaries for each child of this individual.
+        In canonical approach, 'parent' means:
+          - The row has initial_relationship='parent'
+          - The row's `individual_id` == self.id (the parent)
+          - The row's `related_id` is the child's ID
+        So we look in `relationships_as_individual` for rel.initial_relationship == 'parent'
         """
         unique_children = []
         seen_ids = set()
 
         for rel in self.relationships_as_individual:
-            if rel.initial_relationship == InitialRelationshipEnum.PARENT and rel.related.id not in seen_ids:
-                seen_ids.add(rel.related.id)
-                unique_children.append({
-                    "id": rel.related.id,
-                    "first_name": rel.related.primary_identity.first_name if rel.related.primary_identity else None,
-                    "last_name": rel.related.primary_identity.last_name if rel.related.primary_identity else None,
-                    "relationship_id": rel.id
-                })
+            if rel.initial_relationship == InitialRelationshipEnum.PARENT:
+                child_id = rel.related.id
+                if child_id not in seen_ids:
+                    seen_ids.add(child_id)
+                    child_first_name = (rel.related.primary_identity.first_name
+                                        if rel.related.primary_identity else None)
+                    child_last_name = (rel.related.primary_identity.last_name
+                                       if rel.related.primary_identity else None)
 
-        for rel in self.relationships_as_related:
-            if rel.initial_relationship == InitialRelationshipEnum.CHILD and rel.individual.id not in seen_ids:
-                seen_ids.add(rel.individual.id)
-                unique_children.append({
-                    "id": rel.individual.id,
-                    "first_name": rel.individual.primary_identity.first_name if rel.individual.primary_identity else None,
-                    "last_name": rel.individual.primary_identity.last_name if rel.individual.primary_identity else None,
-                    "relationship_id": rel.id
-                })
+                    unique_children.append({
+                        "id": child_id,
+                        "first_name": child_first_name,
+                        "last_name": child_last_name,
+                        "relationship_id": rel.id
+                    })
 
         return unique_children
 
     @property
     def partners(self):
         """
-        Retrieves a list of partner individuals associated with this individual.
-
-        Returns:
-            list: List of dictionaries containing partner details and relationship IDs.
+        Returns a list of dictionaries for each partner of this individual.
+        In canonical approach, 'partner' means:
+          - The row has initial_relationship='partner'
+          - The row's `individual_id` and `related_id` can be in either side,
+            but we appear in either `relationships_as_individual` or `relationships_as_related`.
         """
         unique_partners = []
         seen_ids = set()
 
         for rel in self.relationships_as_individual:
-            if rel.initial_relationship == InitialRelationshipEnum.PARTNER and rel.related.id not in seen_ids:
-                seen_ids.add(rel.related.id)
-                unique_partners.append({
-                    "id": rel.related.id,
-                    "first_name": rel.related.primary_identity.first_name if rel.related.primary_identity else None,
-                    "last_name": rel.related.primary_identity.last_name if rel.related.primary_identity else None,
-                    "relationship_id": rel.id
-                })
+            if rel.initial_relationship == InitialRelationshipEnum.PARTNER:
+                partner_id = rel.related.id
+                if partner_id not in seen_ids:
+                    seen_ids.add(partner_id)
+                    partner_first_name = (rel.related.primary_identity.first_name
+                                          if rel.related.primary_identity else None)
+                    partner_last_name = (rel.related.primary_identity.last_name
+                                         if rel.related.primary_identity else None)
+                    unique_partners.append({
+                        "id": partner_id,
+                        "first_name": partner_first_name,
+                        "last_name": partner_last_name,
+                        "relationship_id": rel.id
+                    })
 
         for rel in self.relationships_as_related:
-            if rel.initial_relationship == InitialRelationshipEnum.PARTNER and rel.individual.id not in seen_ids:
-                seen_ids.add(rel.individual.id)
-                unique_partners.append({
-                    "id": rel.individual.id,
-                    "first_name": rel.individual.primary_identity.first_name if rel.individual.primary_identity else None,
-                    "last_name": rel.individual.primary_identity.last_name if rel.individual.primary_identity else None,
-                    "relationship_id": rel.id
-                })
+            if rel.initial_relationship == InitialRelationshipEnum.PARTNER:
+                partner_id = rel.individual.id
+                if partner_id not in seen_ids:
+                    seen_ids.add(partner_id)
+                    partner_first_name = (rel.individual.primary_identity.first_name
+                                          if rel.individual.primary_identity else None)
+                    partner_last_name = (rel.individual.primary_identity.last_name
+                                         if rel.individual.primary_identity else None)
+                    unique_partners.append({
+                        "id": partner_id,
+                        "first_name": partner_first_name,
+                        "last_name": partner_last_name,
+                        "relationship_id": rel.id
+                    })
 
         return unique_partners
 
     @property
-    def primary_identity(self):
+    def siblings(self):
         """
-        Retrieves the primary identity associated with this individual.
+        Returns a list of dictionaries for each sibling of this individual.
+        A sibling shares a parent with us, so:
+          - We gather our parents
+          - For each parent, we gather that parent's children (besides us)
+        """
+        siblings_set = []
+        seen_ids = set()
 
-        Returns:
-            Identity: The primary identity object or None if not set.
-        """
-        return next((identity for identity in self.identities if
-                     identity.is_primary), None)
+        for parent_info in self.parents:
+            parent_id = parent_info["id"]
+            parent_obj = None
+            for rel in self.relationships_as_related:
+                if rel.initial_relationship == InitialRelationshipEnum.PARENT and rel.individual.id == parent_id:
+                    parent_obj = rel.individual
+                    break
+            for rel in self.relationships_as_individual:
+                if rel.initial_relationship == InitialRelationshipEnum.PARENT and rel.related.id == parent_id:
+                    parent_obj = rel.related
+                    break
+
+            if parent_obj:
+                for child_rel in parent_obj.relationships_as_individual:
+                    if (child_rel.initial_relationship == InitialRelationshipEnum.PARENT
+                            and child_rel.related.id != self.id
+                            and child_rel.related.id not in seen_ids):
+                        seen_ids.add(child_rel.related.id)
+                        child_first_name = (child_rel.related.primary_identity.first_name
+                                            if child_rel.related.primary_identity else None)
+                        child_last_name = (child_rel.related.primary_identity.last_name
+                                           if child_rel.related.primary_identity else None)
+                        siblings_set.append({
+                            "id": child_rel.related.id,
+                            "first_name": child_first_name,
+                            "last_name": child_last_name
+                        })
+
+        return siblings_set
 
     @property
     def first_name(self):
