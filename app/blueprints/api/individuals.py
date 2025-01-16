@@ -144,57 +144,24 @@ def get_individual(individual_id):
         if not individual:
             return jsonify({"error": "Individual not found."}), 404
 
-        individual_out = IndividualOut.model_validate(individual,
-                                                      from_attributes=True)
-        individual_out.identities = [{"id": identity.id} for identity
-                                     in individual.identities]
+        # Convert to our IndividualOut schema
+        individual_out = IndividualOut.model_validate(
+            individual, from_attributes=True
+        )
+        # Only basic identity IDs here (the actual data is in primary_identity)
+        individual_out.identities = [{"id": identity.id} for identity in individual.identities]
 
-        individual_data = individual_out.model_dump()
+        # Turn the Pydantic model into a dict
+        data = individual_out.model_dump()
 
-        individual_data["parents"] = [
-            {
-                "id": p.related.id,
-                "first_name": p.related.primary_identity.first_name if p.related.primary_identity else None,
-                "last_name": p.related.primary_identity.last_name if p.related.primary_identity else None,
-                "relationship_id": p.id
-            }
-            for p in individual.relationships_as_individual
-            if p.related and p.initial_relationship == "child"
-        ]
+        # Now we simply copy from the model's canonical @property logic
+        data["parents"] = individual.parents
+        data["children"] = individual.children
+        data["partners"] = individual.partners
+        data["siblings"] = individual.siblings
 
-        individual_data["children"] = [
-            {
-                "id": c.related.id,
-                "first_name": c.related.primary_identity.first_name if c.related.primary_identity else None,
-                "last_name": c.related.primary_identity.last_name if c.related.primary_identity else None,
-                "relationship_id": c.id
-            }
-            for c in individual.relationships_as_individual
-            if c.related and c.initial_relationship == "parent"
-        ]
+    return jsonify({"data": data}), 200
 
-        individual_data["partners"] = [
-            {
-                "id": prt.related.id,
-                "first_name": prt.related.primary_identity.first_name if prt.related.primary_identity else None,
-                "last_name": prt.related.primary_identity.last_name if prt.related.primary_identity else None,
-                "relationship_id": prt.id
-            }
-            for prt in individual.relationships_as_individual
-            if prt.related and prt.initial_relationship == "partner"
-        ]
-
-        individual_data["siblings"] = [
-            {
-                "id": s.related.id,
-                "first_name": s.related.primary_identity.first_name if s.related.primary_identity else None,
-                "last_name": s.related.primary_identity.last_name if s.related.primary_identity else None
-            }
-            for s in individual.relationships_as_individual
-            if s.related and s.initial_relationship == "sibling"
-        ]
-
-    return jsonify({"data": individual_data}), 200
 
 
 @api_individuals_bp.route("/<int:individual_id>", methods=["PATCH"])
