@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.models.base_model import Base
-from app.utils.password import hash_password, verify_password
+from app.utils.auth_utils import hash_password, verify_password
 
 
 class User(Base):
