@@ -52,6 +52,24 @@ class RelationshipService:
             if not primary_individual or not related_individual:
                 raise ValueError("Both individuals must belong to the same project.")
 
+            existing_any_rel = self.db.query(Relationship).filter(
+                Relationship.project_id == project_id
+            ).filter(
+                or_(
+                    and_(
+                        Relationship.individual_id == individual_id,
+                        Relationship.related_id == related_id
+                    ),
+                    and_(
+                        Relationship.individual_id == related_id,
+                        Relationship.related_id == individual_id
+                    )
+                )
+            ).first()
+            if existing_any_rel:
+                raise ValueError(
+                    "These two individuals already have a relationship. Multiple relationship types are not allowed.")
+
             if rel_type == InitialRelationshipEnum.CHILD:
                 parent_id = related_id
                 child_id = individual_id
