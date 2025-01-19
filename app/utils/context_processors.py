@@ -28,5 +28,4 @@ def inject_current_user():
     except Exception as e:
         current_app.logger.warning(
             f"Failed to inject current user: {e}")
-    finally:
-        return dict(current_user=user)
+    return dict(current_user=user)

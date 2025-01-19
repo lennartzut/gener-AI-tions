@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Custom Enums</h2>
+<form method="POST" action="{{ url_for('web_custom_enums_bp.list_custom_enums') }}">
+    <div class="mb-3">
+        <label for="enumName" class="form-label">Enum Name (e.g., gender)</label>
+        <input type="text" class="form-control" id="enumName" name="enum_name" required>
+    </div>
+    <div class="mb-3">
+        <label for="enumValue" class="form-label">Enum Value (e.g., non-binary)</label>
+        <input type="text" class="form-control" id="enumValue" name="enum_value" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Add Enum Value</button>
+</form>
+
+<h3 class="mt-4">Your Custom Enums</h3>
+<ul class="list-group">
+    {% for e in enums %}
+    <li class="list-group-item">
+        {{ e.enum_name }}: {{ e.enum_value }}
+    </li>
+    {% else %}
+    <li class="list-group-item text-muted">No custom enum values defined.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

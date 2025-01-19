@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Custom Fields</h2>
+<form method="POST" action="{{ url_for('web_custom_fields_bp.list_custom_fields') }}">
+    <div class="mb-3">
+        <label for="tableName" class="form-label">Table Name</label>
+        <input type="text" class="form-control" id="tableName" name="table_name" required>
+    </div>
+    <div class="mb-3">
+        <label for="fieldName" class="form-label">Field Name</label>
+        <input type="text" class="form-control" id="fieldName" name="field_name" required>
+    </div>
+    <div class="mb-3">
+        <label for="fieldType" class="form-label">Field Type</label>
+        <input type="text" class="form-control" id="fieldType" name="field_type" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Create Custom Field</button>
+</form>
+
+<h3 class="mt-4">Your Custom Fields</h3>
+<ul class="list-group">
+    {% for f in fields %}
+    <li class="list-group-item">
+        Table: {{ f.table_name }} | Field: {{ f.field_name }} | Type: {{ f.field_type }}
+    </li>
+    {% else %}
+    <li class="list-group-item text-muted">No custom fields defined.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

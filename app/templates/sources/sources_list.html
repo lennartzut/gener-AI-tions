@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Sources</h2>
+<form method="POST" action="{{ url_for('web_sources_bp.list_sources') }}">
+    <div class="mb-3">
+        <label for="title" class="form-label">Title</label>
+        <input type="text" class="form-control" id="title" name="title" required>
+    </div>
+    <div class="mb-3">
+        <label for="author" class="form-label">Author</label>
+        <input type="text" class="form-control" id="author" name="author">
+    </div>
+    <div class="mb-3">
+        <label for="publicationInfo" class="form-label">Publication Info</label>
+        <input type="text" class="form-control" id="publicationInfo" name="publication_info">
+    </div>
+    <div class="mb-3">
+        <label for="notes" class="form-label">Notes</label>
+        <textarea class="form-control" id="notes" name="notes"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Create Source</button>
+</form>
+
+<h3 class="mt-4">Existing Sources</h3>
+<ul class="list-group">
+    {% for s in sources %}
+    <li class="list-group-item d-flex justify-content-between">
+        <div>
+            <strong>{{ s.title }}</strong><br>
+            Author: {{ s.author or 'N/A' }}<br>
+            Publication: {{ s.publication_info or 'N/A' }}<br>
+            Notes: {{ s.notes or 'None' }}
+        </div>
+        <form method="POST" action="{{ url_for('web_sources_bp.delete_source', source_id=s.id) }}">
+            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+        </form>
+    </li>
+    {% else %}
+    <li class="list-group-item text-muted">No sources found.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

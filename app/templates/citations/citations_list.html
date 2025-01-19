@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Citations</h2>
+<form method="POST" action="{{ url_for('web_citations_bp.list_citations') }}">
+    <div class="mb-3">
+        <label for="sourceId" class="form-label">Source</label>
+        <select class="form-select" id="sourceId" name="source_id" required>
+            {% for s in sources %}
+            <option value="{{ s.id }}">{{ s.title }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="entityType" class="form-label">Entity Type</label>
+        <select class="form-select" id="entityType" name="entity_type" required>
+            <option value="individual">Individual</option>
+            <option value="family">Family</option>
+            <option value="event">Event</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="entityId" class="form-label">Entity ID</label>
+        <input type="number" class="form-control" id="entityId" name="entity_id" required>
+    </div>
+    <div class="mb-3">
+        <label for="notes" class="form-label">Notes</label>
+        <textarea class="form-control" id="notes" name="notes"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Create Citation</button>
+</form>
+
+<h3 class="mt-4">Existing Citations</h3>
+<ul class="list-group">
+    {% for c in citations %}
+    <li class="list-group-item d-flex justify-content-between">
+        <div>
+            Source: {{ c.source.title }} - Entity: {{ c.entity_type }} #{{ c.entity_id }}<br>
+            Notes: {{ c.notes or 'None' }}
+        </div>
+        <form method="POST" action="{{ url_for('web_citations_bp.delete_citation', citation_id=c.id) }}">
+            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+        </form>
+    </li>
+    {% else %}
+    <li class="list-group-item text-muted">No citations found.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

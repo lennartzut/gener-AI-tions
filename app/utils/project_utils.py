@@ -1,24 +1,23 @@
 from flask import abort
+
 from app.services.project_service import ProjectService
 
 
-def get_project_or_404(user_id: int, project_id: int,
-                       db_session=None):
+def get_valid_project(user_id: int, project_id: int,
+                      db_session=None):
     """
     Retrieves a project by ID and verifies ownership.
 
     Args:
         user_id (int): The ID of the current user.
         project_id (int): The ID of the project to retrieve.
-        db_session (Session, optional): The database session to
-        use. Defaults to None.
+        db_session (Session, optional): The database session to use. Defaults to None.
 
     Returns:
         Project: The retrieved project object.
 
     Raises:
-        HTTPException: If the project is not found or not owned
-        by the user.
+        HTTPException: If the project is not found or not owned by the user.
     """
     if db_session is None:
         from app.extensions import SessionLocal

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Events</h2>
+<form method="POST" action="{{ url_for('web_events_bp.list_events', project_id=project_id) }}">
+    <div class="mb-3">
+        <label for="entityType" class="form-label">Entity Type</label>
+        <select class="form-select" id="entityType" name="entity_type" required>
+            <option value="individual">Individual</option>
+            <option value="family">Family</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="entityId" class="form-label">Entity ID</label>
+        <input type="number" class="form-control" id="entityId" name="entity_id" required>
+    </div>
+    <div class="mb-3">
+        <label for="eventType" class="form-label">Event Type</label>
+        <input type="text" class="form-control" id="eventType" name="event_type" required>
+    </div>
+    <div class="mb-3">
+        <label for="eventDate" class="form-label">Event Date</label>
+        <input type="date" class="form-control" id="eventDate" name="event_date">
+    </div>
+    <div class="mb-3">
+        <label for="eventPlace" class="form-label">Event Place</label>
+        <input type="text" class="form-control" id="eventPlace" name="event_place">
+    </div>
+    <div class="mb-3">
+        <label for="notes" class="form-label">Notes</label>
+        <textarea class="form-control" id="notes" name="notes"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Create Event</button>
+</form>
+
+<h3 class="mt-4">Existing Events</h3>
+<ul class="list-group">
+    {% for ev in events %}
+    <li class="list-group-item">
+        <div>Type: {{ ev.event_type }}, Entity: {{ ev.entity_type }} #{{ ev.entity_id }}</div>
+        <div>Date: {{ ev.event_date or 'N/A' }}, Place: {{ ev.event_place or 'N/A' }}</div>
+        <div>Notes: {{ ev.notes or 'None' }}</div>
+        <form method="POST" class="mt-2" action="{{ url_for('web_events_bp.update_event', event_id=ev.id, project_id=project_id) }}">
+            <input type="text" class="form-control mb-2" name="event_type" placeholder="Update event type">
+            <input type="date" class="form-control mb-2" name="event_date">
+            <input type="text" class="form-control mb-2" name="event_place" placeholder="Update place">
+            <textarea class="form-control mb-2" name="notes" placeholder="Update notes"></textarea>
+            <button type="submit" class="btn btn-sm btn-info">Update</button>
+        </form>
+        <form method="POST" class="mt-2" action="{{ url_for('web_events_bp.delete_event', event_id=ev.id, project_id=project_id) }}">
+            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+        </form>
+    </li>
+    {% else %}
+    <li class="list-group-item text-muted">No events found.</li>
+    {% endfor %}
+</ul>
+{% endblock %}
