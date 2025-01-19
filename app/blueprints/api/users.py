@@ -1,18 +1,16 @@
 import logging
 
-from flask import Blueprint, request, current_app
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required
 from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
-from werkzeug.exceptions import NotFound, BadRequest, Conflict, \
-    InternalServerError
+from werkzeug.exceptions import NotFound
 
 from app.extensions import SessionLocal
 from app.schemas.user_schema import UserUpdate, UserOut
 from app.services.user_service import UserService, \
     UserAlreadyExistsError
-from app.utils.auth_utils import get_current_user_id
-from app.utils.response_helpers import success_response
+from app.utils.request_helpers import get_current_user_id_or_401
 
 logger = logging.getLogger(__name__)
 
@@ -29,22 +27,25 @@ def get_user():
         JSON response containing the user's profile data or error details.
     """
     try:
-        user_id = get_current_user_id()
+        user_id = get_current_user_id_or_401()
     except Exception as e:
-        raise BadRequest(str(e))
+        return jsonify({"error": str(e)}), 401
+
     with SessionLocal() as session:
-        service_user = UserService(db=session)
+        service = UserService(db=session)
         try:
-            user = service_user.get_user_by_id(user_id)
+            user = service.get_user_by_id(user_id)
             if not user:
                 raise NotFound("User not found.")
             user_data = UserOut.model_validate(user).model_dump()
-            return success_response("User fetched successfully.",
-                                    {"user": user_data})
-        except SQLAlchemyError as e:
+            return jsonify({"user": user_data}), 200
+        except NotFound as e:
+            return jsonify({"error": str(e)}), 404
+        except Exception as e:
             current_app.logger.error(f"Get profile error: {e}")
-            raise InternalServerError(
-                "An error occurred fetching the profile.")
+            return jsonify({
+                "error": "An error occurred fetching the profile."
+            }), 500
 
 
 @api_users_bp.route('/', methods=['PATCH'])
@@ -60,36 +61,48 @@ def update_user():
         JSON response with a success message and the updated user data or error details.
     """
     try:
-        user_id = get_current_user_id()
+        user_id = get_current_user_id_or_401()
     except Exception as e:
-        raise BadRequest(str(e))
+        return jsonify({"error": str(e)}), 401
+
     if not request.is_json:
-        raise BadRequest("Invalid content type. JSON expected.")
+        return jsonify(
+            {"error": "Invalid content type. JSON expected."}), 400
+
     data = request.get_json()
     if not data:
-        raise BadRequest("Empty or invalid JSON payload.")
+        return jsonify(
+            {"error": "Empty or invalid JSON payload."}), 400
+
     try:
         user_update = UserUpdate.model_validate(data)
     except ValidationError as e:
-        raise BadRequest(str(e))
+        return jsonify({"error": e.errors()}), 400
+
     with SessionLocal() as session:
-        service_user = UserService(db=session)
+        service = UserService(db=session)
         try:
-            updated_user = service_user.update_user(user_id=user_id,
+            updated_user = service.update_user(user_id=user_id,
                                                user_update=user_update)
             if updated_user:
-                return success_response(
-                    "Profile updated successfully.",
-                    {"user": UserOut.model_validate(
-                        updated_user).model_dump()},
-                    200
-                )
-            raise Conflict("Failed to update profile.")
+                return jsonify({
+                    "message": "Profile updated successfully.",
+                    "user": UserOut.model_validate(
+                        updated_user).model_dump()
+                }), 200
+            return jsonify(
+                {"error": "Failed to update profile."}), 409
         except UserAlreadyExistsError as e:
-            raise Conflict(f"{e.message} ({e.field})")
+            return jsonify(
+                {"error": e.message, "field": e.field}), 409
         except SQLAlchemyError as e:
             current_app.logger.error(f"Profile update DB error: {e}")
-            raise InternalServerError("Database error occurred.")
+            return jsonify(
+                {"error": "Database error occurred."}), 500
+        except Exception as e:
+            current_app.logger.error(f"Profile update error: {e}")
+            return jsonify(
+                {"error": "Unexpected error occurred."}), 500
 
 
 @api_users_bp.route('/', methods=['DELETE'])
@@ -102,17 +115,24 @@ def delete_user():
         JSON response with a success message or error details.
     """
     try:
-        user_id = get_current_user_id()
+        user_id = get_current_user_id_or_401()
     except Exception as e:
-        raise BadRequest(str(e))
+        return jsonify({"error": str(e)}), 401
+
     with SessionLocal() as session:
-        service_user = UserService(db=session)
+        service = UserService(db=session)
         try:
-            success = service_user.delete_user(user_id=user_id)
-            if success:
-                return success_response(
-                    "Account deleted successfully.", status_code=200)
-            raise BadRequest("Failed to delete account.")
+            if service.delete_user(user_id=user_id):
+                return jsonify({
+                    "message": "Account deleted successfully."
+                }), 200
+            return jsonify(
+                {"error": "Failed to delete account."}), 400
         except SQLAlchemyError as e:
             current_app.logger.error(f"Delete profile DB error: {e}")
-            raise InternalServerError("Database error occurred.")
+            return jsonify(
+                {"error": "Database error occurred."}), 500
+        except Exception as e:
+            current_app.logger.error(f"Delete profile error: {e}")
+            return jsonify({
+                               "error": "An error occurred deleting the account."}), 500

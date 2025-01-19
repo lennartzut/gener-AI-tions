@@ -1,17 +1,15 @@
 import logging
 
-from flask import Blueprint, request, g
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
 from pydantic import ValidationError
-from sqlalchemy.exc import SQLAlchemyError
-from werkzeug.exceptions import BadRequest, InternalServerError, \
-    NotFound
 
 from app.extensions import SessionLocal
 from app.schemas.identity_schema import IdentityCreate, \
     IdentityUpdate, IdentityOut
 from app.services.identity_service import IdentityService
-from app.utils.response_helpers import success_response
-from app.utils.security_decorators import require_project_access
+from app.utils.auth import validate_token_and_get_user
+from app.utils.project import get_project_or_404
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +17,7 @@ api_identities_bp = Blueprint('api_identities_bp', __name__)
 
 
 @api_identities_bp.route('/', methods=['POST'])
-@require_project_access
+@jwt_required()
 def create_identity():
     """
     Create a new identity for an individual within a project.
@@ -33,36 +31,39 @@ def create_identity():
     Returns:
         JSON response with a success message and the created identity data or error details.
     """
-    data = request.get_json()
+    user_id = validate_token_and_get_user()
+    project_id = request.args.get('project_id', type=int)
+    if not project_id:
+        return jsonify({"error": "Project ID is required"}), 400
+
+    get_project_or_404(user_id=user_id, project_id=project_id)
+
+    data = request.get_json() or {}
     if not data:
-        raise BadRequest("No input data provided.")
-    try:
-        identity_create = IdentityCreate.model_validate(data)
-    except ValidationError as e:
-        raise BadRequest(str(e))
+        return jsonify({"error": "No input data provided."}), 400
+
+    identity_create = IdentityCreate.model_validate(data)
+
     with SessionLocal() as session:
         service_identity = IdentityService(db=session)
-        try:
-            new_identity = service_identity.create_identity(
-                identity_create=identity_create,
-                is_primary=data.get('is_primary', False)
-            )
-            if not new_identity:
-                raise BadRequest("Failed to create identity.")
-            identity_out = IdentityOut.model_validate(new_identity,
-                                                      from_attributes=True)
-            return success_response(
-                "Identity created successfully",
-                {"identity": identity_out.model_dump()},
-                201
-            )
-        except SQLAlchemyError as e:
-            logger.error(f"Error creating identity: {e}")
-            raise InternalServerError("Database error occurred.")
+        new_identity = service_identity.create_identity(
+            identity_create=identity_create,
+            is_primary=data.get('is_primary', False)
+        )
+        if not new_identity:
+            return jsonify(
+                {"error": "Failed to create identity."}), 400
+
+        identity_out = IdentityOut.model_validate(new_identity,
+                                                  from_attributes=True)
+        return jsonify({
+            "message": "Identity created successfully",
+            "data": identity_out.model_dump()
+        }), 201
 
 
 @api_identities_bp.route('/', methods=['GET'])
-@require_project_access
+@jwt_required()
 def list_identities():
     """
     List all identities associated with a specific project.
@@ -73,27 +74,28 @@ def list_identities():
     Returns:
         JSON response containing a list of all identities or error details.
     """
+    user_id = validate_token_and_get_user()
+    project_id = request.args.get('project_id', type=int)
+    if not project_id:
+        return jsonify({"error": "Project ID is required"}), 400
+
+    get_project_or_404(user_id=user_id, project_id=project_id)
+
     with SessionLocal() as session:
         service_identity = IdentityService(db=session)
-        try:
-            identities = service_identity.get_all_identities(
-                project_id=g.project_id)
-            identities_out = [
-                IdentityOut.model_validate(identity).model_dump()
-                for identity in identities
-            ]
-            return success_response(
-                "Identities fetched successfully.",
-                {"identities": identities_out},
-                200
-            )
-        except SQLAlchemyError as e:
-            logger.error(f"Error fetching identities: {e}")
-            raise InternalServerError("Database error occurred.")
+        identities = service_identity.get_all_identities(
+            project_id=project_id)
+
+        identities_out = [
+            IdentityOut.model_validate(identity).model_dump() for
+            identity in identities
+        ]
+
+    return jsonify({"identities": identities_out}), 200
 
 
 @api_identities_bp.route('/<int:identity_id>', methods=['GET'])
-@require_project_access
+@jwt_required()
 def get_identity(identity_id):
     """
     Retrieve details of a specific identity by its ID.
@@ -103,25 +105,29 @@ def get_identity(identity_id):
 
     Args:
         identity_id (int): The unique ID of the identity.
+
+    Returns:
+        JSON response containing the identity details or error details.
     """
+    user_id = validate_token_and_get_user()
+    project_id = request.args.get('project_id', type=int)
+    if not project_id:
+        return jsonify({"error": "Project ID is required"}), 400
+
+    get_project_or_404(user_id=user_id, project_id=project_id)
+
     with SessionLocal() as session:
         service_identity = IdentityService(db=session)
-        try:
-            identity = service_identity.get_identity_by_id(
-                identity_id)
-            if not identity:
-                raise NotFound("Identity not found.")
-            identity_out = IdentityOut.model_validate(
-                identity).model_dump()
-            return success_response("Identity fetched successfully.",
-                                    {"data": identity_out})
-        except SQLAlchemyError as e:
-            logger.error(f"Error retrieving identity: {e}")
-            raise InternalServerError("Database error occurred.")
+        identity = service_identity.get_identity_by_id(identity_id)
+        if not identity:
+            return jsonify({"error": "Identity not found."}), 404
+
+    return jsonify({"data": IdentityOut.model_validate(
+        identity).model_dump()}), 200
 
 
 @api_identities_bp.route('/<int:identity_id>', methods=['PATCH'])
-@require_project_access
+@jwt_required()
 def update_identity(identity_id):
     """
     Update the details of an existing identity.
@@ -134,34 +140,41 @@ def update_identity(identity_id):
 
     Expects:
         JSON payload conforming to the IdentityUpdate schema.
+
+    Returns:
+        JSON response with a success message and the updated identity data or error details.
     """
-    data = request.get_json()
-    if not data:
-        raise BadRequest("No input data provided.")
+    user_id = validate_token_and_get_user()
+    project_id = request.args.get('project_id', type=int)
+    if not project_id:
+        return jsonify({"error": "Project ID is required"}), 400
+
+    get_project_or_404(user_id=user_id, project_id=project_id)
+    data = request.get_json() or {}
+
     try:
         identity_update = IdentityUpdate.model_validate(data)
     except ValidationError as e:
-        raise BadRequest(str(e))
+        return jsonify({"error": e.errors()}), 400
+
     with SessionLocal() as session:
         service_identity = IdentityService(db=session)
         try:
             updated_identity = service_identity.update_identity(
                 identity_id, identity_update)
-            if not updated_identity:
-                raise BadRequest("Failed to update identity.")
-            identity_out = IdentityOut.model_validate(
-                updated_identity).model_dump()
-            return success_response(
-                "Identity updated successfully",
-                {"data": identity_out}
-            )
-        except SQLAlchemyError as e:
-            logger.error(f"Error updating identity: {e}")
-            raise InternalServerError("Database error occurred.")
+        except ValueError as ve:
+            return jsonify({"error": str(ve)}), 400
+        if updated_identity:
+            return jsonify({
+                "message": "Identity updated successfully",
+                "data": IdentityOut.model_validate(
+                    updated_identity).model_dump()
+            }), 200
+        return jsonify({"error": "Failed to update identity."}), 400
 
 
 @api_identities_bp.route('/<int:identity_id>', methods=['DELETE'])
-@require_project_access
+@jwt_required()
 def delete_identity(identity_id):
     """
     Delete an identity by its ID.
@@ -175,15 +188,16 @@ def delete_identity(identity_id):
     Returns:
         JSON response with a success message or error details.
     """
+    user_id = validate_token_and_get_user()
+    project_id = request.args.get('project_id', type=int)
+    if not project_id:
+        return jsonify({"error": "Project ID is required"}), 400
+
+    get_project_or_404(user_id=user_id, project_id=project_id)
+
     with SessionLocal() as session:
         service_identity = IdentityService(db=session)
-        try:
-            success = service_identity.delete_identity(identity_id)
-            if success:
-                return success_response(
-                    "Identity deleted successfully.",
-                    status_code=200)
-            raise BadRequest("Failed to delete identity.")
-        except SQLAlchemyError as e:
-            logger.error(f"Error deleting identity: {e}")
-            raise InternalServerError("Database error occurred.")
+        if service_identity.delete_identity(identity_id):
+            return jsonify(
+                {"message": "Identity deleted successfully."}), 200
+        return jsonify({"error": "Failed to delete identity."}), 400

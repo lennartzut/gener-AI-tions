@@ -1,4 +1,4 @@
-from flask import Blueprint, request, current_app, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -6,17 +6,15 @@ from flask_jwt_extended import (
     set_refresh_cookies,
     jwt_required,
     unset_jwt_cookies,
-    get_jwt_identity
+    get_jwt_identity,
 )
 from sqlalchemy.exc import SQLAlchemyError
-from werkzeug.exceptions import BadRequest, Conflict, \
-    InternalServerError
+from werkzeug.exceptions import BadRequest
 
 from app.extensions import SessionLocal
 from app.schemas.user_schema import UserCreate, UserLogin
 from app.services.user_service import UserService, \
     UserAlreadyExistsError
-from app.utils.response_helpers import success_response
 
 api_auth_bp = Blueprint('api_auth_bp', __name__)
 
@@ -34,24 +32,35 @@ def signup():
     data = request.get_json()
     if not data:
         raise BadRequest("No input data provided.")
+
     try:
         user_create = UserCreate.model_validate(data)
     except Exception as e:
-        raise BadRequest(str(e))
+        return jsonify({"error": str(e)}), 400
+
     with SessionLocal() as session:
-        service_user = UserService(db=session)
+        service = UserService(db=session)
         try:
-            new_user = service_user.create_user(
-                user_create=user_create)
-            if not new_user:
-                raise Conflict("Email or username already in use.")
-            return success_response(
-                "Signup successful! Please log in.", status_code=201)
+            new_user = service.create_user(user_create=user_create)
+            if new_user:
+                return jsonify({
+                    "message": "Signup successful! Please log in."
+                }), 201
+            return jsonify(
+                {"error": "Email or username already in use."}
+            ), 409
         except UserAlreadyExistsError as e:
-            raise Conflict(str(e))
+            return jsonify({"error": str(e)}), 409
         except SQLAlchemyError as e:
             current_app.logger.error(f"Signup DB error: {e}")
-            raise InternalServerError("Database error occurred.")
+            return jsonify(
+                {"error": "Database error occurred."}
+            ), 500
+        except Exception as e:
+            current_app.logger.error(f"Signup error: {e}")
+            return jsonify(
+                {"error": "An unexpected error occurred."}
+            ), 500
 
 
 @api_auth_bp.route('/login', methods=['POST'])
@@ -67,30 +76,40 @@ def login():
     data = request.get_json()
     if not data:
         raise BadRequest("No input data provided.")
+
     try:
         user_login = UserLogin.model_validate(data)
     except Exception as e:
-        raise BadRequest(str(e))
+        return jsonify({"error": str(e)}), 400
+
     with SessionLocal() as session:
-        service_user = UserService(db=session)
+        service = UserService(db=session)
         try:
-            user = service_user.authenticate_user(
-                email=user_login.email,
-                password=user_login.password
-            )
+            user = service.authenticate_user(email=user_login.email,
+                                             password=user_login.password)
             if user and user.id:
                 access_token = create_access_token(
                     identity=str(user.id))
                 refresh_token = create_refresh_token(
                     identity=str(user.id))
+
                 response = jsonify({"message": "Login successful!"})
                 set_access_cookies(response, access_token)
                 set_refresh_cookies(response, refresh_token)
                 return response, 200
-            raise BadRequest("Invalid email or password.")
+            return jsonify(
+                {"error": "Invalid email or password."}
+            ), 401
         except SQLAlchemyError as e:
             current_app.logger.error(f"Login DB error: {e}")
-            raise InternalServerError("Database error occurred.")
+            return jsonify(
+                {"error": "Database error occurred."}
+            ), 500
+        except Exception as e:
+            current_app.logger.error(f"Login error: {e}")
+            return jsonify(
+                {"error": "Unexpected error occurred."}
+            ), 500
 
 
 @api_auth_bp.route('/refresh', methods=['POST'])
@@ -105,7 +124,9 @@ def refresh():
     try:
         user_id = get_jwt_identity()
         if not user_id:
-            raise BadRequest("No user identity in token.")
+            return jsonify(
+                {"error": "No user identity in token."}), 401
+
         new_access_token = create_access_token(identity=user_id)
         response = jsonify(
             {"message": "Token refreshed successfully."})
@@ -113,7 +134,7 @@ def refresh():
         return response, 200
     except Exception as e:
         current_app.logger.error(f"Error refreshing token: {e}")
-        raise InternalServerError("Token refresh failed.")
+        return jsonify({"error": "Token refresh failed."}), 500
 
 
 @api_auth_bp.route('/logout', methods=['POST'])

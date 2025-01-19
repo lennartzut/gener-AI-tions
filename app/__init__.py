@@ -4,8 +4,8 @@ from flask import Flask
 
 from app.blueprints import register_blueprints
 from app.config import get_config
-from app.utils.context_processors import inject_current_user
-from app.utils.error_handlers import register_error_handlers
+from app.context_processors import inject_current_user
+from app.error_handlers import register_error_handlers
 from app.extensions import initialize_extensions
 
 
