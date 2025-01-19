@@ -54,7 +54,8 @@ class Individual(Base):
     identities = relationship('Identity',
                               back_populates='individual',
                               cascade='all, delete-orphan',
-                              lazy='joined')
+                              lazy='joined',
+                              overlaps='primary_identity')
     primary_identity = relationship(
         "Identity",
         uselist=False,
@@ -62,7 +63,7 @@ class Individual(Base):
         foreign_keys='Identity.individual_id',
         primaryjoin="and_(Individual.id == Identity.individual_id, "
                     "Identity.is_primary == True)",
-        overlaps="primary_of_individual"
+        overlaps="identities"
     )
     relationships_as_individual = relationship(
         'Relationship',

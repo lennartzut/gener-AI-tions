@@ -57,14 +57,15 @@ class Identity(Base):
                         onupdate=func.now(), nullable=False)
 
     individual = relationship('Individual',
-                              back_populates='identities')
+                              back_populates='identities',
+                              overlaps='primary_of_individual')
     primary_of_individual = relationship(
         'Individual',
         back_populates='primary_identity',
         uselist=False,
         foreign_keys='Identity.individual_id',
         primaryjoin='and_(Identity.individual_id == Individual.id, Identity.is_primary == True)',
-        overlaps="primary_identity"
+        overlaps="individual"
     )
 
     def full_name(self) -> str:
