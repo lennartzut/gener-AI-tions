@@ -1,5 +1,3 @@
-// File: static/scripts/individuals.js
-
 document.addEventListener('DOMContentLoaded', function () {
     const projectPage = document.getElementById('projectPage');
     let projectId = projectPage ? projectPage.dataset.projectId : null;

@@ -80,9 +80,14 @@ class IdentityService:
             ).first()
 
             if is_primary or (
-                    current_primary and identity_create.valid_from and identity_create.valid_from > current_primary.valid_from):
+                    current_primary and
+                    identity_create.valid_from and
+                    current_primary.valid_from and
+                    identity_create.valid_from > current_primary.valid_from
+            ):
                 self.assign_primary_identity(
-                    identity_create.individual_id, new_identity.id,
+                    identity_create.individual_id,
+                    new_identity.id,
                     identity_create.valid_from
                 )
 
