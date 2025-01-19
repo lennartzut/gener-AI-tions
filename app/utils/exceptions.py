@@ -1,6 +1,7 @@
 class UserAlreadyExistsError(Exception):
     """
-    Exception raised when attempting to create a user that already exists.
+    Exception raised when attempting to create or update a user that
+    already exists.
 
     Attributes:
         message (str): Explanation of the error.
