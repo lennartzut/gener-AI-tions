@@ -11,7 +11,6 @@ from app.schemas.identity_schema import IdentityIdOut
 from app.schemas.individual_schema import IndividualCreate, \
     IndividualUpdate, IndividualOut
 from app.services.individual_service import IndividualService
-from app.services.project_service import ProjectService
 from app.utils.response_helpers import success_response
 from app.utils.security_decorators import require_project_access
 
@@ -42,6 +41,7 @@ def create_individual():
         individual_create = IndividualCreate.model_validate(data)
     except ValidationError as e:
         raise BadRequest(str(e))
+
     with SessionLocal() as session:
         service_individual = IndividualService(db=session)
         try:
@@ -52,11 +52,12 @@ def create_individual():
             )
             if not new_individual:
                 raise BadRequest("Failed to create individual.")
+
             individual_out = IndividualOut.model_validate(
-                new_individual,
-                                               from_attributes=True)
-            individual_out.identities = [IdentityIdOut(
-                id=identity.id) for identity in new_individual.identities]
+                new_individual, from_attributes=True)
+            individual_out.identities = [
+                IdentityIdOut(id=identity.id) for identity in
+                new_individual.identities]
             return success_response(
                 "Individual created successfully.",
                 {"individual": individual_out.model_dump()},
@@ -94,6 +95,7 @@ def list_individuals():
                 individual_out = IndividualOut.model_validate(
                     individual, from_attributes=True)
                 individuals_out.append(individual_out.model_dump())
+
             return success_response(
                 "Individuals fetched successfully.",
                 {
@@ -131,10 +133,12 @@ def get_individual(individual_id):
             )
             if not individual:
                 raise NotFound("Individual not found.")
+
             individual_out = IndividualOut.model_validate(individual,
-                                               from_attributes=True)
+                                                          from_attributes=True)
             individual_out.identities = [{"id": i.id} for i in
-                              individual.identities]
+                                         individual.identities]
+
             data = individual_out.model_dump()
             data["parents"] = individual.parents
             data["children"] = individual.children
@@ -172,6 +176,7 @@ def update_individual(individual_id):
         individual_update = IndividualUpdate.model_validate(data)
     except ValidationError as e:
         raise BadRequest(str(e))
+
     with SessionLocal() as session:
         service_individual = IndividualService(db=session)
         try:
@@ -183,10 +188,13 @@ def update_individual(individual_id):
             )
             if not updated:
                 raise BadRequest("Failed to update individual.")
+
             individual_out = IndividualOut.model_validate(updated,
-                                               from_attributes=True)
-            individual_out.identities = [IdentityIdOut(
-                id=identity.id) for identity in updated.identities]
+                                                          from_attributes=True)
+            individual_out.identities = [
+                IdentityIdOut(id=identity.id) for identity in
+                updated.identities]
+
             return success_response(
                 "Individual updated successfully.",
                 {"data": individual_out.model_dump()}
@@ -214,7 +222,8 @@ def delete_individual(individual_id):
     with SessionLocal() as session:
         service_individual = IndividualService(db=session)
         try:
-            success = service_individual.delete_individual(individual_id,
+            success = service_individual.delete_individual(
+                individual_id,
                 user_id=g.user_id,
                 project_id=g.project_id
             )
@@ -249,14 +258,18 @@ def search_individuals():
                         x.strip()] if exclude_ids.strip() else []
     except ValueError:
         raise BadRequest("Invalid exclude_ids parameter.")
+
     with SessionLocal() as session:
         try:
+            # Optional project check
+            from app.services.project_service import ProjectService
             service_project = ProjectService(db=session)
             project = service_project.get_project_by_id(
                 project_id=g.project_id)
             if not project or project.user_id != g.user_id:
                 raise NotFound(
                     "Project not found or not owned by this user.")
+
             service_individual = IndividualService(db=session)
             individuals = service_individual.get_individuals_by_project(
                 user_id=g.user_id,
@@ -265,12 +278,14 @@ def search_individuals():
             )
             filtered = [i for i in individuals if
                         i.id not in exclude_list]
+
             results = []
             for i in filtered:
                 out = IndividualOut.model_validate(i,
                                                    from_attributes=True)
                 out.identities = [ident.id for ident in i.identities]
                 results.append(out.model_dump())
+
             return success_response("Search completed.",
                                     {"individuals": results})
         except SQLAlchemyError as e:

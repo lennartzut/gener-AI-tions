@@ -1,3 +1,4 @@
+from flask import current_app
 from flask_jwt_extended.exceptions import NoAuthorizationError
 from jwt import ExpiredSignatureError
 from pydantic import ValidationError
@@ -8,6 +9,7 @@ from werkzeug.exceptions import (
     Conflict,
     InternalServerError
 )
+
 from app.utils.response_helpers import error_response
 
 
@@ -18,6 +20,10 @@ def register_error_handlers(app):
 
     @app.errorhandler(ValidationError)
     def handle_validation_error(e):
+        """
+        Handles Pydantic validation errors by returning a 400 response
+        with structured error details.
+        """
         app.logger.error(f"Pydantic Validation Error: {e}")
         errors = []
         for err in e.errors():
@@ -26,7 +32,7 @@ def register_error_handlers(app):
                 'loc': err['loc'],
                 'msg': err['msg']
             })
-        return error_response({"validation_error": errors},
+        return error_response({"validation_errors": errors},
                               status_code=400)
 
     @app.errorhandler(BadRequest)
@@ -67,6 +73,6 @@ def register_error_handlers(app):
 
     @app.errorhandler(Exception)
     def handle_general_exception(e):
-        app.logger.error(f"Unhandled Exception: {type(e)}: {e}",
-                         exc_info=True)
+        current_app.logger.error(
+            f"Unhandled Exception: {type(e)}: {e}", exc_info=True)
         return error_response("An unexpected error occurred.", 500)

@@ -1,6 +1,6 @@
 import logging
-from typing import List, Tuple, Optional
 from datetime import date, datetime
+from typing import List, Tuple, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +19,7 @@ class ValidationUtils:
             date_str (Optional[str]): The date string to parse.
 
         Returns:
-            Optional[date]: The parsed date object or None if
-            invalid or empty.
+            Optional[date]: The parsed date object or None if invalid or empty.
 
         Raises:
             ValueError: If the date string is in an incorrect format.
@@ -38,16 +37,14 @@ class ValidationUtils:
     def validate_date_order(validations: List[
         Tuple[Optional[date], Optional[date], str]]):
         """
-        Validates that the provided dates are in the correct
-        chronological order.
+        Validates that the provided dates are in the correct chronological order.
 
         Args:
-            validations (List[Tuple[Optional[date], Optional[
-            date], str]]): A list of tuples containing:
-                - valid_from (Optional[date]): The start date.
-                - valid_until (Optional[date]): The end date.
-                - error_message (str): The error message to raise
-                if validation fails.
+            validations (List[Tuple[Optional[date], Optional[date], str]]):
+                A list of tuples containing:
+                    - valid_from (Optional[date]): The start date.
+                    - valid_until (Optional[date]): The end date.
+                    - error_message (str): The error message to raise if validation fails.
 
         Raises:
             ValueError: If any date validation fails.
@@ -55,8 +52,7 @@ class ValidationUtils:
         for valid_from, valid_until, error_message in validations:
             if valid_from and valid_until and valid_from > valid_until:
                 logger.error(
-                    f"Validation failed: {valid_from} > "
-                    f"{valid_until}. Error: {error_message}")
+                    f"Validation failed: {valid_from} > {valid_until}. Error: {error_message}")
                 raise ValueError(error_message)
 
     @staticmethod
@@ -64,16 +60,14 @@ class ValidationUtils:
                       death_date: Optional[date] = None) -> Optional[
         int]:
         """
-        Calculates the age based on birth date and optional death date.
+        Calculates the age based on a birth date and optional death date.
 
         Args:
             birth_date (Optional[date]): The birth date.
-            death_date (Optional[date], optional): The death date.
-            Defaults to None.
+            death_date (Optional[date], optional): The death date. Defaults to None.
 
         Returns:
-            Optional[int]: The calculated age or None if birth
-            date is not provided.
+            Optional[int]: The calculated age or None if birth date is not provided.
         """
         if not birth_date:
             return None

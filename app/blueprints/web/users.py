@@ -8,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.extensions import SessionLocal
 from app.schemas.user_schema import UserUpdate
 from app.services.user_service import UserService, UserAlreadyExistsError
-from app.utils.request_helpers import get_current_user_id_or_401
+from app.utils.auth_utils import get_current_user_id
 
 web_users_bp = Blueprint('web_users_bp', __name__,
                          template_folder='templates/users')
@@ -18,7 +18,7 @@ web_users_bp = Blueprint('web_users_bp', __name__,
 @jwt_required()
 def profile():
     try:
-        user_id = get_current_user_id_or_401()
+        user_id = get_current_user_id()
         with SessionLocal() as session:
             service = UserService(db=session)
             user = service.get_user_by_id(user_id)
@@ -36,7 +36,7 @@ def profile():
 @jwt_required()
 def update_profile():
     try:
-        user_id = get_current_user_id_or_401()
+        user_id = get_current_user_id()
     except Exception as e:
         flash(str(e), "danger")
         return redirect(url_for('web_auth_bp.login'))
@@ -73,7 +73,7 @@ def update_profile():
 @jwt_required()
 def delete_profile():
     try:
-        user_id = get_current_user_id_or_401()
+        user_id = get_current_user_id()
         with SessionLocal() as session:
             service = UserService(db=session)
             success = service.delete_user(user_id=user_id)

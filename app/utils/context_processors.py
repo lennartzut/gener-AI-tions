@@ -9,8 +9,7 @@ from app.services.user_service import UserService
 
 def inject_current_user():
     """
-    Injects the current user into the template context if a valid
-    JWT exists.
+    Injects the current user into the template context if a valid JWT exists.
 
     Returns:
         dict: Dictionary containing the current user or None.
@@ -28,4 +27,5 @@ def inject_current_user():
     except Exception as e:
         current_app.logger.warning(
             f"Failed to inject current user: {e}")
-    return dict(current_user=user)
+    finally:
+        return dict(current_user=user)

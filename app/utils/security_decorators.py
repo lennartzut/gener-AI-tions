@@ -33,10 +33,10 @@ def admin_required(fn):
 def require_project_access(fn):
     """
     Decorator that:
-    1) Ensures a valid JWT is present.
-    2) Retrieves the current user ID.
-    3) Ensures the user has access to the project specified by 'project_id'.
-    4) Stores user_id and project_id into `g`.
+      1) Ensures a valid JWT is present.
+      2) Retrieves the current user ID.
+      3) Ensures the user has access to the project specified by 'project_id'.
+      4) Stores user_id and project_id in Flask's 'g' object.
     """
 
     @wraps(fn)
