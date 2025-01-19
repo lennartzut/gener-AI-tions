@@ -33,7 +33,7 @@ class IndividualService:
 
     def create_individual(self, user_id: int, project_id: int,
                           individual_create: IndividualCreate) -> \
-    Optional[Individual]:
+            Optional[Individual]:
         """
         Creates a new individual and a primary identity within the project.
 
@@ -121,6 +121,7 @@ class IndividualService:
                 project_id=project_id
             ).options(
                 joinedload(Individual.identities),
+                joinedload(Individual.primary_identity),
                 joinedload(
                     Individual.relationships_as_individual).joinedload(
                     Relationship.related),
@@ -158,6 +159,7 @@ class IndividualService:
                 user_id=user_id, project_id=project_id
             ).options(
                 joinedload(Individual.identities),
+                joinedload(Individual.primary_identity),
                 joinedload(
                     Individual.relationships_as_individual).joinedload(
                     Relationship.related),
