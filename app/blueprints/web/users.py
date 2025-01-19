@@ -7,7 +7,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.extensions import SessionLocal
 from app.schemas.user_schema import UserUpdate
-from app.services.user_service import UserService, UserAlreadyExistsError
+from app.services.user_service import UserService, \
+    UserAlreadyExistsError
 from app.utils.auth_utils import get_current_user_id
 
 web_users_bp = Blueprint('web_users_bp', __name__,
@@ -28,7 +29,8 @@ def profile():
             return render_template('users/profile.html', user=user)
     except SQLAlchemyError as e:
         current_app.logger.error(f"Profile retrieval error: {e}")
-        flash('An error occurred while fetching your profile.', 'danger')
+        flash('An error occurred while fetching your profile.',
+              'danger')
         return redirect(url_for('web_projects_bp.list_projects'))
 
 
@@ -51,10 +53,8 @@ def update_profile():
     try:
         with SessionLocal() as session:
             service = UserService(db=session)
-            updated_user = service.update_user(
-                user_id=user_id,
-                user_update=user_update
-            )
+            updated_user = service.update_user(user_id=user_id,
+                                               user_update=user_update)
             if updated_user:
                 flash('Profile updated successfully!', 'success')
             else:
@@ -80,16 +80,19 @@ def delete_profile():
             if success:
                 flash('Account deleted successfully.', 'success')
                 response = make_response(
-                    redirect(url_for('web_auth_bp.signup'))
-                )
+                    redirect(url_for('web_auth_bp.signup')))
                 unset_jwt_cookies(response)
                 return response
             else:
                 flash('Failed to delete account.', 'danger')
     except SQLAlchemyError as e:
-        flash(f"Database error occurred while deleting your account: {e}", 'danger')
+        flash(
+            f"Database error occurred while deleting your account: {e}",
+            'danger')
     except Exception as e:
         current_app.logger.error(f"Account deletion error: {e}")
-        flash('An unexpected error occurred while deleting your account.', 'danger')
+        flash(
+            'An unexpected error occurred while deleting your account.',
+            'danger')
 
     return redirect(url_for('web_users_bp.profile'))

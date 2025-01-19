@@ -6,9 +6,10 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.extensions import SessionLocal
-from app.services.individual_service import IndividualService
 from app.models.enums_model import GenderEnum
-from app.schemas.individual_schema import IndividualCreate, IndividualUpdate
+from app.schemas.individual_schema import IndividualCreate, \
+    IndividualUpdate
+from app.services.individual_service import IndividualService
 
 web_individuals_bp = Blueprint('web_individuals_bp', __name__,
                                template_folder='templates/individuals')
@@ -17,6 +18,10 @@ web_individuals_bp = Blueprint('web_individuals_bp', __name__,
 @web_individuals_bp.route('/', methods=['GET'])
 @jwt_required()
 def get_individuals():
+    """
+    Show the project page with all individuals for the current user and project.
+    If an individual_id is provided, fetch that individual's details.
+    """
     current_user_id = get_jwt_identity()
     if not current_user_id:
         flash("Please log in.", 'danger')
@@ -31,8 +36,9 @@ def get_individuals():
     try:
         with SessionLocal() as session:
             service = IndividualService(db=session)
+            # Fetch all individuals for this project/user
             individuals = service.get_individuals_by_project(
-                user_id=current_user_id,
+                user_id=int(current_user_id),  # ensure int
                 project_id=project_id,
                 search_query=request.args.get('q', '').strip()
             )
@@ -41,7 +47,7 @@ def get_individuals():
             if individual_id:
                 selected_individual = service.get_individual_by_id(
                     individual_id=individual_id,
-                    user_id=current_user_id,
+                    user_id=int(current_user_id),
                     project_id=project_id
                 )
 
@@ -52,9 +58,17 @@ def get_individuals():
             selected_individual=selected_individual,
             GenderEnum=GenderEnum
         )
+
     except SQLAlchemyError as e:
-        current_app.logger.error(f"Error fetching individuals: {e}")
-        flash('An error occurred while fetching individuals.', 'danger')
+        # Log the full stack trace
+        current_app.logger.exception(
+            "SQLAlchemyError when fetching individuals:")
+        # Option A: If you want to see the real error on the console, re-raise it:
+        # raise e
+
+        # Option B: If you prefer to keep it user-friendly, flash a message:
+        flash('An error occurred while fetching individuals.',
+              'danger')
         return redirect(url_for('web_projects_bp.list_projects'))
 
 
@@ -73,17 +87,19 @@ def create_individual():
 
     form_data = request.form.to_dict()
     try:
-        individual_create = IndividualCreate.model_validate(form_data)
+        individual_create = IndividualCreate.model_validate(
+            form_data)
     except Exception as e:
         flash(f"Validation error: {e}", 'danger')
-        return render_template('partials/forms/create_individual_form.html',
-                               form_data=form_data, project_id=project_id)
+        return render_template(
+            'partials/forms/create_individual_form.html',
+            form_data=form_data, project_id=project_id)
 
     try:
         with SessionLocal() as session:
             service = IndividualService(db=session)
             new_individual = service.create_individual(
-                user_id=current_user_id,
+                user_id=int(current_user_id),
                 project_id=project_id,
                 individual_create=individual_create
             )
@@ -92,12 +108,16 @@ def create_individual():
             else:
                 flash('Failed to create individual.', 'danger')
     except SQLAlchemyError as e:
-        flash(f"Error creating individual: {e}", 'danger')
+        current_app.logger.exception(
+            "SQLAlchemyError creating individual:")
+        flash(f"Error creating individual in DB: {e}", 'danger')
 
-    return redirect(url_for('web_individuals_bp.get_individuals', project_id=project_id))
+    return redirect(url_for('web_individuals_bp.get_individuals',
+                            project_id=project_id))
 
 
-@web_individuals_bp.route('/<int:individual_id>/update', methods=['POST'])
+@web_individuals_bp.route('/<int:individual_id>/update',
+                          methods=['POST'])
 @jwt_required()
 def update_individual(individual_id):
     current_user_id = get_jwt_identity()
@@ -112,18 +132,20 @@ def update_individual(individual_id):
 
     form_data = request.form.to_dict()
     try:
-        individual_update = IndividualUpdate.model_validate(form_data)
+        individual_update = IndividualUpdate.model_validate(
+            form_data)
     except Exception as e:
         flash(f"Validation error: {e}", 'danger')
-        return render_template('partials/modals/update_individual_modal.html',
-                               form_data=form_data, project_id=project_id)
+        return render_template(
+            'partials/modals/update_individual_modal.html',
+            form_data=form_data, project_id=project_id)
 
     try:
         with SessionLocal() as session:
             service = IndividualService(db=session)
             updated_individual = service.update_individual(
                 individual_id=individual_id,
-                user_id=current_user_id,
+                user_id=int(current_user_id),
                 project_id=project_id,
                 individual_update=individual_update
             )
@@ -132,12 +154,16 @@ def update_individual(individual_id):
             else:
                 flash('Failed to update individual.', 'danger')
     except SQLAlchemyError as e:
-        flash(f"Error updating individual: {e}", 'danger')
+        current_app.logger.exception(
+            "SQLAlchemyError updating individual:")
+        flash(f"Error updating individual in DB: {e}", 'danger')
 
-    return redirect(url_for('web_individuals_bp.get_individuals', project_id=project_id))
+    return redirect(url_for('web_individuals_bp.get_individuals',
+                            project_id=project_id))
 
 
-@web_individuals_bp.route('/<int:individual_id>/delete', methods=['POST'])
+@web_individuals_bp.route('/<int:individual_id>/delete',
+                          methods=['POST'])
 @jwt_required()
 def delete_individual(individual_id):
     current_user_id = get_jwt_identity()
@@ -155,7 +181,7 @@ def delete_individual(individual_id):
             service = IndividualService(db=session)
             success = service.delete_individual(
                 individual_id=individual_id,
-                user_id=current_user_id,
+                user_id=int(current_user_id),
                 project_id=project_id
             )
             if success:
@@ -163,6 +189,9 @@ def delete_individual(individual_id):
             else:
                 flash('Failed to delete individual.', 'danger')
     except SQLAlchemyError as e:
-        flash(f"Error deleting individual: {e}", 'danger')
+        current_app.logger.exception(
+            "SQLAlchemyError deleting individual:")
+        flash(f"Error deleting individual in DB: {e}", 'danger')
 
-    return redirect(url_for('web_individuals_bp.get_individuals', project_id=project_id))
+    return redirect(url_for('web_individuals_bp.get_individuals',
+                            project_id=project_id))

@@ -24,11 +24,14 @@ def list_projects():
     try:
         with SessionLocal() as session:
             service = ProjectService(db=session)
-            projects = service.get_projects_by_user(user_id=current_user_id)
-        return render_template('projects/list_projects.html', projects=projects)
+            projects = service.get_projects_by_user(
+                user_id=current_user_id)
+        return render_template('projects/list_projects.html',
+                               projects=projects)
     except SQLAlchemyError as e:
         current_app.logger.error(f"Error fetching projects: {e}")
-        flash('An error occurred while fetching your projects.', 'danger')
+        flash('An error occurred while fetching your projects.',
+              'danger')
         return redirect(url_for('web_main_bp.main_landing'))
 
 
@@ -45,26 +48,30 @@ def create_project():
         project_create = ProjectCreate.model_validate(form_data)
     except Exception as e:
         flash(f"Validation error: {e}", 'danger')
-        return render_template('partials/forms/create_project_form.html', form_data=form_data)
+        return render_template(
+            'partials/forms/create_project_form.html',
+            form_data=form_data)
 
     try:
         with SessionLocal() as session:
             service = ProjectService(db=session)
             new_project = service.create_project(
                 user_id=current_user_id,
-                project_create=project_create
-            )
+                project_create=project_create)
             if new_project:
                 flash('Project created successfully!', 'success')
             else:
-                flash('Failed to create project. A project with this name may already exist.', 'danger')
+                flash(
+                    'Failed to create project. A project with this name may already exist.',
+                    'danger')
     except SQLAlchemyError as e:
         flash(f"Error creating project: {e}", 'danger')
 
     return redirect(url_for('web_projects_bp.list_projects'))
 
 
-@web_projects_bp.route('/<int:project_id>/update', methods=['GET', 'POST'])
+@web_projects_bp.route('/<int:project_id>/update',
+                       methods=['GET', 'POST'])
 @jwt_required()
 def update_project(project_id):
     current_user_id = get_jwt_identity()
@@ -78,7 +85,9 @@ def update_project(project_id):
             project_update = ProjectUpdate.model_validate(form_data)
         except Exception as e:
             flash(f"Validation error: {e}", 'danger')
-            return render_template('partials/forms/update_project_form.html', form_data=form_data, project_id=project_id)
+            return render_template(
+                'partials/forms/update_project_form.html',
+                form_data=form_data, project_id=project_id)
 
         try:
             with SessionLocal() as session:
@@ -97,12 +106,15 @@ def update_project(project_id):
 
         return redirect(url_for('web_projects_bp.list_projects'))
 
-    # For GET, render the form with existing project details
+    # For GET, render the existing project details in a form
     try:
         with SessionLocal() as session:
             service = ProjectService(db=session)
-            project = service.get_project_by_id(project_id=project_id)
-        return render_template('partials/forms/update_project_form.html', project=project)
+            project = service.get_project_by_id(
+                project_id=project_id)
+        return render_template(
+            'partials/forms/update_project_form.html',
+            project=project)
     except SQLAlchemyError as e:
         flash(f"Error fetching project for update: {e}", 'danger')
         return redirect(url_for('web_projects_bp.list_projects'))
@@ -119,14 +131,13 @@ def delete_project(project_id):
     try:
         with SessionLocal() as session:
             service = ProjectService(db=session)
-            success = service.delete_project(
-                project_id=project_id,
-                user_id=current_user_id
-            )
+            success = service.delete_project(project_id=project_id,
+                                             user_id=current_user_id)
             if success:
                 flash('Project deleted successfully.', 'success')
             else:
-                flash('Failed to delete project or no permission.', 'danger')
+                flash('Failed to delete project or no permission.',
+                      'danger')
     except SQLAlchemyError as e:
         flash(f"Error deleting project: {e}", 'danger')
 
@@ -138,24 +149,20 @@ def delete_project(project_id):
 def select_project(project_id):
     current_user_id = get_jwt_identity()
     try:
-        current_user_id = int(current_user_id)
-    except ValueError:
-        flash("Invalid user ID in token. Please log in again.", "danger")
-        return redirect(url_for('web_auth_bp.login'))
-
-    try:
         with SessionLocal() as session:
             service = ProjectService(db=session)
-            project = service.get_project_by_id(project_id=project_id)
-            if not project or project.user_id != current_user_id:
-                flash('Project not found or not owned by you.', 'danger')
-                return redirect(url_for('web_projects_bp.list_projects'))
+            project = service.get_project_by_id(
+                project_id=project_id)
+            if not project or project.user_id != int(
+                    current_user_id):
+                flash('Project not found or not owned by you.',
+                      'danger')
+                return redirect(
+                    url_for('web_projects_bp.list_projects'))
 
-            # If project is valid, redirect to individuals page
             return redirect(
                 url_for('web_individuals_bp.get_individuals',
-                        project_id=project_id)
-            )
+                        project_id=project_id))
     except SQLAlchemyError as e:
         flash(f"Error selecting project: {e}", 'danger')
         return redirect(url_for('web_projects_bp.list_projects'))
