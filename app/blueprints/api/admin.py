@@ -5,7 +5,7 @@ from app.extensions import SessionLocal
 from app.models.user_model import User
 from app.schemas.user_schema import UserOut
 from app.services.user_service import UserService
-from app.utils.decorators import admin_required
+from app.utils.security_decorators import admin_required
 
 api_admin_bp = Blueprint('api_admin_bp', __name__)
 
