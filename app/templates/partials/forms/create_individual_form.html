@@ -1,0 +1,37 @@
+<div class="mb-3">
+    <label class="form-label" for="firstName">First Name*</label>
+    <input type="text" class="form-control" id="firstName" name="first_name" required>
+</div>
+<div class="mb-3">
+    <label class="form-label" for="lastName">Last Name*</label>
+    <input type="text" class="form-control" id="lastName" name="last_name" required>
+</div>
+<div class="mb-3">
+    <label class="form-label" for="gender">Gender*</label>
+    <select class="form-select" id="gender" name="gender" required>
+        <option value="" disabled selected>Please select</option>
+        {% for choice in GenderEnum %}
+        <option value="{{ choice.value }}">{{ choice.value|capitalize }}</option>
+        {% endfor %}
+    </select>
+</div>
+<div class="mb-3">
+    <label class="form-label" for="birthDate">Birth Date</label>
+    <input type="date" class="form-control" id="birthDate" name="birth_date">
+</div>
+<div class="mb-3">
+    <label class="form-label" for="birthPlace">Birth Place</label>
+    <input type="text" class="form-control" id="birthPlace" name="birth_place">
+</div>
+<div class="mb-3">
+    <label class="form-label" for="deathDate">Death Date</label>
+    <input type="date" class="form-control" id="deathDate" name="death_date">
+</div>
+<div class="mb-3">
+    <label class="form-label" for="deathPlace">Death Place</label>
+    <input type="text" class="form-control" id="deathPlace" name="death_place">
+</div>
+<div class="mb-3">
+    <label class="form-label" for="notes">Notes</label>
+    <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+</div>

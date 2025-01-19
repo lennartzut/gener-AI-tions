@@ -1,35 +1,37 @@
 {% extends "base.html" %}
-
+{% block title %}Profile{% endblock %}
 {% block content %}
 <div class="container mt-4">
     <h2>User Profile</h2>
-    <form method="POST"
-          action="{{ url_for('web_users_bp.update_profile') }}">
+    <form method="POST" action="{{ url_for('web_users_bp.update_profile') }}">
         <div class="mb-3">
             <label for="username" class="form-label">Username</label>
-            <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" required>
+            <input type="text" class="form-control" id="username"
+                   name="username" required value="{{ user.username }}">
         </div>
         <div class="mb-3">
             <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+            <input type="email" class="form-control" id="email"
+                   name="email" required value="{{ user.email }}">
         </div>
         <div class="mb-3">
             <label for="password" class="form-label">New Password (leave blank if unchanged)</label>
             <input type="password" class="form-control" id="password" name="password">
         </div>
-        <input type="hidden" name="confirm_password" value="">
         <button type="submit" class="btn btn-primary">Save Changes</button>
     </form>
 
     <hr class="my-4">
     <h3>Danger Zone</h3>
-    <form method="POST"
-          action="{{ url_for('web_users_bp.delete_profile') }}">
+    <form method="POST" action="{{ url_for('web_users_bp.delete_profile') }}">
         <div class="alert alert-danger" role="alert">
             Deleting your account will permanently delete all your data (projects, individuals, etc.).
             This action cannot be undone.
         </div>
-        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete your account? This action cannot be undone!')">Delete Account</button>
+        <button type="submit" class="btn btn-danger"
+                onclick="return confirm('Are you sure? This action cannot be undone.')">
+            Delete Account
+        </button>
     </form>
 </div>
 {% endblock %}

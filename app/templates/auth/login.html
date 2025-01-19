@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% block title %}Log In{% endblock %}
 {% block content %}
 <div class="container mt-4">
     <h2>Log In</h2>
     <form id="loginForm" method="POST" action="{{ url_for('web_auth_bp.login') }}">
         <div class="mb-3">
             <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" name="email" required>
+            <input type="email" class="form-control" name="email" required value="{{ form_data.email if form_data else '' }}">
         </div>
         <div class="mb-3">
             <label for="password" class="form-label">Password</label>

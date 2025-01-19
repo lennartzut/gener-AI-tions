@@ -1,6 +1,7 @@
 {% extends "base.html" %}
+{% block title %}Welcome to Gener-AI-tions{% endblock %}
 {% block content %}
-<div class="text-center">
+<div class="text-center mt-5">
     <h1>Welcome to Gener-AI-tions</h1>
     <p>Build your own family tree.</p>
     <a href="{{ url_for('web_auth_bp.login') }}" class="btn btn-primary">Log In</a>

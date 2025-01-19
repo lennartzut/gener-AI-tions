@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Gener-AI-tions{% endblock %}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css', v='1.0') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     {% block head %}{% endblock %}
 </head>
 <body class="d-flex flex-column min-vh-100">
@@ -17,13 +17,7 @@
     </div>
 
     {% include "layout/footer.html" %}
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    {% if project_id is defined and project_id %}
-    <script>
-        window.projectId = "{{ project_id }}";
-    </script>
-    {% endif %}
     {% block scripts %}{% endblock %}
 </body>
 </html>

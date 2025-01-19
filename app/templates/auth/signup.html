@@ -6,11 +6,13 @@
     <form method="POST" action="{{ url_for('web_auth_bp.signup') }}">
         <div class="mb-3">
             <label class="form-label" for="username">Username</label>
-            <input id="username" class="form-control" name="username" required>
+            <input id="username" class="form-control" name="username" required
+                   value="{{ form_data.username if form_data else '' }}">
         </div>
         <div class="mb-3">
             <label class="form-label" for="email">Email</label>
-            <input id="email" class="form-control" name="email" type="email" required>
+            <input id="email" class="form-control" name="email" type="email" required
+                   value="{{ form_data.email if form_data else '' }}">
         </div>
         <div class="mb-3">
             <label class="form-label" for="password">Password</label>

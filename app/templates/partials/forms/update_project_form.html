@@ -1,0 +1,8 @@
+<form method="POST" action="{{ url_for('web_projects_bp.update_project', project_id=project_id) }}">
+    <div class="mb-3">
+        <label for="projectName" class="form-label">Project Name</label>
+        <input type="text" class="form-control" id="projectName" name="name"
+               value="{{ form_data.name if form_data else '' }}" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+</form>
