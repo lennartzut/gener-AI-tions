@@ -64,7 +64,7 @@ class Identity(Base):
         uselist=False,
         foreign_keys='Identity.individual_id',
         primaryjoin='and_(Identity.individual_id == Individual.id, Identity.is_primary == True)',
-        overlaps="identities, primary_identity"
+        overlaps="primary_identity"
     )
 
     def full_name(self) -> str:

@@ -62,7 +62,7 @@ class Individual(Base):
         foreign_keys='Identity.individual_id',
         primaryjoin="and_(Individual.id == Identity.individual_id, "
                     "Identity.is_primary == True)",
-        overlaps = "identities, individual"
+        overlaps="primary_of_individual"
     )
     relationships_as_individual = relationship(
         'Relationship',
