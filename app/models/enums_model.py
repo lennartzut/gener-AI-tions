@@ -28,9 +28,12 @@ class VerticalRelationshipTypeEnum(str, Enum):
     ADOPTIVE = "adoptive"
     FOSTER = "foster"
     OTHER = "other"
+    UNKNOWN = "unknown"
 
 
 class HorizontalRelationshipTypeEnum(str, Enum):
     MARRIAGE = "marriage"
     CIVIL_UNION = "civil union"
     PARTNERSHIP = "partnership"
+    OTHER = "other"
+    UNKNOWN = "unknown"
