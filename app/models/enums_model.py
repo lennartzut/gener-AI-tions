@@ -22,7 +22,7 @@ class InitialRelationshipEnum(str, Enum):
     PARTNER = "partner"
 
 
-class HorizontalRelationshipTypeEnum(str, Enum):
+class VerticalRelationshipTypeEnum(str, Enum):
     BIOLOGICAL = "biological"
     STEP = "step"
     ADOPTIVE = "adoptive"
@@ -30,7 +30,7 @@ class HorizontalRelationshipTypeEnum(str, Enum):
     OTHER = "other"
 
 
-class VerticalRelationshipTypeEnum(str, Enum):
+class HorizontalRelationshipTypeEnum(str, Enum):
     MARRIAGE = "marriage"
     CIVIL_UNION = "civil union"
     PARTNERSHIP = "partnership"
