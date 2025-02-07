@@ -14,18 +14,10 @@ logger = logging.getLogger(__name__)
 class ProjectService:
     """
     Service layer for managing projects.
-
-    Provides methods to create, retrieve, update, and delete projects
-    associated with users.
+    Provides methods to create, retrieve, update, and delete projects associated with users.
     """
 
     def __init__(self, db: Session):
-        """
-        Initializes the ProjectService with a database session.
-
-        Args:
-            db (Session): The SQLAlchemy database session.
-        """
         self.db = db
 
     def create_project(self, user_id: int,
@@ -33,19 +25,12 @@ class ProjectService:
         Project]:
         """
         Creates a new project for a user.
-
-        Args:
-            user_id (int): The ID of the user creating the project.
-            project_create (ProjectCreate): The schema containing project details.
-
-        Returns:
-            Optional[Project]: The newly created Project object if successful, else None.
         """
         try:
             max_project_number = self.db.query(
-                func.max(Project.project_number)) \
-                .filter(Project.user_id == user_id) \
-                .scalar()
+                func.max(Project.project_number)).filter(
+                Project.user_id == user_id
+            ).scalar()
             next_project_number = 1 if max_project_number is None else max_project_number + 1
 
             new_project = Project(
@@ -58,6 +43,7 @@ class ProjectService:
             self.db.refresh(new_project)
             logger.info(f"Project created: ID={new_project.id}")
             return new_project
+
         except SQLAlchemyError as e:
             self.db.rollback()
             logger.error(
@@ -67,17 +53,10 @@ class ProjectService:
     def get_projects_by_user(self, user_id: int) -> List[Project]:
         """
         Fetches all projects for a specific user.
-
-        Args:
-            user_id (int): The ID of the user whose projects are to be retrieved.
-
-        Returns:
-            List[Project]: A list of Project objects associated with the user.
         """
         try:
             projects = self.db.query(Project).filter(
-                Project.user_id == user_id
-            ).all()
+                Project.user_id == user_id).all()
             logger.info(
                 f"Retrieved {len(projects)} projects for user {user_id}")
             return projects
@@ -91,12 +70,6 @@ class ProjectService:
         Project]:
         """
         Fetches a project by its ID.
-
-        Args:
-            project_id (int): The unique ID of the project to retrieve.
-
-        Returns:
-            Optional[Project]: The Project object if found, else None.
         """
         try:
             project = self.db.query(Project).filter(
@@ -114,19 +87,10 @@ class ProjectService:
         Project]:
         """
         Updates an existing project for a user.
-
-        Args:
-            project_id (int): The unique ID of the project to update.
-            user_id (int): The ID of the user requesting the update.
-            project_update (ProjectUpdate): The schema containing updated project details.
-
-        Returns:
-            Optional[Project]: The updated Project object if successful, else None.
         """
         try:
             project = self.db.query(Project).filter(
-                Project.id == project_id,
-                Project.user_id == user_id
+                Project.id == project_id, Project.user_id == user_id
             ).first()
             if not project:
                 logger.warning(
@@ -140,6 +104,7 @@ class ProjectService:
             self.db.refresh(project)
             logger.info(f"Project updated: ID={project_id}")
             return project
+
         except SQLAlchemyError as e:
             self.db.rollback()
             logger.error(
@@ -149,18 +114,10 @@ class ProjectService:
     def delete_project(self, project_id: int, user_id: int) -> bool:
         """
         Deletes a project by its ID.
-
-        Args:
-            project_id (int): The unique ID of the project to delete.
-            user_id (int): The ID of the user requesting the deletion.
-
-        Returns:
-            bool: True if deletion was successful, else False.
         """
         try:
             project = self.db.query(Project).filter(
-                Project.id == project_id,
-                Project.user_id == user_id
+                Project.id == project_id, Project.user_id == user_id
             ).first()
             if not project:
                 logger.warning(
@@ -171,6 +128,7 @@ class ProjectService:
             self.db.commit()
             logger.info(f"Project deleted: ID={project_id}")
             return True
+
         except SQLAlchemyError as e:
             self.db.rollback()
             logger.error(

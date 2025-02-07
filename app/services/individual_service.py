@@ -17,43 +17,24 @@ logger = logging.getLogger(__name__)
 class IndividualService:
     """
     Service layer for managing individuals within projects.
-
     Provides methods to create, retrieve, update, and delete individuals,
     along with managing their associated identities and relationships.
     """
 
     def __init__(self, db: Session):
-        """
-        Initializes the IndividualService with a database session.
-
-        Args:
-            db (Session): The SQLAlchemy database session.
-        """
         self.db = db
 
     def create_individual(self, user_id: int, project_id: int,
                           individual_create: IndividualCreate) -> \
-            Optional[Individual]:
+    Optional[Individual]:
         """
         Creates a new individual and a primary identity within the project.
-
-        Args:
-            user_id (int): The ID of the user creating the individual.
-            project_id (int): The ID of the project to which the individual belongs.
-            individual_create (IndividualCreate): The schema containing individual details.
-
-        Returns:
-            Optional[Individual]: The newly created Individual object if successful, else None.
-
-        Raises:
-            ValueError: If the `birth_date` is after the `death_date`.
-            SQLAlchemyError: For any database-related errors.
         """
         try:
             max_individual_number = self.db.query(
-                func.max(Individual.individual_number)) \
-                .filter_by(user_id=user_id, project_id=project_id) \
-                .scalar()
+                func.max(Individual.individual_number)
+            ).filter_by(user_id=user_id,
+                        project_id=project_id).scalar()
             next_individual_number = 1 if max_individual_number is None else max_individual_number + 1
 
             new_individual = Individual(
@@ -76,9 +57,9 @@ class IndividualService:
             )
 
             max_identity_number = self.db.query(
-                func.max(Identity.identity_number)) \
-                .filter(Identity.individual_id == new_individual.id) \
-                .scalar()
+                func.max(Identity.identity_number)
+            ).filter(
+                Identity.individual_id == new_individual.id).scalar()
             next_identity_number = 1 if max_identity_number is None else max_identity_number + 1
             primary_identity.identity_number = next_identity_number
 
@@ -88,6 +69,7 @@ class IndividualService:
             logger.info(
                 f"Created individual: ID={new_individual.id}")
             return new_individual
+
         except SQLAlchemyError as e:
             self.db.rollback()
             logger.error(
@@ -106,14 +88,6 @@ class IndividualService:
         Individual]:
         """
         Fetches an individual by ID within the specified project.
-
-        Args:
-            individual_id (int): The unique ID of the individual to retrieve.
-            user_id (int): The ID of the user requesting the individual.
-            project_id (int): The ID of the project to which the individual belongs.
-
-        Returns:
-            Optional[Individual]: The Individual object if found, else None.
         """
         try:
             individual = self.db.query(Individual).filter_by(
@@ -145,19 +119,10 @@ class IndividualService:
         Individual]:
         """
         Fetches all individuals in a project, optionally filtered by a search query.
-
-        Args:
-            user_id (int): The ID of the user requesting the individuals.
-            project_id (int): The ID of the project whose individuals are to be retrieved.
-            search_query (Optional[str], optional): The search term to filter individuals. Defaults to None.
-
-        Returns:
-            List[Individual]: A list of Individual objects matching the criteria.
         """
         try:
             query = self.db.query(Individual).filter_by(
-                user_id=user_id, project_id=project_id
-            ).options(
+                user_id=user_id, project_id=project_id).options(
                 joinedload(Individual.identities),
                 joinedload(Individual.primary_identity),
                 joinedload(
@@ -191,15 +156,6 @@ class IndividualService:
     Optional[Individual]:
         """
         Updates an individual's details, including their primary identity.
-
-        Args:
-            individual_id (int): The unique ID of the individual to update.
-            user_id (int): The ID of the user requesting the update.
-            project_id (int): The ID of the project to which the individual belongs.
-            individual_update (IndividualUpdate): The schema containing updated individual details.
-
-        Returns:
-            Optional[Individual]: The updated Individual object if successful, else None.
         """
         try:
             individual = self.db.query(Individual).filter_by(
@@ -221,8 +177,8 @@ class IndividualService:
             primary_identity = individual.primary_identity
             if primary_identity:
                 identity_updates = {
-                    key: val for key, val in updates.items()
-                    if key in {"first_name", "last_name", "gender"}
+                    key: val for key, val in updates.items() if
+                    key in {"first_name", "last_name", "gender"}
                 }
                 for field, value in identity_updates.items():
                     setattr(primary_identity, field, value)
@@ -235,6 +191,7 @@ class IndividualService:
             self.db.refresh(individual)
             logger.info(f"Updated individual: ID={individual_id}")
             return individual
+
         except SQLAlchemyError as e:
             self.db.rollback()
             logger.error(f"Error updating individual: {e}")
@@ -244,14 +201,6 @@ class IndividualService:
                           project_id: int) -> bool:
         """
         Deletes an individual by ID.
-
-        Args:
-            individual_id (int): The unique ID of the individual to delete.
-            user_id (int): The ID of the user requesting the deletion.
-            project_id (int): The ID of the project to which the individual belongs.
-
-        Returns:
-            bool: True if deletion was successful, else False.
         """
         try:
             individual = self.db.query(Individual).filter_by(
@@ -267,6 +216,7 @@ class IndividualService:
             self.db.commit()
             logger.info(f"Deleted individual: ID={individual_id}")
             return True
+
         except SQLAlchemyError as e:
             self.db.rollback()
             logger.error(f"Error deleting individual: {e}")
