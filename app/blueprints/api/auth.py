@@ -29,11 +29,8 @@ api_auth_bp = Blueprint('api_auth_bp', __name__)
 def signup():
     """
     Register a new user.
-
-    Expects a JSON payload with 'username', 'email', and 'password'.
-
-    Returns:
-        JSON response with a success message or error details.
+    Expects a JSON payload with 'username', 'email', 'password' and 'confirm_password'.
+    Returns a JSON response with a success message or error details.
     """
     data = request.get_json()
     if not data:
@@ -51,9 +48,7 @@ def signup():
             if not new_user:
                 raise Conflict("Email or username already in use.")
             return success_response(
-                "Signup successful! Please log in.",
-                status_code=201
-            )
+                "Signup successful! Please log in.", status_code=201)
         except UserAlreadyExistsError as e:
             raise Conflict(str(e))
         except SQLAlchemyError as e:
@@ -65,11 +60,8 @@ def signup():
 def login():
     """
     Authenticate an existing user and issue JWT tokens.
-
     Expects a JSON payload with 'email' and 'password'.
-
-    Returns:
-        JSON response with a success message and sets JWT cookies or error details.
+    Returns a JSON response with a success message, sets JWT cookies or error details.
     """
     data = request.get_json()
     if not data:
@@ -83,9 +75,7 @@ def login():
         service_user = UserService(db=session)
         try:
             user = service_user.authenticate_user(
-                email=user_login.email,
-                password=user_login.password
-            )
+                email=user_login.email, password=user_login.password)
             if user and user.id:
                 access_token = create_access_token(
                     identity=str(user.id))
@@ -106,9 +96,7 @@ def login():
 def refresh():
     """
     Refresh the access token using a valid refresh token.
-
-    Returns:
-        JSON response with a success message and sets a new access token cookie or error details.
+    Returns a JSON response with a new access token cookie or error details.
     """
     try:
         user_id = get_jwt_identity()
@@ -129,9 +117,7 @@ def refresh():
 def logout():
     """
     Log out the current user by unsetting JWT cookies.
-
-    Returns:
-        JSON response with a success message.
+    Returns a JSON response with a success message.
     """
     response = jsonify({"message": "Logged out successfully."})
     unset_jwt_cookies(response)

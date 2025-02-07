@@ -24,9 +24,6 @@ api_users_bp = Blueprint('api_users_bp', __name__)
 def get_user():
     """
     Retrieve the current user's profile.
-
-    Returns:
-        JSON response containing the user's profile data or error details.
     """
     try:
         user_id = get_current_user_id()
@@ -53,12 +50,7 @@ def get_user():
 def update_user():
     """
     Update the current user's profile.
-
-    Expects:
-        JSON payload conforming to the UserUpdate schema.
-
-    Returns:
-        JSON response with a success message and the updated user data or error details.
+    Expects JSON payload conforming to the UserUpdate schema.
     """
     try:
         user_id = get_current_user_id()
@@ -86,9 +78,7 @@ def update_user():
                 return success_response(
                     "Profile updated successfully.",
                     {"user": UserOut.model_validate(
-                        updated_user).model_dump()},
-                    200
-                )
+                        updated_user).model_dump()}, 200)
             raise Conflict("Failed to update profile.")
         except UserAlreadyExistsError as e:
             raise Conflict(f"{e.message} ({e.field})")
@@ -102,9 +92,6 @@ def update_user():
 def delete_user():
     """
     Delete the current user's account.
-
-    Returns:
-        JSON response with a success message or error details.
     """
     try:
         user_id = get_current_user_id()

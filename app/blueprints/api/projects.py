@@ -24,12 +24,7 @@ api_projects_bp = Blueprint('api_projects_bp', __name__)
 def create_project():
     """
     Create a new project for the current user.
-
-    Expects:
-        JSON payload conforming to the ProjectCreate schema.
-
-    Returns:
-        JSON response with a success message and the created project data or error details.
+    Expects JSON payload conforming to ProjectCreate schema.
     """
     user_id = get_current_user_id()
     if not user_id:
@@ -65,9 +60,6 @@ def create_project():
 def list_projects():
     """
     List all projects associated with the current user.
-
-    Returns:
-        JSON response containing a list of projects or error details.
     """
     user_id = get_current_user_id()
     with SessionLocal() as session:
@@ -89,12 +81,6 @@ def list_projects():
 def get_project(project_id):
     """
     Retrieve details of a specific project by its ID.
-
-    Args:
-        project_id (int): The unique ID of the project.
-
-    Returns:
-        JSON response containing the project details or error details.
     """
     user_id = get_current_user_id()
     with SessionLocal() as session:
@@ -120,22 +106,13 @@ def get_project(project_id):
 @jwt_required()
 def update_project(project_id):
     """
-    Update the details of an existing project.
-
-    Args:
-        project_id (int): The unique ID of the project to update.
-
-    Expects:
-        JSON payload conforming to the ProjectUpdate schema.
-
-    Returns:
-        JSON response with a success message and the updated project data or error details.
+    Update an existing project.
+    Expects JSON payload conforming to ProjectUpdate schema.
     """
     user_id = get_current_user_id()
     data = request.get_json()
     if not data:
         raise BadRequest("No input data provided.")
-
     try:
         project_update = ProjectUpdate.model_validate(data)
     except ValidationError as e:
@@ -145,8 +122,7 @@ def update_project(project_id):
         service_project = ProjectService(db=session)
         try:
             updated_project = service_project.update_project(
-                project_id=project_id,
-                user_id=user_id,
+                project_id=project_id, user_id=user_id,
                 project_update=project_update
             )
             if updated_project:
@@ -168,12 +144,6 @@ def update_project(project_id):
 def delete_project(project_id):
     """
     Delete a specific project by its ID.
-
-    Args:
-        project_id (int): The unique ID of the project to delete.
-
-    Returns:
-        JSON response with a success message or error details.
     """
     user_id = get_current_user_id()
     with SessionLocal() as session:

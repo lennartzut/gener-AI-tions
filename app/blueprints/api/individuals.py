@@ -24,15 +24,7 @@ api_individuals_bp = Blueprint("api_individuals_bp", __name__)
 def create_individual():
     """
     Create a new individual within a project.
-
-    Query Parameters:
-        project_id (int): The ID of the project.
-
-    Expects:
-        JSON payload conforming to the IndividualCreate schema.
-
-    Returns:
-        JSON response with a success message and the created individual data or error details.
+    Expects JSON payload conforming to IndividualCreate schema.
     """
     data = request.get_json()
     if not data:
@@ -52,7 +44,6 @@ def create_individual():
             )
             if not new_individual:
                 raise BadRequest("Failed to create individual.")
-
             individual_out = IndividualOut.model_validate(
                 new_individual, from_attributes=True)
             individual_out.identities = [
@@ -61,8 +52,7 @@ def create_individual():
             return success_response(
                 "Individual created successfully.",
                 {"individual": individual_out.model_dump()},
-                201
-            )
+                201)
         except SQLAlchemyError as e:
             logger.error(f"Error creating individual: {e}")
             raise InternalServerError("Database error occurred.")
@@ -73,13 +63,7 @@ def create_individual():
 def list_individuals():
     """
     List all individuals within a specific project.
-
-    Query Parameters:
-        project_id (int): The ID of the project.
-        q (str, optional): Search query to filter individuals by name or birth place.
-
-    Returns:
-        JSON response containing a list of individuals or error details.
+    Optional query parameter 'q' for search.
     """
     search_query = request.args.get("q", type=str, default=None)
     with SessionLocal() as session:
@@ -88,21 +72,20 @@ def list_individuals():
             individuals = service_individual.get_individuals_by_project(
                 user_id=g.user_id,
                 project_id=g.project_id,
-                search_query=search_query
+                search_query=search_query if search_query else None
             )
             individuals_out = []
             for individual in individuals:
                 individual_out = IndividualOut.model_validate(
                     individual, from_attributes=True)
+                individual_out.identities = [IdentityIdOut(id=i.id)
+                                             for i in
+                                             individual.identities]
                 individuals_out.append(individual_out.model_dump())
-
             return success_response(
                 "Individuals fetched successfully.",
-                {
-                    "project_id": g.project_id,
-                    "individuals": individuals_out
-                }
-            )
+                {"project_id": g.project_id,
+                 "individuals": individuals_out})
         except SQLAlchemyError as e:
             logger.error(f"Error listing individuals: {e}")
             raise InternalServerError("Database error occurred.")
@@ -113,15 +96,6 @@ def list_individuals():
 def get_individual(individual_id):
     """
     Retrieve detailed information of a specific individual by ID.
-
-    Query Parameters:
-        project_id (int): The ID of the project.
-
-    Args:
-        individual_id (int): The unique ID of the individual.
-
-    Returns:
-        JSON response containing the individual's details or error details.
     """
     with SessionLocal() as session:
         service_individual = IndividualService(db=session)
@@ -133,12 +107,10 @@ def get_individual(individual_id):
             )
             if not individual:
                 raise NotFound("Individual not found.")
-
             individual_out = IndividualOut.model_validate(individual,
                                                           from_attributes=True)
-            individual_out.identities = [{"id": i.id} for i in
-                                         individual.identities]
-
+            individual_out.identities = [IdentityIdOut(id=i.id) for i
+                                         in individual.identities]
             data = individual_out.model_dump()
             data["parents"] = individual.parents
             data["children"] = individual.children
@@ -155,19 +127,8 @@ def get_individual(individual_id):
 @require_project_access
 def update_individual(individual_id):
     """
-    Update the details of an existing individual.
-
-    Query Parameters:
-        project_id (int): The ID of the project.
-
-    Args:
-        individual_id (int): The unique ID of the individual to update.
-
-    Expects:
-        JSON payload conforming to the IndividualUpdate schema.
-
-    Returns:
-        JSON response with a success message and the updated individual data or error details.
+    Update an existing individual.
+    Expects JSON payload conforming to IndividualUpdate schema.
     """
     data = request.get_json()
     if not data:
@@ -188,17 +149,14 @@ def update_individual(individual_id):
             )
             if not updated:
                 raise BadRequest("Failed to update individual.")
-
             individual_out = IndividualOut.model_validate(updated,
                                                           from_attributes=True)
             individual_out.identities = [
                 IdentityIdOut(id=identity.id) for identity in
                 updated.identities]
-
             return success_response(
                 "Individual updated successfully.",
-                {"data": individual_out.model_dump()}
-            )
+                {"data": individual_out.model_dump()})
         except SQLAlchemyError as e:
             logger.error(f"Error updating individual: {e}")
             raise InternalServerError("Database error occurred.")
@@ -209,15 +167,6 @@ def update_individual(individual_id):
 def delete_individual(individual_id):
     """
     Delete an individual by their ID.
-
-    Query Parameters:
-        project_id (int): The ID of the project.
-
-    Args:
-        individual_id (int): The unique ID of the individual to delete.
-
-    Returns:
-        JSON response with a success message or error details.
     """
     with SessionLocal() as session:
         service_individual = IndividualService(db=session)
@@ -242,14 +191,7 @@ def delete_individual(individual_id):
 def search_individuals():
     """
     Search for individuals within a project based on a query.
-
-    Query Parameters:
-        project_id (int): The ID of the project.
-        q (str, optional): The search query.
-        exclude_ids (str, optional): Comma-separated list of individual IDs to exclude.
-
-    Returns:
-        JSON response containing a list of matched individuals or error details.
+    Optional query parameter 'exclude_ids' can be provided as a comma-separated string.
     """
     q = request.args.get("q", "", type=str)
     exclude_ids = request.args.get("exclude_ids", "", type=str)
@@ -261,7 +203,6 @@ def search_individuals():
 
     with SessionLocal() as session:
         try:
-            # Optional project check
             from app.services.project_service import ProjectService
             service_project = ProjectService(db=session)
             project = service_project.get_project_by_id(
@@ -269,7 +210,6 @@ def search_individuals():
             if not project or project.user_id != g.user_id:
                 raise NotFound(
                     "Project not found or not owned by this user.")
-
             service_individual = IndividualService(db=session)
             individuals = service_individual.get_individuals_by_project(
                 user_id=g.user_id,
@@ -278,14 +218,13 @@ def search_individuals():
             )
             filtered = [i for i in individuals if
                         i.id not in exclude_list]
-
             results = []
             for i in filtered:
                 out = IndividualOut.model_validate(i,
                                                    from_attributes=True)
-                out.identities = [ident.id for ident in i.identities]
+                out.identities = [IdentityIdOut(id=ident.id) for
+                                  ident in i.identities]
                 results.append(out.model_dump())
-
             return success_response("Search completed.",
                                     {"individuals": results})
         except SQLAlchemyError as e:

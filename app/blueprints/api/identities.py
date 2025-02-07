@@ -23,15 +23,8 @@ api_identities_bp = Blueprint('api_identities_bp', __name__)
 def create_identity():
     """
     Create a new identity for an individual within a project.
-
-    Query Parameters:
-        project_id (int): The ID of the project.
-
-    Expects:
-        JSON payload conforming to the IdentityCreate schema.
-
-    Returns:
-        JSON response with a success message and the created identity data or error details.
+    Expects JSON payload conforming to IdentityCreate schema.
+    Returns a JSON response with the created identity data.
     """
     data = request.get_json()
     if not data:
@@ -50,7 +43,6 @@ def create_identity():
             )
             if not new_identity:
                 raise BadRequest("Failed to create identity.")
-
             identity_out = IdentityOut.model_validate(new_identity,
                                                       from_attributes=True)
             return success_response(
@@ -68,12 +60,6 @@ def create_identity():
 def list_identities():
     """
     List all identities associated with a specific project.
-
-    Query Parameters:
-        project_id (int): The ID of the project.
-
-    Returns:
-        JSON response containing a list of all identities or error details.
     """
     with SessionLocal() as session:
         service_identity = IdentityService(db=session)
@@ -81,8 +67,8 @@ def list_identities():
             identities = service_identity.get_all_identities(
                 project_id=g.project_id)
             identities_out = [
-                IdentityOut.model_validate(identity).model_dump()
-                for identity in identities
+                IdentityOut.model_validate(identity).model_dump() for
+                identity in identities
             ]
             return success_response(
                 "Identities fetched successfully.",
@@ -99,12 +85,6 @@ def list_identities():
 def get_identity(identity_id):
     """
     Retrieve details of a specific identity by its ID.
-
-    Query Parameters:
-        project_id (int): The ID of the project.
-
-    Args:
-        identity_id (int): The unique ID of the identity.
     """
     with SessionLocal() as session:
         service_identity = IdentityService(db=session)
@@ -126,16 +106,8 @@ def get_identity(identity_id):
 @require_project_access
 def update_identity(identity_id):
     """
-    Update the details of an existing identity.
-
-    Query Parameters:
-        project_id (int): The ID of the project.
-
-    Args:
-        identity_id (int): The unique ID of the identity to update.
-
-    Expects:
-        JSON payload conforming to the IdentityUpdate schema.
+    Update an existing identity.
+    Expects JSON payload conforming to IdentityUpdate schema.
     """
     data = request.get_json()
     if not data:
@@ -154,10 +126,8 @@ def update_identity(identity_id):
                 raise BadRequest("Failed to update identity.")
             identity_out = IdentityOut.model_validate(
                 updated_identity).model_dump()
-            return success_response(
-                "Identity updated successfully",
-                {"data": identity_out}
-            )
+            return success_response("Identity updated successfully",
+                                    {"data": identity_out})
         except SQLAlchemyError as e:
             logger.error(f"Error updating identity: {e}")
             raise InternalServerError("Database error occurred.")
@@ -168,15 +138,6 @@ def update_identity(identity_id):
 def delete_identity(identity_id):
     """
     Delete an identity by its ID.
-
-    Query Parameters:
-        project_id (int): The ID of the project.
-
-    Args:
-        identity_id (int): The unique ID of the identity to delete.
-
-    Returns:
-        JSON response with a success message or error details.
     """
     with SessionLocal() as session:
         service_identity = IdentityService(db=session)

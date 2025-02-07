@@ -23,14 +23,11 @@ api_admin_bp = Blueprint('api_admin_bp', __name__)
 def list_users():
     """
     Retrieve a paginated list of all users. Accessible only to admins.
-
     Query Parameters:
         page (int, optional): The page number to retrieve. Defaults to 1.
         per_page (int, optional): The number of users per page. Defaults to 20.
-
     Returns:
-        JSON response containing the total number of users, current page,
-        users per page, and a list of user data.
+        JSON response containing total, page, per_page and list of user data.
     """
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
@@ -40,6 +37,7 @@ def list_users():
             users = service_user.get_paginated_users(page=page,
                                                      per_page=per_page)
             total = session.query(User).count()
+            # Convert each ORM object into a schema-dict using UserOut.
             users_out = [UserOut.model_validate(u).model_dump() for u
                          in users]
             return success_response(

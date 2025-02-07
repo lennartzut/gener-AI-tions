@@ -23,15 +23,7 @@ api_relationships_bp = Blueprint("api_relationships_bp", __name__)
 def create_relationship():
     """
     Create a new relationship between two individuals within a project.
-
-    Query Parameters:
-        project_id (int): The ID of the project.
-
-    Expects:
-        JSON payload conforming to the RelationshipCreate schema.
-
-    Returns:
-        JSON response with a success message and the created relationship data or error details.
+    Expects JSON payload conforming to RelationshipCreate schema.
     """
     data = request.get_json()
     if not data:
@@ -66,12 +58,6 @@ def create_relationship():
 def list_relationships():
     """
     List all relationships associated with a specific project.
-
-    Query Parameters:
-        project_id (int): The ID of the project.
-
-    Returns:
-        JSON response containing a list of relationships or error details.
     """
     with SessionLocal() as session:
         service_relationship = RelationshipService(db=session)
@@ -82,8 +68,7 @@ def list_relationships():
                                 rels]
             return success_response(
                 "Relationships fetched successfully.",
-                {"relationships": relationship_out}
-            )
+                {"relationships": relationship_out})
         except SQLAlchemyError as e:
             logger.error(f"Error listing relationships: {e}")
             raise InternalServerError("Database error occurred.")
@@ -95,15 +80,6 @@ def list_relationships():
 def get_relationship(relationship_id):
     """
     Retrieve details of a specific relationship by its ID.
-
-    Query Parameters:
-        project_id (int): The ID of the project.
-
-    Args:
-        relationship_id (int): The unique ID of the relationship.
-
-    Returns:
-        JSON response containing the relationship details or error details.
     """
     with SessionLocal() as session:
         service_relationship = RelationshipService(db=session)
@@ -114,8 +90,7 @@ def get_relationship(relationship_id):
                 raise NotFound("Relationship not found.")
             return success_response(
                 "Relationship fetched successfully.",
-                {"data": _short_relationship_dict(relationship)}
-            )
+                {"data": _short_relationship_dict(relationship)})
         except SQLAlchemyError as e:
             logger.error(f"Error retrieving relationship: {e}")
             raise InternalServerError("Database error occurred.")
@@ -126,19 +101,8 @@ def get_relationship(relationship_id):
 @require_project_access
 def update_relationship(relationship_id):
     """
-    Update the details of an existing relationship.
-
-    Query Parameters:
-        project_id (int): The ID of the project.
-
-    Args:
-        relationship_id (int): The unique ID of the relationship to update.
-
-    Expects:
-        JSON payload conforming to the RelationshipUpdate schema.
-
-    Returns:
-        JSON response with a success message and the updated relationship data or error details.
+    Update an existing relationship.
+    Expects JSON payload conforming to RelationshipUpdate schema.
     """
     data = request.get_json()
     if not data:
@@ -152,15 +116,13 @@ def update_relationship(relationship_id):
         service_relationship = RelationshipService(db=session)
         try:
             updated_rel = service_relationship.update_relationship(
-                relationship_id, relationship_update, g.project_id
-            )
+                relationship_id, relationship_update, g.project_id)
             if not updated_rel:
                 raise NotFound(
                     "Relationship not found or update failed.")
             return success_response(
                 "Relationship updated successfully",
-                {"data": _short_relationship_dict(updated_rel)}
-            )
+                {"data": _short_relationship_dict(updated_rel)})
         except ValueError as ve:
             raise BadRequest(str(ve))
         except SQLAlchemyError as e:
@@ -174,15 +136,6 @@ def update_relationship(relationship_id):
 def delete_relationship(relationship_id):
     """
     Delete a specific relationship by its ID.
-
-    Query Parameters:
-        project_id (int): The ID of the project.
-
-    Args:
-        relationship_id (int): The unique ID of the relationship to delete.
-
-    Returns:
-        JSON response with a success message or error details.
     """
     with SessionLocal() as session:
         service_relationship = RelationshipService(db=session)
@@ -201,12 +154,14 @@ def delete_relationship(relationship_id):
 
 
 def _short_relationship_dict(rel):
+    """
+    Helper function to return a compact dictionary representation of a relationship.
+    """
     return {
         "id": rel.id,
         "initial_relationship": rel.initial_relationship,
         "relationship_detail": (
-                rel.relationship_detail_horizontal or rel.relationship_detail_vertical
-        ),
+                    rel.relationship_detail_horizontal or rel.relationship_detail_vertical),
         "notes": rel.notes,
         "union_date": rel.union_date,
         "union_place": rel.union_place,
