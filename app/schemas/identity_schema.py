@@ -10,6 +10,17 @@ from app.utils.validators import ValidationUtils
 logger = logging.getLogger(__name__)
 
 
+def _validate_identity_dates(valid_from: Optional[date],
+                             valid_until: Optional[date]) -> None:
+    """
+    Helper function to validate that valid_from is not after valid_until.
+    """
+    ValidationUtils.validate_date_order([
+        (valid_from, valid_until,
+         "Valid from date cannot be after valid until date.")
+    ])
+
+
 class IdentityBase(BaseModel):
     """
     Base schema for an identity, including common fields.
@@ -39,23 +50,28 @@ class IdentityBase(BaseModel):
         description="The end date of this identity's validity"
     )
 
+    @model_validator(mode='before')
+    def convert_blank_dates(cls, data):
+        """
+        Converts empty-string values for valid_from/valid_until into None.
+        """
+        if not isinstance(data, dict):
+            return data
+        for field_name in ('valid_from', 'valid_until'):
+            if field_name in data and isinstance(data[field_name],
+                                                 str):
+                if not data[field_name].strip():
+                    data[field_name] = None
+        return data
+
     @model_validator(mode='after')
-    def validate_dates(cls, values: "IdentityBase") -> "IdentityBase":
+    def validate_dates(cls,
+                       values: "IdentityBase") -> "IdentityBase":
         """
-        Validates that the `valid_from` date is not after the `valid_until` date.
-
-        Args:
-            values (IdentityBase): The model instance containing the dates.
-
-        Returns:
-            IdentityBase: The validated model instance.
-
-        Raises:
-            ValueError: If `valid_from` is after `valid_until`.
+        Validates that valid_from is not after valid_until.
         """
-        ValidationUtils.validate_date_order([
-            (values.valid_from, values.valid_until, "Valid from date cannot be after valid until date.")
-        ])
+        _validate_identity_dates(values.valid_from,
+                                 values.valid_until)
         return values
 
     model_config = ConfigDict(from_attributes=True)
@@ -105,24 +121,14 @@ class IdentityUpdate(BaseModel):
     )
 
     @model_validator(mode='after')
-    def validate_dates(cls, values: "IdentityUpdate") -> "IdentityUpdate":
+    def validate_dates(cls,
+                       values: "IdentityUpdate") -> "IdentityUpdate":
         """
-        Validates that the `valid_from` date is not after the `valid_until` date.
-
-        Args:
-            values (IdentityUpdate): The model instance containing the dates.
-
-        Returns:
-            IdentityUpdate: The validated model instance.
-
-        Raises:
-            ValueError: If `valid_from` is after `valid_until`.
+        Validates that valid_from is not after valid_until.
         """
         try:
-            ValidationUtils.validate_date_order([
-                (values.valid_from, values.valid_until,
-                "Valid from date cannot be after valid until date.")
-            ])
+            _validate_identity_dates(values.valid_from,
+                                     values.valid_until)
         except ValueError as ve:
             logger.error(f"Validation failed: {ve}")
             raise ValueError(str(ve)) from ve

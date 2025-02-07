@@ -12,6 +12,39 @@ from app.schemas.individual_schema import IndividualOut
 from app.utils.validators import ValidationUtils
 
 
+# Helper function to validate relationship dates
+def _validate_relationship_dates(union_date: Optional[date],
+                                 dissolution_date: Optional[
+                                     date]) -> None:
+    ValidationUtils.validate_date_order([
+        (union_date, dissolution_date,
+         "Union date must be before dissolution date.")
+    ])
+
+
+# Helper function to validate relationship_detail based on initial_relationship.
+def _validate_relationship_detail(
+        initial_relationship: InitialRelationshipEnum,
+        detail: Optional[str]) -> None:
+    if detail is None:
+        return
+    if initial_relationship == InitialRelationshipEnum.PARTNER:
+        # For partners, we expect a detail from the HorizontalRelationshipTypeEnum.
+        valid_values = [e.value for e in
+                        HorizontalRelationshipTypeEnum]
+        if detail not in valid_values:
+            raise ValueError(
+                "Invalid `relationship_detail` for partners.")
+    elif initial_relationship in {InitialRelationshipEnum.CHILD,
+                                  InitialRelationshipEnum.PARENT}:
+        # For child/parent, we expect a detail from the VerticalRelationshipTypeEnum.
+        valid_values = [e.value for e in
+                        VerticalRelationshipTypeEnum]
+        if detail not in valid_values:
+            raise ValueError(
+                "Invalid `relationship_detail` for child/parent.")
+
+
 class RelationshipBase(BaseModel):
     """
     Base schema for a relationship, including validation logic.
@@ -50,62 +83,38 @@ class RelationshipBase(BaseModel):
         description="Additional notes about the relationship"
     )
 
+    @model_validator(mode='before')
+    def convert_blank_dates(cls, data):
+        """
+        Converts empty-string values for union_date/dissolution_date into None.
+        """
+        if not isinstance(data, dict):
+            return data
+        for field_name in ('union_date', 'dissolution_date'):
+            if field_name in data and isinstance(data[field_name],
+                                                 str):
+                if not data[field_name].strip():
+                    data[field_name] = None
+        return data
+
     @model_validator(mode='after')
     def validate_relationship_detail(cls,
                                      values: "RelationshipBase") -> "RelationshipBase":
         """
-        Validates that `relationship_detail` corresponds to the
-        correct enum based on `initial_relationship`.
-
-        Args:
-            values (RelationshipBase): The model instance
-            containing relationship details.
-
-        Returns:
-            RelationshipBase: The validated model instance.
-
-        Raises:
-            ValueError: If `relationship_detail` is invalid based
-            on `initial_relationship`.
+        Validates that `relationship_detail` is valid based on `initial_relationship`.
         """
-        if values.relationship_detail is None:
-            return values
-        if values.initial_relationship == InitialRelationshipEnum.PARTNER:
-            if values.relationship_detail not in [e.value for e in
-                                                  VerticalRelationshipTypeEnum]:
-                raise ValueError(
-                    "Invalid `relationship_detail` for partners.")
-        elif values.initial_relationship in {
-            InitialRelationshipEnum.CHILD,
-            InitialRelationshipEnum.PARENT
-        }:
-            if values.relationship_detail not in [e.value for e in
-                                                  HorizontalRelationshipTypeEnum]:
-                raise ValueError(
-                    "Invalid `relationship_detail` for child/parent.")
+        _validate_relationship_detail(values.initial_relationship,
+                                      values.relationship_detail)
         return values
 
     @model_validator(mode='after')
     def validate_dates(cls,
                        values: "RelationshipBase") -> "RelationshipBase":
         """
-        Validates that the `union_date` is not after the
-        `dissolution_date`.
-
-        Args:
-            values (RelationshipBase): The model instance
-            containing the dates.
-
-        Returns:
-            RelationshipBase: The validated model instance.
-
-        Raises:
-            ValueError: If `union_date` is after `dissolution_date`.
+        Validates that union_date is not after dissolution_date.
         """
-        ValidationUtils.validate_date_order([
-            (values.union_date, values.dissolution_date,
-             "Union date must be before dissolution date.")
-        ])
+        _validate_relationship_dates(values.union_date,
+                                     values.dissolution_date)
         return values
 
     model_config = ConfigDict(from_attributes=True)
@@ -160,59 +169,22 @@ class RelationshipUpdate(BaseModel):
     def validate_relationship_detail(cls,
                                      values: "RelationshipUpdate") -> "RelationshipUpdate":
         """
-        Validates that `relationship_detail` corresponds to the
-        correct enum based on `initial_relationship`.
-
-        Args:
-            values (RelationshipUpdate): The model instance
-            containing relationship details.
-
-        Returns:
-            RelationshipUpdate: The validated model instance.
-
-        Raises:
-            ValueError: If `relationship_detail` is invalid based
-            on `initial_relationship`.
+        Validates that `relationship_detail` is valid based on `initial_relationship`, if provided.
         """
         if values.relationship_detail is not None and values.initial_relationship is not None:
-            if values.initial_relationship == InitialRelationshipEnum.PARTNER:
-                if values.relationship_detail not in [e.value for e
-                                                      in
-                                                      VerticalRelationshipTypeEnum]:
-                    raise ValueError(
-                        "Invalid `relationship_detail` for partners.")
-            elif values.initial_relationship in {
-                InitialRelationshipEnum.CHILD,
-                InitialRelationshipEnum.PARENT
-            }:
-                if values.relationship_detail not in [e.value for e
-                                                      in
-                                                      HorizontalRelationshipTypeEnum]:
-                    raise ValueError(
-                        "Invalid `relationship_detail` for child/parent.")
+            _validate_relationship_detail(
+                values.initial_relationship,
+                values.relationship_detail)
         return values
 
     @model_validator(mode='after')
     def validate_dates(cls,
                        values: "RelationshipUpdate") -> "RelationshipUpdate":
         """
-        Validates that the `union_date` is not after the
-        `dissolution_date`.
-
-        Args:
-            values (RelationshipUpdate): The model instance 
-            containing the dates.
-
-        Returns:
-            RelationshipUpdate: The validated model instance.
-
-        Raises:
-            ValueError: If `union_date` is after `dissolution_date`.
+        Validates that union_date is not after dissolution_date.
         """
-        ValidationUtils.validate_date_order([
-            (values.union_date, values.dissolution_date,
-             "Union date must be before dissolution date.")
-        ])
+        _validate_relationship_dates(values.union_date,
+                                     values.dissolution_date)
         return values
 
     model_config = ConfigDict(from_attributes=True)

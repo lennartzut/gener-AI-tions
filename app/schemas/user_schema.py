@@ -26,25 +26,12 @@ class UserBase(BaseModel):
     @field_validator('username')
     def username_pattern(cls, v: str) -> str:
         """
-        Validates the username to ensure it starts with a letter
-        and contains
-        only letters, digits, underscores, or dots.
-
-        Args:
-            v (str): The username to validate.
-
-        Returns:
-            str: The validated username.
-
-        Raises:
-            ValueError: If the username does not match the
-            required pattern.
+        Validates the username to ensure it starts with a letter and contains only letters, digits, underscores, or dots.
         """
         pattern = r'^[A-Za-z][A-Za-z0-9_.]*$'
         if not re.match(pattern, v):
             raise ValueError(
-                'Username must start with a letter and contain '
-                'only letters, digits, underscores, or dots.'
+                'Username must start with a letter and contain only letters, digits, underscores, or dots.'
             )
         return v
 
@@ -70,12 +57,6 @@ class UserCreate(UserBase):
     def check_passwords_match(self):
         """
         Ensures that the password and confirm_password fields match.
-
-        Returns:
-            UserCreate: The validated model instance.
-
-        Raises:
-            ValueError: If the passwords do not match.
         """
         if self.password != self.confirm_password:
             raise ValueError("Passwords do not match.")
@@ -116,7 +97,6 @@ class UserUpdate(BaseModel):
     )
     password: Optional[str] = Field(
         None,
-        min_length=8,
         max_length=128,
         description="The updated password"
     )
@@ -127,17 +107,17 @@ class UserUpdate(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @field_validator('password')
+    def optional_password_min_length(cls, v):
+        if v is not None and v.strip() != '' and len(v) < 8:
+            raise ValueError(
+                "Password must be at least 8 characters.")
+        return v
+
     @model_validator(mode='after')
     def check_passwords_match(self):
         """
-        Ensures that the password and confirm_password fields
-        match, if both are provided.
-
-        Returns:
-            UserUpdate: The validated model instance.
-
-        Raises:
-            ValueError: If the passwords do not match.
+        Ensures that the password and confirm_password fields match, if both are provided.
         """
         if self.password or self.confirm_password:
             if self.password != self.confirm_password:
@@ -147,8 +127,7 @@ class UserUpdate(BaseModel):
 
 class UserOut(UserBase):
     """
-    Schema for returning user data, including related entity IDs
-    and admin status.
+    Schema for returning user data, including related entity IDs and admin status.
     """
     id: int = Field(
         ...,

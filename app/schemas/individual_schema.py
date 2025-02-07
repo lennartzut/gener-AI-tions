@@ -11,6 +11,17 @@ from app.utils.validators import ValidationUtils
 logger = logging.getLogger(__name__)
 
 
+def _validate_individual_dates(birth_date: Optional[date],
+                               death_date: Optional[date]) -> None:
+    """
+    Helper function to validate that birth_date is not after death_date.
+    """
+    ValidationUtils.validate_date_order([
+        (birth_date, death_date,
+         "Birth date must be before death date.")
+    ])
+
+
 class IndividualBase(BaseModel):
     """
     Base schema for an individual, including common fields.
@@ -38,27 +49,29 @@ class IndividualBase(BaseModel):
         description="Additional notes about the individual"
     )
 
+    @model_validator(mode='before')
+    def convert_blank_dates(cls, data):
+        """
+        Converts empty-string values for birth_date/death_date into None.
+        """
+        if not isinstance(data, dict):
+            return data
+        for field_name in ('birth_date', 'death_date'):
+            if field_name in data and isinstance(data[field_name],
+                                                 str):
+                if not data[field_name].strip():
+                    data[field_name] = None
+        return data
+
     @model_validator(mode='after')
     def validate_dates(cls,
                        values: "IndividualBase") -> "IndividualBase":
         """
-        Validates that the `birth_date` is not after the `death_date`.
-
-        Args:
-            values (IndividualBase): The model instance containing
-            the dates.
-
-        Returns:
-            IndividualBase: The validated model instance.
-
-        Raises:
-            ValueError: If `birth_date` is after `death_date`.
+        Validates that birth_date is not after death_date.
         """
         try:
-            ValidationUtils.validate_date_order([
-                (values.birth_date, values.death_date,
-                 "Birth date must be before death date.")
-            ])
+            _validate_individual_dates(values.birth_date,
+                                       values.death_date)
         except ValueError as ve:
             logger.error(f"Validation failed: {ve}")
             raise ValueError(str(ve)) from ve
@@ -160,19 +173,11 @@ class IndividualOut(BaseModel):
     def populate_age(cls,
                      values: "IndividualOut") -> "IndividualOut":
         """
-        Calculates and populates the age based on birth and death
-        dates if not already set.
-
-        Args:
-            values (IndividualOut): The model instance.
-
-        Returns:
-            IndividualOut: The model instance with the age populated.
+        Calculates and populates the age based on birth and death dates if not already set.
         """
         if not values.age and values.birth_date:
             values.age = ValidationUtils.calculate_age(
-                values.birth_date, values.death_date
-            )
+                values.birth_date, values.death_date)
         return values
 
     model_config = ConfigDict(from_attributes=True)
